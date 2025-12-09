@@ -1,0 +1,19 @@
+// Settings in here override those in "LSP/LSP.sublime-settings"
+{
+	"clients": {
+		"odin": {
+			"command": [
+				"c:\\ols\\ols.exe"
+			],
+			"enabled": false, // true for globally-enabled, but not required due to 'Enable In Project' command
+			"selector": "source.odin",
+			"initializationOptions": {
+				"enable_semantic_tokens": true,
+				"enable_document_symbols": true,
+				"enable_hover": true,
+				"enable_snippets": true,
+				"enable_format": true,
+			}
+		}
+	}
+}

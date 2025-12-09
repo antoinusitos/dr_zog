@@ -1,0 +1,4 @@
+{
+	"shell_cmd": "odin run . -define:RAYLIB_SHARED=true",
+	"file_regex": "^(.+)\\(([0-9]+):([0-9]+)\\) (.+)$"
+}
