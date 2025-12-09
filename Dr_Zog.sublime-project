@@ -1,0 +1,33 @@
+{
+	"build_systems":
+	[
+		{
+			"cmd": "odin run .",
+			"file_regex": "^(.+)\\(([0-9]+):([0-9]+)\\) (.+)$",
+			"name": "plateformer",
+		}
+	],
+	"folders":
+	[
+		{
+			"path": ".",
+		},
+		{
+			"path": "C:\\odin\\core",
+		},
+		{
+			"path": "C:\\odin\\vendor\\raylib",
+		},
+	],
+	"settings":
+	{
+		"LSP":
+		{
+			"odin":
+			{
+				"enabled": true,
+			},
+		},
+		"auto_complete": false,
+	},
+}
