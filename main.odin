@@ -110,53 +110,6 @@ ARENA_WIDTH :: 10
 ARENA_HEIGHT :: 10
 END_BY_TURN :: 2
 
-MOVEMENTS_1 :: [4][2]int {
-	{1, 0},
-	{-1, 0},
-	{0, 1},
-	{0, -1},
-}
-MOVEMENTS_2 :: [12][2]int {
-	{1, 0},
-	{2, 0},
-	{1, 1},
-	{1, -1},
-	{-1, 0},
-	{-2, 0},
-	{-1, 1},
-	{-1, -1},
-	{0, 1},
-	{0, 2},
-	{0, -1},
-	{0, -2},
-}
-MOVEMENTS_3 :: [24][2]int {
-	{1, 0},
-	{2, 0},
-	{3, 0},
-	{0, 1},
-	{0, 2},
-	{0, 3},
-	{0, -1},
-	{0, -2},
-	{0, -3},
-	{-1, 0},
-	{-2, 0},
-	{-3, 0},
-	{1, 1},
-	{1, -1},
-	{-1, 1},
-	{-1, -1},
-	{1, 2},
-	{-1, 2},
-	{1, -2},
-	{-1, -2},
-	{-2, 1},
-	{2, 1},
-	{-2, -1},
-	{2, -1},
-}
-
 names := [12]string {
 	"Oliver",
 	"Jake",
@@ -308,12 +261,31 @@ Class_stats :: struct {
 	stats : Entity_Stats,
 	movement_size : int,
 	attack_size : int,
+	ability : [2]^Class_ability,
+}
+
+Ability_type :: enum {
+	damage,
+	heal,
+
+}
+
+warrior_ability_1 := Class_ability {
+	ability_type = .damage,
+	value = 2,
+	name = "Warrior Ability"
+}
+
+Class_ability :: struct {
+	ability_type : Ability_type,
+	value : int,
+	name : string,
 }
 
 class_stats := [6]Class_stats {
 	{class = .tank, stats = {max_life = 3, psyche = 1, agility = -1}, movement_size = 3, attack_size = 1},
 	{class = .tech, stats = {technology = 3, chance = 1, max_life = -1}, movement_size = 4, attack_size = 2},
-	{class = .warrior, stats = {max_life = 2, agility = 1, psyche = -1}, movement_size = 4, attack_size = 1},
+	{class = .warrior, stats = {max_life = 2, agility = 1, psyche = -1}, movement_size = 4, attack_size = 1, ability = {&warrior_ability_1, nil}},
 	{class = .healer, stats = {psyche = 3, chance = 3, max_life = -1}, movement_size = 4, attack_size = 1},
 	{class = .sniper, stats = {agility = 3, max_life = -1, psyche = -1}, movement_size = 5, attack_size = 4},
 	{class = .spirit, stats = {psyche = 3, technology = -1, max_life = -1}, movement_size = 4, attack_size = 2},
@@ -656,7 +628,7 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 			damaged_entity.sprite = bee_dead_sprite
 		}
 	}
-	attacking_entity.current_endurance -= 1
+	attacking_entity.current_endurance -= 2
 	end_attack()
 }
 
@@ -682,6 +654,20 @@ update :: proc() {
 
 	if rl.IsKeyPressed(.SPACE) {
 		end_turn()
+	}
+
+	if rl.IsKeyPressed(.F) {
+		log_error(game_state.order[game_state.order_index].class_stats.ability)
+	}
+
+	if rl.IsKeyPressed(.G) {
+		for i in 0..<4 {
+			game_state.clones[i].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+		    game_state.clones[i].name = names[rl.GetRandomValue(0, len(names) - 1)]
+		    game_state.clones[i].class = Class(int(rl.GetRandomValue(1, len(Class) - 1)))
+			game_state.clones[i].mutation = Mutation(int(rl.GetRandomValue(0, len(Mutation) - 1)))
+			init_entity(game_state.clones[i])
+		}
 	}
 
 	check_inspected()
@@ -818,6 +804,7 @@ draw :: proc() {
 		rl.DrawText(fmt.ctprint("DMG:", game_state.info_entity.entity_stats.damage), 1300, 160, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("NAME:", game_state.info_entity.name), 1300, 180, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("mutation", game_state.info_entity.mutation), 1300, 200, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("class", game_state.info_entity.class), 1300, 220, 20, rl.WHITE)
 	}
 
 	x_offset := 0
@@ -841,37 +828,19 @@ draw :: proc() {
 		if rl.GuiButton(rl.Rectangle{0, 1000, 150, 50}, move_text) && game_state.order[game_state.order_index].kind == .player && !game_state.order[game_state.order_index].movement_done {
 			end_attack()
 			game_state.want_to_move = true
-
-			x := game_state.order[game_state.order_index].cell.x
-			y := game_state.order[game_state.order_index].cell.y
-			for move in MOVEMENTS_2 {
-				if x + move[0] < 0 || y + move[1] < 0 do continue
-				if x + move[0] >= ARENA_WIDTH || y + move[1] >= ARENA_HEIGHT do continue
-				if game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].entity != nil do continue
-
-				game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].cell_active = true
-			}
 		}
-		attack_text := fmt.ctprint("Attack (", game_state.order[game_state.order_index].entity_stats.damage, ")", sep = "")
+		attack_text := fmt.ctprint("Attack (dmg:", game_state.order[game_state.order_index].entity_stats.damage, " | rng:", game_state.order[game_state.order_index].class_stats.attack_size, ")", sep = "")
 		if rl.GuiButton(rl.Rectangle{160, 1000, 150, 50}, attack_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 {
 			end_movement()
 			game_state.want_to_attack = true
-			x := game_state.order[game_state.order_index].cell.x
-			y := game_state.order[game_state.order_index].cell.y
-			attack_size := game_state.order[game_state.order_index].class_stats.attack_size
-			for move in -attack_size..=attack_size {
-				if x + move < 0 || y  < 0 do continue
-				if x + move == x do continue
-				if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
+		}
 
-				game_state.arena[y * ARENA_WIDTH + x + move].cell_active = true
-			}
-			for move in -attack_size..=attack_size {
-				if x < 0 || y + move < 0 do continue
-				if y + move == y do continue
-				if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
-
-				game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
+		offset_ability := 0
+		for a in game_state.order[game_state.order_index].class_stats.ability {
+			if a != nil {
+				if rl.GuiButton(rl.Rectangle{f32(320 + offset_ability), 1000, 150, 50}, fmt.ctprint(a.name)) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 {
+				}
+				offset_ability += 160
 			}
 		}
 	}
