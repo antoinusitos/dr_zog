@@ -16,7 +16,7 @@ OFFSET_Y :: 100
 
 main :: proc() {
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Dr_Zog")
-	rl.ToggleBorderlessWindowed()
+	//rl.ToggleBorderlessWindowed()
 
     camera.zoom = 2
 
@@ -188,6 +188,7 @@ Game_State :: struct {
 	enemies : [dynamic]^Entity,
 	order : [dynamic]^Entity,
 	order_index : int,
+	ai_turn_time : f32,
 }
 
 Entity_Handle :: struct {
@@ -583,28 +584,29 @@ check_move :: proc() {
 	mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
 	x := mouse_pos.x
 	y := mouse_pos.y
-	if x >= 0 && x <= 150 && y >= 1030 && y <= 1080 {
+	if x >= 0 && x <= 150 && y >= 1000 && y <= 1080 {
 		reset_active_cells()
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
-		if game_state.order[game_state.order_index].class_stats.movement_size == 1 
-		{
-			for move in MOVEMENTS_1 {
-				if x + move[0] < 0 || y + move[1] < 0 do continue
-				if x + move[0] >= ARENA_WIDTH || y + move[1] >= ARENA_HEIGHT do continue
-				if game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].entity != nil do continue
+		movement_size := game_state.order[game_state.order_index].class_stats.movement_size
+		array : [dynamic]rl.Vector2
+		for dx := -movement_size; dx <= movement_size; dx += 1 {
+	        for dy := -movement_size; dy <= movement_size; dy += 1 {
+	            if abs(dx) + abs(dy) <= movement_size {
+	            	append(&array, rl.Vector2{f32(dx), f32(dy)})
+	            }
+	        }
+	    }
 
-				game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].cell_active = true
-			}
-		}
-		else {
-			for move in MOVEMENTS_2 {
-				if x + move[0] < 0 || y + move[1] < 0 do continue
-				if x + move[0] >= ARENA_WIDTH || y + move[1] >= ARENA_HEIGHT do continue
-				if game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].entity != nil do continue
+		for move in array {
+			move_x := int(move[0])
+			move_y := int(move[1])
 
-				game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].cell_active = true
-			}
+			if x + move_x < 0 || y + move_y < 0 do continue
+			if x + move_x >= ARENA_WIDTH || y + move_y >= ARENA_HEIGHT do continue
+			if game_state.arena[(y + move_y) * ARENA_WIDTH + x + move_x].entity != nil do continue
+
+			game_state.arena[(y + move_y) * ARENA_WIDTH + x + move_x].cell_active = true
 		}
 	}
 }
@@ -617,7 +619,7 @@ check_attack :: proc() {
 	mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
 	x := mouse_pos.x
 	y := mouse_pos.y
-	if x >= 160 && x <= 310 && y >= 1030 && y <= 1080 {
+	if x >= 160 && x <= 310 && y >= 1000 && y <= 1080 {
 		reset_active_cells()
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
@@ -666,6 +668,18 @@ update :: proc() {
 		entity.update(&entity)
 	}
 
+	if game_state.order[game_state.order_index].kind != .player {
+		if game_state.order[game_state.order_index].current_life <= 0 {
+			end_turn()
+			return
+		}
+		game_state.ai_turn_time += rl.GetFrameTime()
+		if game_state.ai_turn_time >= 0.5 {
+			game_state.ai_turn_time = 0
+			end_turn()
+		}
+	}
+
 	if rl.IsKeyPressed(.SPACE) {
 		end_turn()
 	}
@@ -677,34 +691,44 @@ update :: proc() {
 	if game_state.want_to_move {
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
-		if game_state.order[game_state.order_index].class_stats.movement_size == 1 
-		{
-			for move in MOVEMENTS_1 {
-				if x + move[0] < 0 || y + move[1] < 0 do continue
-				if x + move[0] >= ARENA_WIDTH || y + move[1] >= ARENA_HEIGHT do continue
-				if game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].entity != nil do continue
+		movement_size := game_state.order[game_state.order_index].class_stats.movement_size
+		array : [dynamic]rl.Vector2
+		for dx := -movement_size; dx <= movement_size; dx += 1 {
+	        for dy := -movement_size; dy <= movement_size; dy += 1 {
+	            if abs(dx) + abs(dy) <= movement_size {
+	            	append(&array, rl.Vector2{f32(dx), f32(dy)})
+	            }
+	        }
+	    }
 
-				game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].cell_active = true
-			}
-		}
-		else {
-			for move in MOVEMENTS_2 {
-				if x + move[0] < 0 || y + move[1] < 0 do continue
-				if x + move[0] >= ARENA_WIDTH || y + move[1] >= ARENA_HEIGHT do continue
-				if game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].entity != nil do continue
+	    for move in array {
+			move_x := int(move[0])
+			move_y := int(move[1])
 
-				game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].cell_active = true
-			}
+			if x + move_x < 0 || y + move_y < 0 do continue
+			if x + move_x >= ARENA_WIDTH || y + move_y >= ARENA_HEIGHT do continue
+			if game_state.arena[(y + move_y) * ARENA_WIDTH + x + move_x].entity != nil do continue
+
+			game_state.arena[(y + move_y) * ARENA_WIDTH + x + move_x].cell_active = true
 		}
 	}
 	else if game_state.want_to_attack {
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
-		for move in MOVEMENTS_1 {
-			if x + move[0] < 0 || y + move[1] < 0 do continue
-			if x + move[0] >= ARENA_WIDTH || y + move[1] >= ARENA_HEIGHT do continue
+		attack_size := game_state.order[game_state.order_index].class_stats.attack_size
+		for move in -attack_size..=attack_size {
+			if x + move < 0 || y  < 0 do continue
+			if x + move == x do continue
+			if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
 
-			game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].cell_active = true
+			game_state.arena[y * ARENA_WIDTH + x + move].cell_active = true
+		}
+		for move in -attack_size..=attack_size {
+			if x < 0 || y + move < 0 do continue
+			if y + move == y do continue
+			if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
+
+			game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
 		}
 	}
 
@@ -807,13 +831,14 @@ draw :: proc() {
 		index += 1
 	}
 
-	if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "End Turn") {
-		end_turn()
-	}
-
 	if game_state.order[game_state.order_index].kind == .player {
+
+		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "End Turn") {
+			end_turn()
+		}
+
 		move_text := fmt.ctprint("Move (", game_state.order[game_state.order_index].class_stats.movement_size, ")", sep = "")
-		if rl.GuiButton(rl.Rectangle{0, 1030, 150, 50}, move_text) && game_state.order[game_state.order_index].kind == .player && !game_state.order[game_state.order_index].movement_done {
+		if rl.GuiButton(rl.Rectangle{0, 1000, 150, 50}, move_text) && game_state.order[game_state.order_index].kind == .player && !game_state.order[game_state.order_index].movement_done {
 			end_attack()
 			game_state.want_to_move = true
 
@@ -828,19 +853,25 @@ draw :: proc() {
 			}
 		}
 		attack_text := fmt.ctprint("Attack (", game_state.order[game_state.order_index].entity_stats.damage, ")", sep = "")
-		if rl.GuiButton(rl.Rectangle{160, 1030, 150, 50}, attack_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 {
+		if rl.GuiButton(rl.Rectangle{160, 1000, 150, 50}, attack_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 {
 			end_movement()
 			game_state.want_to_attack = true
 			x := game_state.order[game_state.order_index].cell.x
 			y := game_state.order[game_state.order_index].cell.y
-			for move in MOVEMENTS_1 {
-				if x + move[0] < 0 || y + move[1] < 0 do continue
-				if x + move[0] >= ARENA_WIDTH || y + move[1] >= ARENA_HEIGHT do continue
-				if game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].entity == nil do continue
-				if game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].entity.kind == .player do continue
-				if game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].entity.current_life <= 0 do continue
+			attack_size := game_state.order[game_state.order_index].class_stats.attack_size
+			for move in -attack_size..=attack_size {
+				if x + move < 0 || y  < 0 do continue
+				if x + move == x do continue
+				if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
 
-				game_state.arena[(y + move[1]) * ARENA_WIDTH + x + move[0]].cell_active = true
+				game_state.arena[y * ARENA_WIDTH + x + move].cell_active = true
+			}
+			for move in -attack_size..=attack_size {
+				if x < 0 || y + move < 0 do continue
+				if y + move == y do continue
+				if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
+
+				game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
 			}
 		}
 	}
