@@ -138,6 +138,8 @@ Game_State :: struct {
 	info_entity: ^Entity,
 	want_to_move : bool,
 	want_to_attack : bool,
+	ability_1 : bool,
+	ability_2 : bool,
 	enemies : [dynamic]^Entity,
 	order : [dynamic]^Entity,
 	order_index : int,
@@ -273,13 +275,19 @@ Ability_type :: enum {
 warrior_ability_1 := Class_ability {
 	ability_type = .damage,
 	value = 2,
-	name = "Warrior Ability"
+	value_2 = 3,
+	cost = 2,
+	name = "Warrior Ability",
+	id = "Warrior_Ability"
 }
 
 Class_ability :: struct {
 	ability_type : Ability_type,
 	value : int,
+	value_2 : int,
+	cost : int,
 	name : string,
+	id : string,
 }
 
 class_stats := [6]Class_stats {
@@ -613,6 +621,48 @@ check_attack :: proc() {
 	}
 }
 
+check_abilities :: proc() {
+	if game_state.order[game_state.order_index].kind != .player {
+		return
+	}
+
+	mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
+	x := mouse_pos.x
+	y := mouse_pos.y
+
+	offset_ability := 0
+	for a in game_state.order[game_state.order_index].class_stats.ability {
+		if a != nil {
+			if x >= f32(320 + offset_ability) && x <= f32(320 + offset_ability + 160) && y >= 1000 && y <= 1080 {
+				#partial switch a.ability_type {
+					case .damage :
+					{
+						reset_active_cells()
+						x := game_state.order[game_state.order_index].cell.x
+						y := game_state.order[game_state.order_index].cell.y
+						attack_size := a.value_2
+						for move in -attack_size..=attack_size {
+							if x + move < 0 || y  < 0 do continue
+							if x + move == x do continue
+							if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
+
+							game_state.arena[y * ARENA_WIDTH + x + move].cell_active = true
+						}
+						for move in -attack_size..=attack_size {
+							if x < 0 || y + move < 0 do continue
+							if y + move == y do continue
+							if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
+
+							game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
+						}
+					}
+				}
+			}
+			offset_ability += 160
+		}
+	}
+}
+
 reset_active_cells :: proc() {
 	for y in 0..<ARENA_HEIGHT {
 		for x in 0..<ARENA_WIDTH {
@@ -630,6 +680,23 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 	}
 	attacking_entity.current_endurance -= 2
 	end_attack()
+}
+
+ability :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity, index : int) {
+	#partial switch attacking_entity.class_stats.ability[index].ability_type {
+		case .damage:
+		{
+			damaged_entity.current_life -= attacking_entity.class_stats.ability[index].value
+			if damaged_entity.current_life <= 0 {
+				if damaged_entity.kind == .enemy {
+					damaged_entity.sprite = bee_dead_sprite
+				}
+			}
+			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+		}
+	}
+	game_state.ability_1 = false
+	reset_active_cells()
 }
 
 update :: proc() {
@@ -717,10 +784,37 @@ update :: proc() {
 			game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
 		}
 	}
+	else if game_state.ability_1 && game_state.order[game_state.order_index].class_stats.ability[0] != nil {
+		#partial switch (game_state.order[game_state.order_index].class_stats.ability[0].ability_type) {
+			case .damage :
+			{
+				reset_active_cells()
+				x := game_state.order[game_state.order_index].cell.x
+				y := game_state.order[game_state.order_index].cell.y
+				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].value_2
+				for move in -attack_size..=attack_size {
+					if x + move < 0 || y  < 0 do continue
+					if x + move == x do continue
+					if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
+
+					game_state.arena[y * ARENA_WIDTH + x + move].cell_active = true
+				}
+				for move in -attack_size..=attack_size {
+					if x < 0 || y + move < 0 do continue
+					if y + move == y do continue
+					if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
+
+					game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
+				}
+			}
+		}
+	}
 
 	check_move()
 
 	check_attack()
+
+	check_abilities()
 
 	if rl.IsMouseButtonPressed(.LEFT) && game_state.order[game_state.order_index].kind == .player && (game_state.want_to_move || game_state.want_to_attack) {
 		mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
@@ -740,7 +834,10 @@ update :: proc() {
 				game_state.order[game_state.order_index].movement_done = true 
 				end_movement()
 			}
-			else if game_state.arena[y * ARENA_WIDTH + x].entity != nil {
+			else if game_state.want_to_attack && game_state.arena[y * ARENA_WIDTH + x].entity != nil {
+				attack(game_state.arena[y * ARENA_WIDTH + x].entity, game_state.order[game_state.order_index])
+			}
+			else if game_state.ability_1 && game_state.arena[y * ARENA_WIDTH + x].entity != nil {
 				attack(game_state.arena[y * ARENA_WIDTH + x].entity, game_state.order[game_state.order_index])
 			}
 		}
@@ -839,6 +936,7 @@ draw :: proc() {
 		for a in game_state.order[game_state.order_index].class_stats.ability {
 			if a != nil {
 				if rl.GuiButton(rl.Rectangle{f32(320 + offset_ability), 1000, 150, 50}, fmt.ctprint(a.name)) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 {
+					game_state.ability_1 = true
 				}
 				offset_ability += 160
 			}
