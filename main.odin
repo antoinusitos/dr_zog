@@ -36,12 +36,7 @@ main :: proc() {
 	player_sprite = rl.LoadTexture("Player.png")
 	old_player_sprite = rl.LoadTexture("Old_Player.png")
 
-	game_state.game_step = .cloning
-
-	append(&game_state.possible_class, Class.tank)
-	append(&game_state.possible_class, Class.tech)
-	append(&game_state.possible_class, Class.warrior)
-	append(&game_state.possible_class, Class.healer)
+	init_main_menu()
 
     time_step : f32 = 1.0 / 60
     sub_steps : i32 = 4
@@ -103,6 +98,8 @@ Game_State :: struct {
 	all_clone_created : bool,
 	all_clone_created_ready : bool,
 	possible_class : [dynamic]Class,
+	game_finished : bool,
+	gold : int,
 }
 
 Game_Step :: enum {
@@ -279,17 +276,18 @@ Mutation_stats :: struct {
 	mutation : Mutation,
 	stats : Entity_Stats,
 	good : bool,
+	description : string,
 }
 
 mutation_stats := [8]Mutation_stats {
-	{mutation = .cortex, stats = {psyche = 1, technology = 1}, good = true},
-	{mutation = .reflex, stats = {agility = 1}, good = true},
-	{mutation = .lucky, stats = {chance = 1}, good = true},
-	{mutation = .dna, stats = {max_life = 1}, good = true},
-	{mutation = .shaking, stats = {agility = -1}},
-	{mutation = .microwave, stats = {psyche = -1}},
-	{mutation = .bad_luck, stats = {chance = -1}},
-	{mutation = .bad_body, stats = {max_life = -1}},
+	{mutation = .cortex, stats = {psyche = 1, technology = 1}, good = true, description = "Big Brain (+1 psyche, +1 tech)"},
+	{mutation = .reflex, stats = {agility = 1}, good = true, description = "Strong Reflex (+1 agility)"},
+	{mutation = .lucky, stats = {chance = 1}, good = true, description = "Strong Luck (+1 chance)"},
+	{mutation = .dna, stats = {max_life = 1}, good = true, description = "Strong DNA (+1 HP)"},
+	{mutation = .shaking, stats = {agility = -1}, description = "Bad Shake (-1 agility)"},
+	{mutation = .microwave, stats = {psyche = -1}, description = "Radiated (-1 psyche)"},
+	{mutation = .bad_luck, stats = {chance = -1}, description = "Bad Luck (-1 chance)"},
+	{mutation = .bad_body, stats = {max_life = -1}, description = "Bad Body (-1 HP)"},
 }
 
 Cell :: struct {
@@ -512,6 +510,15 @@ end_turn :: proc() {
 	game_state.order[game_state.order_index].current_endurance += END_BY_TURN
 }
 
+init_main_menu :: proc() {
+	game_state.game_step = .cloning
+
+	append(&game_state.possible_class, Class.tank)
+	append(&game_state.possible_class, Class.tech)
+	append(&game_state.possible_class, Class.warrior)
+	append(&game_state.possible_class, Class.healer)
+}
+
 end_movement :: proc() {
 	game_state.want_to_move = false
 	for y in 0..<ARENA_HEIGHT {
@@ -669,7 +676,23 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 		}
 	}
 	attacking_entity.current_endurance -= 2
+	check_all_dead()
 	end_attack()
+}
+
+check_all_dead :: proc() {
+	all_dead := true
+	for e in game_state.enemies {
+		if e != nil && e.current_life >= 0 {
+			all_dead = false
+			break
+		}
+	}
+
+	if all_dead {
+		game_state.game_finished = true
+		// return to main menu
+	}
 }
 
 ability :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity, index : int) {
@@ -709,6 +732,10 @@ update_battle :: proc() {
 
 		// call the update function
 		entity.update(&entity)
+	}
+
+	if game_state.game_finished {
+		return
 	}
 
 	if game_state.order[game_state.order_index].kind != .player {
@@ -860,6 +887,8 @@ draw :: proc() {
 }
 
 draw_main_menu :: proc() {
+	rl.DrawText(fmt.ctprint("Gold : ", game_state.gold, sep = ""), WINDOW_WIDTH - 100, 10, 20, rl.WHITE)
+
 	if game_state.all_clone_created_ready {
 		if len(game_state.possible_class) == 0 {
 			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Start Battle") {
@@ -904,9 +933,15 @@ draw_main_menu :: proc() {
 				game_state.order_index = 0
 			}
 		}
+		/*if rl.GuiButton(rl.Rectangle{0, 350, 150, 50}, "Recycle Clone") {
+			game_state.clones[game_state.order_index].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+		    game_state.clones[game_state.order_index].name = names[rl.GetRandomValue(0, len(names) - 1)]
+		    game_state.clones[game_state.order_index].mutation = Mutation(int(rl.GetRandomValue(0, len(Mutation) - 1)))
+		    init_entity(game_state.clones[game_state.order_index])
+		}*/
 
 		if game_state.clones[game_state.order_index].class != .none {
-			if rl.GuiButton(rl.Rectangle{0, 350, 150, 50}, "Remove Class") {
+			if rl.GuiButton(rl.Rectangle{160, 250, 150, 50}, "Remove Class") {
 				append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
 				remove_class(game_state.clones[game_state.order_index])
 			}
@@ -941,10 +976,19 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("END:", game_state.clones[game_state.order_index].current_endurance), 0, 140, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("AGI:", game_state.clones[game_state.order_index].entity_stats.agility), 0, 160, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].name), 0, 180, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
+		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_stats.description), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
 		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
 
 		rl.DrawTextureEx(game_state.clones[game_state.order_index].sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
+
+		rl.DrawText(fmt.ctprint("Chance - Slightly affects all actions"), 0, WINDOW_HEIGHT - 20, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Agility - Dodge chance and damage at long range"), 0, WINDOW_HEIGHT - 40, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Technology - Mastery of gadgets and objects"), 0, WINDOW_HEIGHT - 60, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Speed - Initiative"), 0, WINDOW_HEIGHT - 80, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Psyche - Mental/psychic power"), 0, WINDOW_HEIGHT - 100, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Damage - Physical attack power "), 0, WINDOW_HEIGHT - 120, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Fatigue - Number of actions per turn "), 0, WINDOW_HEIGHT - 140, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Heal Point - Total life "), 0, WINDOW_HEIGHT - 160, 20, rl.WHITE)
 	}
 	else {
 		rl.DrawText(fmt.ctprint("Dr. Zog - A Revenche Story"), WINDOW_WIDTH / 2 - 500, 20, 75, rl.WHITE)
@@ -1078,17 +1122,17 @@ draw_battle :: proc() {
 
 	if game_state.order[game_state.order_index].kind == .player {
 
-		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "End Turn") {
+		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "End Turn") && !game_state.game_finished {
 			end_turn()
 		}
 
 		move_text := fmt.ctprint("Move (", game_state.order[game_state.order_index].class_stats.movement_size, ")", sep = "")
-		if rl.GuiButton(rl.Rectangle{0, 1000, 150, 50}, move_text) && game_state.order[game_state.order_index].kind == .player && !game_state.order[game_state.order_index].movement_done {
+		if rl.GuiButton(rl.Rectangle{0, 1000, 150, 50}, move_text) && game_state.order[game_state.order_index].kind == .player && !game_state.order[game_state.order_index].movement_done && !game_state.game_finished {
 			end_attack()
 			game_state.want_to_move = true
 		}
 		attack_text := fmt.ctprint("Attack (dmg:", game_state.order[game_state.order_index].entity_stats.damage, " | rng:", game_state.order[game_state.order_index].class_stats.attack_size, ")", sep = "")
-		if rl.GuiButton(rl.Rectangle{160, 1000, 150, 50}, attack_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 {
+		if rl.GuiButton(rl.Rectangle{160, 1000, 150, 50}, attack_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 && !game_state.game_finished {
 			end_movement()
 			game_state.want_to_attack = true
 		}
@@ -1104,5 +1148,26 @@ draw_battle :: proc() {
 		}
 	}
 
-	
+	if game_state.game_finished {
+		rl.DrawRectangleRec(rl.Rectangle{(WINDOW_WIDTH - 1000) / 2, (WINDOW_HEIGHT - 1000) / 2, 1000, 1000}, rl.GRAY)
+		rl.DrawText(fmt.ctprint("YOU WIN !"), WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT / 2 - 150, 50, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Rewards : "), WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT / 2 - 100, 40, rl.WHITE)
+		rl.DrawText(fmt.ctprint("10 interstellar coins "), WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT / 2 - 50, 25, rl.WHITE)
+		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 25, WINDOW_HEIGHT / 2 + 100, 150, 50}, "End Combat") {
+			game_state.game_step = .cloning
+			for &c in game_state.clones {
+				entity_destroy(c)
+				c = nil
+			}
+			for &e in game_state.enemies {
+				entity_destroy(e)
+			}
+			clear(&game_state.enemies)
+			game_state.order_index = 0
+			game_state.all_clone_created = false
+			game_state.all_clone_created_ready = false
+			game_state.gold += 10
+			init_main_menu()
+		}
+	}
 }
