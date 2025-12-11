@@ -101,6 +101,7 @@ Game_State :: struct {
 	ai_turn_time : f32,
 	game_step : Game_Step,
 	all_clone_created : bool,
+	all_clone_created_ready : bool,
 	possible_class : [dynamic]Class,
 }
 
@@ -859,40 +860,42 @@ draw :: proc() {
 }
 
 draw_main_menu :: proc() {
-	if game_state.all_clone_created {
-		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "Start Battle") {
-			place_entity(game_state.clones[0], 0, 0)
-		    place_entity(game_state.clones[1], 1, 0)
-		    place_entity(game_state.clones[2], 2, 0)
-		    place_entity(game_state.clones[3], 3, 0)
+	if game_state.all_clone_created_ready {
+		if len(game_state.possible_class) == 0 {
+			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "Start Battle") {
+				place_entity(game_state.clones[0], 0, 0)
+			    place_entity(game_state.clones[1], 1, 0)
+			    place_entity(game_state.clones[2], 2, 0)
+			    place_entity(game_state.clones[3], 3, 0)
 
-		    enemy := entity_create(.enemy)
-		    enemy.entity_stats = fly_stats
-		    enemy.name = "ass"
-		    init_entity(enemy)
-		    append(&game_state.enemies, enemy)
-		    place_entity(enemy, 9, 9)
-			enemy = entity_create(.enemy)
-		    enemy.entity_stats = fly_stats
-		    enemy.name = "mother fucker"
-		    init_entity(enemy)
-		    append(&game_state.enemies, enemy)
-		    place_entity(enemy, 8, 9)
-		    enemy = entity_create(.enemy)
-		    enemy.entity_stats = fly_stats
-		    enemy.name = "dummy"
-		    init_entity(enemy)
-		    place_entity(enemy, 7, 9)
-		    append(&game_state.enemies, enemy)
+			    enemy := entity_create(.enemy)
+			    enemy.entity_stats = fly_stats
+			    enemy.name = "ass"
+			    init_entity(enemy)
+			    append(&game_state.enemies, enemy)
+			    place_entity(enemy, 9, 9)
+				enemy = entity_create(.enemy)
+			    enemy.entity_stats = fly_stats
+			    enemy.name = "mother fucker"
+			    init_entity(enemy)
+			    append(&game_state.enemies, enemy)
+			    place_entity(enemy, 8, 9)
+			    enemy = entity_create(.enemy)
+			    enemy.entity_stats = fly_stats
+			    enemy.name = "dummy"
+			    init_entity(enemy)
+			    place_entity(enemy, 7, 9)
+			    append(&game_state.enemies, enemy)
 
-		    for &e in game_state.entities {
-		    	if !e.allocated do continue
-		    	append(&game_state.order, &e)
-		    }
+			    for &e in game_state.entities {
+			    	if !e.allocated do continue
+			    	append(&game_state.order, &e)
+			    }
 
-		    game_state.order_index = 0
-			slice.sort_by(game_state.order[:], entity_order)
-			game_state.game_step = .battle
+			    game_state.order_index = 0
+				slice.sort_by(game_state.order[:], entity_order)
+				game_state.game_step = .battle
+			}
 		}
 
 		if rl.GuiButton(rl.Rectangle{0, 250, 150, 50}, "Next Clone") {
@@ -909,10 +912,12 @@ draw_main_menu :: proc() {
 			}
 		}
 
+		rl.DrawText(fmt.ctprint("Assign a class to each clone"), WINDOW_WIDTH / 2 - 150, 20, 20, rl.WHITE)
+
 		offset_class_x := 0
 		index := 0
 		for c in game_state.possible_class {
-			if rl.GuiButton(rl.Rectangle{f32(300 + offset_class_x), 0, 150, 50}, fmt.ctprint(c)) {
+			if rl.GuiButton(rl.Rectangle{f32(300 + offset_class_x), 50, 150, 50}, fmt.ctprint(c)) {
 				if game_state.clones[game_state.order_index].class != .none {
 					append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
 					remove_class(game_state.clones[game_state.order_index])
@@ -942,39 +947,57 @@ draw_main_menu :: proc() {
 		rl.DrawTextureEx(game_state.clones[game_state.order_index].sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
 	}
 	else {
-		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 75, WINDOW_HEIGHT / 2, 150, 50}, "Generate Clone") {
-			index := 0
-			for &c in game_state.clones {
-				if c == nil {
-					c = entity_create(.player)
-				    c.entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
-				    if index == 0 {
-				    	c.color = rl.BLUE
-				    }
-				    else if index == 1 {
-				    	c.color = rl.RED
-				    }
-				    else if index == 2 {
-				    	c.color = rl.GREEN
-				    }
-				    else if index == 3 {
-				    	c.color = rl.YELLOW
-				    }
-				    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
-				    init_entity(c)
-				    break
+		if game_state.all_clone_created && !game_state.all_clone_created_ready {
+			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 75, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Start") {
+				game_state.all_clone_created_ready = true
+			}
+		}
+		else {
+
+			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 75, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Generate Clone") {
+				index := 0
+				for &c in game_state.clones {
+					if c == nil {
+						c = entity_create(.player)
+					    c.entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+					    if index == 0 {
+					    	c.color = rl.BLUE
+					    }
+					    else if index == 1 {
+					    	c.color = rl.RED
+					    }
+					    else if index == 2 {
+					    	c.color = rl.GREEN
+					    }
+					    else if index == 3 {
+					    	c.color = rl.YELLOW
+					    }
+					    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
+					    init_entity(c)
+					    break
+					}
+					index += 1
 				}
-				index += 1
+
+				for &c in game_state.clones {
+					if c == nil {
+						return
+					}
+				}
+
+				game_state.all_clone_created = true
+				game_state.all_clone_created_ready = false
+				game_state.order_index = 0
+			}
+		}
+		offset_clone_x := 0
+		for &c in game_state.clones {
+			if c == nil {
+				return
 			}
 
-			for &c in game_state.clones {
-				if c == nil {
-					return
-				}
-			}
-
-			game_state.all_clone_created = true
-			game_state.order_index = 0
+			rl.DrawTextureEx(c.sprite, {f32(WINDOW_WIDTH / 4 * offset_clone_x), f32(WINDOW_HEIGHT / 2)}, 0, 5, c.color)
+			offset_clone_x += 1
 		}
 	}
 }
