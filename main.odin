@@ -36,57 +36,12 @@ main :: proc() {
 	player_sprite = rl.LoadTexture("Player.png")
 	old_player_sprite = rl.LoadTexture("Old_Player.png")
 
-    game_state.clones[0] = entity_create(.player)
-    game_state.clones[0].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
-    game_state.clones[0].color = rl.BLUE
-    game_state.clones[0].name = names[rl.GetRandomValue(0, len(names) - 1)]
-    game_state.clones[1] = entity_create(.player)
-    game_state.clones[1].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
-    game_state.clones[1].color = rl.RED
-    game_state.clones[1].name = names[rl.GetRandomValue(0, len(names) - 1)]
-    game_state.clones[2] = entity_create(.player)
-    game_state.clones[2].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
-    game_state.clones[2].color = rl.GREEN
-    game_state.clones[2].name = names[rl.GetRandomValue(0, len(names) - 1)]
-    game_state.clones[3] = entity_create(.player)
-    game_state.clones[3].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
-    game_state.clones[3].color = rl.YELLOW
-    game_state.clones[3].name = names[rl.GetRandomValue(0, len(names) - 1)]
-    init_entity(game_state.clones[0])
-    init_entity(game_state.clones[1])
-    init_entity(game_state.clones[2])
-    init_entity(game_state.clones[3])
+	game_state.game_step = .cloning
 
-    place_entity(game_state.clones[0], 0, 0)
-    place_entity(game_state.clones[1], 1, 0)
-    place_entity(game_state.clones[2], 2, 0)
-    place_entity(game_state.clones[3], 3, 0)
-
-    enemy := entity_create(.enemy)
-    enemy.entity_stats = fly_stats
-    enemy.name = "ass"
-    init_entity(enemy)
-    append(&game_state.enemies, enemy)
-    place_entity(enemy, 9, 9)
-	enemy = entity_create(.enemy)
-    enemy.entity_stats = fly_stats
-    enemy.name = "mother fucker"
-    init_entity(enemy)
-    append(&game_state.enemies, enemy)
-    place_entity(enemy, 8, 9)
-    enemy = entity_create(.enemy)
-    enemy.entity_stats = fly_stats
-    enemy.name = "dummy"
-    init_entity(enemy)
-    place_entity(enemy, 7, 9)
-    append(&game_state.enemies, enemy)
-
-    for &e in game_state.entities {
-    	if !e.allocated do continue
-    	append(&game_state.order, &e)
-    }
-
-	slice.sort_by(game_state.order[:], entity_order)
+	append(&game_state.possible_class, Class.tank)
+	append(&game_state.possible_class, Class.tech)
+	append(&game_state.possible_class, Class.warrior)
+	append(&game_state.possible_class, Class.healer)
 
     time_step : f32 = 1.0 / 60
     sub_steps : i32 = 4
@@ -144,6 +99,14 @@ Game_State :: struct {
 	order : [dynamic]^Entity,
 	order_index : int,
 	ai_turn_time : f32,
+	game_step : Game_Step,
+	all_clone_created : bool,
+	possible_class : [dynamic]Class,
+}
+
+Game_Step :: enum {
+	cloning,
+	battle,
 }
 
 Entity_Handle :: struct {
@@ -398,7 +361,7 @@ setup_player :: proc(entity: ^Entity) {
 	entity.kind = .player
 	entity.sprite_size = 32
 	entity.color = rl.WHITE
-	entity.class = Class(int(rl.GetRandomValue(1, len(Class) - 1)))
+	//entity.class = Class(int(rl.GetRandomValue(1, len(Class) - 1)))
 	entity.mutation = Mutation(int(rl.GetRandomValue(0, len(Mutation) - 1)))
 
 	entity.update = proc(entity: ^Entity) {
@@ -440,20 +403,6 @@ init_entity :: proc(entity: ^Entity) {
 		}
 	}
 
-	for c in class_stats {
-		if c.class == entity.class {
-			entity.class_stats = c
-			entity.entity_stats.agility += c.stats.agility
-			entity.entity_stats.chance += c.stats.chance
-			entity.entity_stats.damage += c.stats.damage
-			entity.entity_stats.fatigue += c.stats.fatigue
-			entity.entity_stats.max_life += c.stats.max_life
-			entity.entity_stats.psyche += c.stats.psyche
-			entity.entity_stats.speed += c.stats.speed
-			entity.entity_stats.technology += c.stats.technology
-		}
-	}
-
 	for m in mutation_stats {
 		if m.mutation == entity.mutation {
 			entity.mutation_stats = m
@@ -468,6 +417,46 @@ init_entity :: proc(entity: ^Entity) {
 		}
 	}
 
+	resolve_stats(entity)
+}
+
+remove_class :: proc (entity : ^Entity) {
+	for c in class_stats {
+		if c.class == entity.class {
+			entity.class = .none
+			entity.entity_stats.agility -= c.stats.agility
+			entity.entity_stats.chance -= c.stats.chance
+			entity.entity_stats.damage -= c.stats.damage
+			entity.entity_stats.fatigue -= c.stats.fatigue
+			entity.entity_stats.max_life -= c.stats.max_life
+			entity.entity_stats.psyche -= c.stats.psyche
+			entity.entity_stats.speed -= c.stats.speed
+			entity.entity_stats.technology -= c.stats.technology
+		}
+	}
+
+	resolve_stats(entity)
+}
+
+apply_class :: proc (entity : ^Entity) {
+	for c in class_stats {
+		if c.class == entity.class {
+			entity.class_stats = c
+			entity.entity_stats.agility += c.stats.agility
+			entity.entity_stats.chance += c.stats.chance
+			entity.entity_stats.damage += c.stats.damage
+			entity.entity_stats.fatigue += c.stats.fatigue
+			entity.entity_stats.max_life += c.stats.max_life
+			entity.entity_stats.psyche += c.stats.psyche
+			entity.entity_stats.speed += c.stats.speed
+			entity.entity_stats.technology += c.stats.technology
+		}
+	}
+
+	resolve_stats(entity)
+}
+
+resolve_stats  :: proc(entity: ^Entity) {
 	if entity.entity_stats.agility <= 0 {
 		entity.entity_stats.agility = 1
 	}
@@ -700,6 +689,20 @@ ability :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity, index : in
 }
 
 update :: proc() {
+	
+	switch game_state.game_step {
+		case .cloning:
+			update_main_menu()
+		case .battle:
+			update_battle()
+	}
+}
+
+update_main_menu :: proc() {
+
+}
+
+update_battle :: proc() {
 	for &entity in game_state.entities {
 		if !entity.allocated do continue
 
@@ -845,6 +848,138 @@ update :: proc() {
 }
 
 draw :: proc() {
+	switch game_state.game_step {
+		case .cloning:
+			draw_main_menu()
+		case .battle:
+			draw_battle()
+	}
+
+	rl.EndDrawing()	
+}
+
+draw_main_menu :: proc() {
+	if game_state.all_clone_created {
+		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "Start Battle") {
+			place_entity(game_state.clones[0], 0, 0)
+		    place_entity(game_state.clones[1], 1, 0)
+		    place_entity(game_state.clones[2], 2, 0)
+		    place_entity(game_state.clones[3], 3, 0)
+
+		    enemy := entity_create(.enemy)
+		    enemy.entity_stats = fly_stats
+		    enemy.name = "ass"
+		    init_entity(enemy)
+		    append(&game_state.enemies, enemy)
+		    place_entity(enemy, 9, 9)
+			enemy = entity_create(.enemy)
+		    enemy.entity_stats = fly_stats
+		    enemy.name = "mother fucker"
+		    init_entity(enemy)
+		    append(&game_state.enemies, enemy)
+		    place_entity(enemy, 8, 9)
+		    enemy = entity_create(.enemy)
+		    enemy.entity_stats = fly_stats
+		    enemy.name = "dummy"
+		    init_entity(enemy)
+		    place_entity(enemy, 7, 9)
+		    append(&game_state.enemies, enemy)
+
+		    for &e in game_state.entities {
+		    	if !e.allocated do continue
+		    	append(&game_state.order, &e)
+		    }
+
+		    game_state.order_index = 0
+			slice.sort_by(game_state.order[:], entity_order)
+			game_state.game_step = .battle
+		}
+
+		if rl.GuiButton(rl.Rectangle{0, 250, 150, 50}, "Next Clone") {
+			game_state.order_index += 1
+			if game_state.order_index >= 4 {
+				game_state.order_index = 0
+			}
+		}
+
+		if game_state.clones[game_state.order_index].class != .none {
+			if rl.GuiButton(rl.Rectangle{0, 350, 150, 50}, "Remove Class") {
+				append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
+				remove_class(game_state.clones[game_state.order_index])
+			}
+		}
+
+		offset_class_x := 0
+		index := 0
+		for c in game_state.possible_class {
+			if rl.GuiButton(rl.Rectangle{f32(300 + offset_class_x), 0, 150, 50}, fmt.ctprint(c)) {
+				if game_state.clones[game_state.order_index].class != .none {
+					append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
+					remove_class(game_state.clones[game_state.order_index])
+				}
+				game_state.clones[game_state.order_index].class = c
+				apply_class(game_state.clones[game_state.order_index])
+				ordered_remove(&game_state.possible_class, index)
+
+			}
+			index += 1
+			offset_class_x += 160
+		}
+
+		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].entity_stats.entity_age), 0, 0, 20, game_state.clones[game_state.order_index].color)
+		rl.DrawText(fmt.ctprint("HP:", game_state.clones[game_state.order_index].current_life), 0, 20, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("DMG:", game_state.clones[game_state.order_index].entity_stats.damage), 0, 40, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("SPEED:", game_state.clones[game_state.order_index].entity_stats.speed), 0, 60, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("PSY:", game_state.clones[game_state.order_index].entity_stats.psyche), 0, 80, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("TECH:", game_state.clones[game_state.order_index].entity_stats.technology), 0, 100, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("CHANCE:", game_state.clones[game_state.order_index].entity_stats.chance), 0, 120, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("END:", game_state.clones[game_state.order_index].current_endurance), 0, 140, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("AGI:", game_state.clones[game_state.order_index].entity_stats.agility), 0, 160, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].name), 0, 180, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
+		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
+
+		rl.DrawTextureEx(game_state.clones[game_state.order_index].sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
+	}
+	else {
+		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 75, WINDOW_HEIGHT / 2, 150, 50}, "Generate Clone") {
+			index := 0
+			for &c in game_state.clones {
+				if c == nil {
+					c = entity_create(.player)
+				    c.entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+				    if index == 0 {
+				    	c.color = rl.BLUE
+				    }
+				    else if index == 1 {
+				    	c.color = rl.RED
+				    }
+				    else if index == 2 {
+				    	c.color = rl.GREEN
+				    }
+				    else if index == 3 {
+				    	c.color = rl.YELLOW
+				    }
+				    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
+				    init_entity(c)
+				    break
+				}
+				index += 1
+			}
+
+			for &c in game_state.clones {
+				if c == nil {
+					return
+				}
+			}
+
+			game_state.all_clone_created = true
+			game_state.order_index = 0
+		}
+	}
+}
+
+draw_battle :: proc() {
 	rl.BeginMode2D(camera)
 
 	for y in 0..<ARENA_HEIGHT{
@@ -943,5 +1078,5 @@ draw :: proc() {
 		}
 	}
 
-	rl.EndDrawing()	
+	
 }
