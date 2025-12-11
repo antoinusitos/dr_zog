@@ -887,9 +887,9 @@ draw :: proc() {
 }
 
 draw_main_menu :: proc() {
-	rl.DrawText(fmt.ctprint("Gold : ", game_state.gold, sep = ""), WINDOW_WIDTH - 100, 10, 20, rl.WHITE)
-
 	if game_state.all_clone_created_ready {
+		rl.DrawText(fmt.ctprint("Gold : ", game_state.gold, sep = ""), WINDOW_WIDTH - 100, 10, 20, rl.WHITE)
+
 		if len(game_state.possible_class) == 0 {
 			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Start Battle") {
 				place_entity(game_state.clones[0], 0, 0)
@@ -991,7 +991,7 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("Heal Point - Total life "), 0, WINDOW_HEIGHT - 160, 20, rl.WHITE)
 	}
 	else {
-		rl.DrawText(fmt.ctprint("Dr. Zog - A Revenche Story"), WINDOW_WIDTH / 2 - 500, 20, 75, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Dr. Zog - A Revenge Story"), WINDOW_WIDTH / 2 - 500, 20, 75, rl.WHITE)
 
 		if game_state.all_clone_created && !game_state.all_clone_created_ready {
 			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 75, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Start") {
