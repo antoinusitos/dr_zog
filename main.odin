@@ -862,7 +862,7 @@ draw :: proc() {
 draw_main_menu :: proc() {
 	if game_state.all_clone_created_ready {
 		if len(game_state.possible_class) == 0 {
-			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "Start Battle") {
+			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Start Battle") {
 				place_entity(game_state.clones[0], 0, 0)
 			    place_entity(game_state.clones[1], 1, 0)
 			    place_entity(game_state.clones[2], 2, 0)
@@ -947,6 +947,8 @@ draw_main_menu :: proc() {
 		rl.DrawTextureEx(game_state.clones[game_state.order_index].sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
 	}
 	else {
+		rl.DrawText(fmt.ctprint("Dr. Zog - A Revenche Story"), WINDOW_WIDTH / 2 - 500, 20, 75, rl.WHITE)
+
 		if game_state.all_clone_created && !game_state.all_clone_created_ready {
 			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 75, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Start") {
 				game_state.all_clone_created_ready = true
@@ -996,7 +998,8 @@ draw_main_menu :: proc() {
 				return
 			}
 
-			rl.DrawTextureEx(c.sprite, {f32(WINDOW_WIDTH / 4 * offset_clone_x), f32(WINDOW_HEIGHT / 2)}, 0, 5, c.color)
+			rl.DrawTextureEx(c.sprite, {f32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16)), f32(WINDOW_HEIGHT / 2)}, 0, 5, c.color)
+			rl.DrawText(fmt.ctprint(c.name), i32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16) + 32), WINDOW_HEIGHT / 2 + 175, 30, rl.WHITE)
 			offset_clone_x += 1
 		}
 	}
