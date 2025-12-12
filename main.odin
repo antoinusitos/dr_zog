@@ -27,6 +27,8 @@ main :: proc() {
 		}
 	}
 
+	init_main_menu_ui()
+
 	floor_sprite = rl.LoadTexture("Floor.png")
 	bee_sprite = rl.LoadTexture("Bee.png")
 	bee_dead_sprite = rl.LoadTexture("Bee_Dead.png")
@@ -100,6 +102,9 @@ Game_State :: struct {
 	possible_class : [dynamic]Class,
 	game_finished : bool,
 	gold : int,
+
+	cloning_button : Button,
+	ready_button : Button,
 }
 
 Game_Step :: enum {
@@ -297,6 +302,41 @@ Cell :: struct {
 	entity : ^Entity,
 }
 
+Button_Type :: enum {
+	once,
+	filling,
+}
+
+Button :: struct {
+	x : f32,
+	y : f32,
+	width : f32,
+	height : f32,
+	background_color : rl.Color,
+	hover_color : rl.Color,
+	clicked_color : rl.Color,
+	fill_color : rl.Color,
+	button_type : Button_Type,
+	is_hover : bool,
+	is_clicked : bool,
+
+	filled_done : bool,
+	fill_percent : f32,
+	fill_max : f32,
+	fill_auto_reset : bool,
+
+	text : string,
+	text_size : i32,
+	text_offset : rl.Vector2,
+
+	update : proc(^Button),
+	draw : proc(^Button),
+	on_click : proc(^Button),
+	on_down : proc(^Button),
+	on_release : proc(^Button),
+	on_filled : proc(^Button),
+}
+
 camera : rl.Camera2D
 
 player : ^Entity
@@ -382,6 +422,113 @@ setup_enemy :: proc(entity: ^Entity) {
 	}
 	entity.draw = proc(entity: ^Entity) {
 		default_draw_based_on_entity_data(entity)
+	}
+}
+
+setup_one_button :: proc(button : ^Button) {
+	button.button_type = .once
+	button.update = proc(button : ^Button) {
+		mouse_pos := rl.GetMousePosition()
+
+		if mouse_pos.x >= button.x && mouse_pos.x <= button.x + button.width &&
+			mouse_pos.y >= button.y && mouse_pos.y <= button.y + button.height {
+				button.is_hover = true
+				
+				if rl.IsMouseButtonPressed(.LEFT) {
+					button.is_clicked = true
+					button.on_click(button)
+				}
+				else if rl.IsMouseButtonReleased(.LEFT) {
+					button.is_clicked = false
+					button.on_release(button)
+				}
+		}
+		else {
+			button.is_hover = false
+		}
+	}
+	button.draw = proc(button : ^Button) {
+		if button.is_clicked {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.clicked_color)
+		}
+		else {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
+		}
+		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.width / 4), i32(button.y + button.height / 4), button.text_size, rl.BLACK)
+	}
+
+	button.on_click = proc(button : ^Button) {
+
+	}
+	button.on_down = proc(button : ^Button) {
+		
+	}
+	button.on_release = proc(button : ^Button) {
+		
+	}
+	button.on_filled = proc(button : ^Button) {
+		
+	}
+}
+
+setup_filling_button :: proc(button : ^Button) {
+	button.button_type = .filling
+	button.update = proc(button : ^Button) {
+		mouse_pos := rl.GetMousePosition()
+
+		if mouse_pos.x >= button.x && mouse_pos.x <= button.x + button.width &&
+			mouse_pos.y >= button.y && mouse_pos.y <= button.y + button.height {
+				button.is_hover = true
+				
+				if rl.IsMouseButtonDown(.LEFT) {
+					button.is_clicked = true
+					button.fill_percent += rl.GetFrameTime()
+					if button.fill_percent >= button.fill_max {
+						button.fill_percent = button.fill_max
+						if !button.fill_auto_reset {
+							if !button.filled_done {
+								button.filled_done = true
+								button.on_filled(button)
+							}
+						}
+						else {
+							button.fill_percent = 0
+							button.on_filled(button)
+						}
+					}
+				}
+				else if rl.IsMouseButtonReleased(.LEFT) {
+					button.is_clicked = false
+					button.fill_percent = 0
+					button.filled_done = false
+				}
+		}
+		else {
+			button.is_hover = false
+		}
+	}
+	button.draw = proc(button : ^Button) {
+		if button.is_clicked {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.background_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, f32(button.width * (button.fill_percent / button.fill_max)) , button.height}, button.fill_color)
+		}
+		else {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
+		}
+		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+	}
+
+	button.on_click = proc(button : ^Button) {
+
+	}
+	button.on_down = proc(button : ^Button) {
+		
+	}
+	button.on_release = proc(button : ^Button) {
+		
+	}
+	button.on_filled = proc(button : ^Button) {
+		
 	}
 }
 
@@ -723,7 +870,14 @@ update :: proc() {
 }
 
 update_main_menu :: proc() {
-
+	if !game_state.all_clone_created_ready {
+		if game_state.all_clone_created && !game_state.all_clone_created_ready {
+			game_state.ready_button.update(&game_state.ready_button)
+		}
+		else {
+			game_state.cloning_button.update(&game_state.cloning_button)
+		}
+	}
 }
 
 update_battle :: proc() {
@@ -875,6 +1029,80 @@ update_battle :: proc() {
 	}
 }
 
+init_main_menu_ui :: proc() {
+	game_state.cloning_button = Button{
+		x = WINDOW_WIDTH / 2 - 75,
+		y = WINDOW_HEIGHT / 2 - 200,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		fill_color = rl.GREEN,
+		text = "Generate\n Clone",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {30, 5},
+		fill_auto_reset = true
+	}
+	setup_filling_button(&game_state.cloning_button)
+	game_state.cloning_button.on_filled = proc(button : ^Button) {
+		index := 0
+		for &c in game_state.clones {
+			if c == nil {
+				c = entity_create(.player)
+			    c.entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+			    if index == 0 {
+			    	c.color = rl.BLUE
+			    }
+			    else if index == 1 {
+			    	c.color = rl.RED
+			    }
+			    else if index == 2 {
+			    	c.color = rl.GREEN
+			    }
+			    else if index == 3 {
+			    	c.color = rl.YELLOW
+			    }
+			    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
+			    init_entity(c)
+			    break
+			}
+			index += 1
+		}
+
+		for &c in game_state.clones {
+			if c == nil {
+				return
+			}
+		}
+
+		game_state.all_clone_created = true
+		game_state.all_clone_created_ready = false
+		game_state.order_index = 0
+	}
+
+	game_state.ready_button = Button{
+		x = WINDOW_WIDTH / 2 - 75,
+		y = WINDOW_HEIGHT / 2 - 200,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {30, 5}
+	}
+	setup_one_button(&game_state.ready_button)
+	game_state.ready_button.on_click = proc(button : ^Button) {
+		game_state.all_clone_created_ready = true
+	}
+}
+
 draw :: proc() {
 	switch game_state.game_step {
 		case .cloning:
@@ -994,47 +1222,10 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("Dr. Zog - A Revenge Story"), WINDOW_WIDTH / 2 - 500, 20, 75, rl.WHITE)
 
 		if game_state.all_clone_created && !game_state.all_clone_created_ready {
-			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 75, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Start") {
-				game_state.all_clone_created_ready = true
-			}
+			game_state.ready_button.draw(&game_state.ready_button)
 		}
 		else {
-
-			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 75, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Generate Clone") {
-				index := 0
-				for &c in game_state.clones {
-					if c == nil {
-						c = entity_create(.player)
-					    c.entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
-					    if index == 0 {
-					    	c.color = rl.BLUE
-					    }
-					    else if index == 1 {
-					    	c.color = rl.RED
-					    }
-					    else if index == 2 {
-					    	c.color = rl.GREEN
-					    }
-					    else if index == 3 {
-					    	c.color = rl.YELLOW
-					    }
-					    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
-					    init_entity(c)
-					    break
-					}
-					index += 1
-				}
-
-				for &c in game_state.clones {
-					if c == nil {
-						return
-					}
-				}
-
-				game_state.all_clone_created = true
-				game_state.all_clone_created_ready = false
-				game_state.order_index = 0
-			}
+			game_state.cloning_button.draw(&game_state.cloning_button)
 		}
 		offset_clone_x := 0
 		for &c in game_state.clones {
