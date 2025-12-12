@@ -9,6 +9,8 @@ import rl "vendor:raylib"
 import "core:strings"
 import "core:strconv"
 
+quick_test := true
+
 main :: proc() {
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Dr_Zog")
 	//rl.ToggleBorderlessWindowed()
@@ -34,6 +36,72 @@ main :: proc() {
 	old_player_sprite = rl.LoadTexture("Old_Player.png")
 
 	init_main_menu()
+
+	if quick_test {
+		for i in 0..<4 {
+			index := 0
+			for &c in game_state.clones {
+				if c == nil {
+					c = entity_create(.player)
+				    c.entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+				    if index == 0 {
+				    	c.color = rl.BLUE
+				    }
+				    else if index == 1 {
+				    	c.color = rl.RED
+				    }
+				    else if index == 2 {
+				    	c.color = rl.GREEN
+				    }
+				    else if index == 3 {
+				    	c.color = rl.YELLOW
+				    }
+				    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
+				    init_entity(c)
+
+				    game_state.clones[game_state.order_index].class = game_state.possible_class[i]
+					apply_class(game_state.clones[game_state.order_index])
+				}
+				index += 1
+			}
+		}
+		game_state.all_clone_created = true
+		game_state.all_clone_created_ready = true
+		game_state.order_index = 0
+
+		place_entity(game_state.clones[0], 0, 0)
+	    place_entity(game_state.clones[1], 1, 0)
+	    place_entity(game_state.clones[2], 2, 0)
+	    place_entity(game_state.clones[3], 3, 0)
+
+	    enemy := entity_create(.enemy)
+	    enemy.entity_stats = fly_stats
+	    enemy.name = "ass"
+	    init_entity(enemy)
+	    append(&game_state.enemies, enemy)
+	    place_entity(enemy, 9, 9)
+		enemy = entity_create(.enemy)
+	    enemy.entity_stats = fly_stats
+	    enemy.name = "mother fucker"
+	    init_entity(enemy)
+	    append(&game_state.enemies, enemy)
+	    place_entity(enemy, 8, 9)
+	    enemy = entity_create(.enemy)
+	    enemy.entity_stats = fly_stats
+	    enemy.name = "dummy"
+	    init_entity(enemy)
+	    place_entity(enemy, 7, 9)
+	    append(&game_state.enemies, enemy)
+
+	    for &e in game_state.entities {
+	    	if !e.allocated do continue
+	    	append(&game_state.order, &e)
+	    }
+
+	    game_state.order_index = 0
+		slice.sort_by(game_state.order[:], entity_order)
+		game_state.game_step = .battle
+	}
 
     time_step : f32 = 1.0 / 60
     sub_steps : i32 = 4
@@ -100,9 +168,7 @@ entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 	return new_entity
 }
 
-entity_order :: proc(lhs, rhs: ^Entity) -> bool {
-    return lhs.entity_stats.speed > rhs.entity_stats.speed || (lhs.entity_stats.speed == rhs.entity_stats.speed && lhs.kind == .player)
-}
+
 
 entity_destroy :: proc(entity: ^Entity) {
 	entity^ = {} // it's really that simple
@@ -117,7 +183,6 @@ setup_player :: proc(entity: ^Entity) {
 	entity.kind = .player
 	entity.sprite_size = 32
 	entity.color = rl.WHITE
-	//entity.class = Class(int(rl.GetRandomValue(1, len(Class) - 1)))
 	entity.mutation = Mutation(int(rl.GetRandomValue(0, len(Mutation) - 1)))
 
 	entity.update = proc(entity: ^Entity) {
@@ -735,6 +800,7 @@ update_battle :: proc() {
 		if game_state.arena[y * ARENA_WIDTH + x].cell_active == true {
 			reset_active_cells()
 			if game_state.want_to_move {
+				find_path(game_state.order[game_state.order_index].cell.x, game_state.order[game_state.order_index].cell.y, x, y)
 				place_entity(game_state.order[game_state.order_index], x, y)
 				game_state.order[game_state.order_index].movement_done = true 
 				end_movement()
