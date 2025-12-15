@@ -177,6 +177,8 @@ Game_State :: struct {
 	game_finished : bool,
 	gold : int,
 
+	blocked : bool,
+
 	cloning_button : Button,
 	ready_button : Button,
 	next_clone_button : Button,
@@ -225,6 +227,9 @@ Entity :: struct {
 	artefact : Object,
 
 	cell : ^Cell,
+	path : [dynamic]Check_Cell,
+	path_index : int,
+	time_to_point : f32,
 
 	update : proc(^Entity),
 	draw: proc(^Entity),

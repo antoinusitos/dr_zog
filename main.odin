@@ -671,9 +671,29 @@ update_battle :: proc() {
 
 		// call the update function
 		entity.update(&entity)
+
+		if len(entity.path) > 0 {
+			if entity.time_to_point >= 0.25 {
+				place_entity(&entity, entity.path[entity.path_index].cell.x, entity.path[entity.path_index].cell.y)
+				entity.time_to_point = 0
+				entity.path_index -= 1
+				if entity.path_index < 0 {
+					clear(&entity.path)
+					entity.path_index = 0
+					game_state.blocked = false
+				}
+			}
+			else {
+				entity.time_to_point += rl.GetFrameTime()
+			}
+		}
 	}
 
 	if game_state.game_finished {
+		return
+	}
+
+	if game_state.blocked {
 		return
 	}
 
@@ -800,8 +820,11 @@ update_battle :: proc() {
 		if game_state.arena[y * ARENA_WIDTH + x].cell_active == true {
 			reset_active_cells()
 			if game_state.want_to_move {
-				find_path(game_state.order[game_state.order_index].cell.x, game_state.order[game_state.order_index].cell.y, x, y)
-				place_entity(game_state.order[game_state.order_index], x, y)
+				game_state.order[game_state.order_index].path = find_path(game_state.order[game_state.order_index].cell.x, game_state.order[game_state.order_index].cell.y, x, y)
+				game_state.order[game_state.order_index].path_index = len(game_state.order[game_state.order_index].path) - 1
+				game_state.order[game_state.order_index].time_to_point = 0.25
+				game_state.blocked = true
+				//place_entity(game_state.order[game_state.order_index], x, y)
 				game_state.order[game_state.order_index].movement_done = true 
 				end_movement()
 			}
