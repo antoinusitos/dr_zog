@@ -69,7 +69,13 @@ find_path :: proc(from_x : int, from_y : int, to_x : int, to_y : int) -> [dynami
 
 	for {
 
-		if len(to_check) <= 0 && (to_check[0].cell.x == to_x && to_check[0].cell.y == to_y) {
+		if len(to_check) <= 0 || (to_check[0].cell.x == to_x && to_check[0].cell.y == to_y) {
+			if len(to_check) > 0 && to_check[0].cell.x == to_x && to_check[0].cell.y == to_y {
+				log_error("found0")
+			}
+			else {
+				log_error("found1")
+			}
 			break
 		}
 
@@ -89,6 +95,10 @@ find_path :: proc(from_x : int, from_y : int, to_x : int, to_y : int) -> [dynami
 				cell = c
 			}
 		}
+	}
+
+	for t in to_return {
+		log_error("node x", t.cell.x, " : ", t.cell.y)
 	}
 
 	return to_return
@@ -129,7 +139,10 @@ checked_has :: proc(cell : Cell) -> ^Check_Cell {
 test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	append(&checked, cell_to_check^)
 
+	log_error("test_cell x", cell_to_check.cell.x, " : ", cell_to_check.cell.y)
+
 	if cell_to_check.cell.x == to_x && cell_to_check.cell.y == to_y {
+		log_error("found")
 		return true
 	}
 
@@ -139,7 +152,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 
 	if cell_to_check.cell.x > 0 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x - 1]
-		if from.id == -1 || cell != from.cell {
+		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -160,7 +173,8 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 					cell = cell, 
 					dist = distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)}),
 					//from_cell = cell_to_check,
-					id = id_cumul
+					id = id_cumul,
+					from_id = cell_to_check.id
 				}
 				id_cumul += 1
 				append(&to_check, c)
@@ -169,7 +183,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	}
 	if cell_to_check.cell.x < ARENA_WIDTH - 1 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x + 1]
-		if from.id == -1 || cell != from.cell {
+		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -190,7 +204,8 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 					cell = cell, 
 					dist = distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)}),
 					//from_cell = cell_to_check,
-					id = id_cumul
+					id = id_cumul,
+					from_id = cell_to_check.id
 				}
 				id_cumul += 1
 				append(&to_check, c)
@@ -199,7 +214,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	}
 	if cell_to_check.cell.y > 0 {
 		cell := game_state.arena[(cell_to_check.cell.y - 1) * ARENA_WIDTH + cell_to_check.cell.x]
-		if from.id == -1 || cell != from.cell {
+		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -235,7 +250,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	}
 	if cell_to_check.cell.y < ARENA_HEIGHT - 1 {
 		cell := game_state.arena[(cell_to_check.cell.y + 1) * ARENA_WIDTH + cell_to_check.cell.x]
-		if from.id == -1 || cell != from.cell {
+		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)

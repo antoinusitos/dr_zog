@@ -230,6 +230,7 @@ Entity :: struct {
 	path : [dynamic]Check_Cell,
 	path_index : int,
 	time_to_point : f32,
+	moving : bool,
 
 	update : proc(^Entity),
 	draw: proc(^Entity),
