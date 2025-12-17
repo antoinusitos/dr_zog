@@ -56,7 +56,7 @@ checked : [dynamic]Check_Cell
 find_path :: proc(from_x : int, from_y : int, to_x : int, to_y : int) -> [dynamic]Check_Cell {
 	clear(&to_return)
 	clear(&to_check)
-	clear(&to_check)
+	clear(&checked)
 
 	current_cell := game_state.arena[from_y * ARENA_WIDTH + from_x]
 
@@ -71,10 +71,10 @@ find_path :: proc(from_x : int, from_y : int, to_x : int, to_y : int) -> [dynami
 
 		if len(to_check) <= 0 || (to_check[0].cell.x == to_x && to_check[0].cell.y == to_y) {
 			if len(to_check) > 0 && to_check[0].cell.x == to_x && to_check[0].cell.y == to_y {
-				log_error("found0")
+				log_error("found objective cell")
 			}
 			else {
-				log_error("found1")
+				log_error("found1 no node to check")
 			}
 			break
 		}
@@ -95,10 +95,6 @@ find_path :: proc(from_x : int, from_y : int, to_x : int, to_y : int) -> [dynami
 				cell = c
 			}
 		}
-	}
-
-	for t in to_return {
-		log_error("node x", t.cell.x, " : ", t.cell.y)
 	}
 
 	return to_return
@@ -153,16 +149,19 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	if cell_to_check.cell.x > 0 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x - 1]
 		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
+			log_error("left")
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
 			if check != nil {
+				log_error("nope0")
 				/*if cell_to_check.dist + dist < check.dist {
 					check.from_cell = cell_to_check
 					check.dist = cell_to_check.dist + dist
 				}*/
 			}
 			else if check2 != nil {
+				log_error("nope1")
 				/*if cell_to_check.dist + dist < check2.dist {
 					check2.from_cell = cell_to_check
 					check2.dist = cell_to_check.dist + dist
@@ -184,16 +183,19 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	if cell_to_check.cell.x < ARENA_WIDTH - 1 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x + 1]
 		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
+			log_error("right")
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
 			if check != nil {
+				log_error("nope0")
 				/*if cell_to_check.dist + dist < check.dist {
 					check.from_cell = cell_to_check
 					check.dist = cell_to_check.dist + dist
 				}*/
 			}
 			else if check2 != nil {
+				log_error("nope1")
 				/*if cell_to_check.dist + dist < check2.dist {
 					check2.from_cell = cell_to_check
 					check2.dist = cell_to_check.dist + dist
@@ -215,10 +217,12 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	if cell_to_check.cell.y > 0 {
 		cell := game_state.arena[(cell_to_check.cell.y - 1) * ARENA_WIDTH + cell_to_check.cell.x]
 		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
+			log_error("top")
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
 			if check != nil {
+				log_error("nope0")
 				/*log_error("top cell1")
 				if cell_to_check.dist + dist < check.dist {
 					check.from_cell = cell_to_check
@@ -226,6 +230,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 				}*/
 			}
 			else if check2 != nil {
+				log_error("nope1")
 				/*log_error("top cell2")
 				if cell_to_check.dist + dist < check2.dist {
 					log_error("replace")
@@ -251,16 +256,19 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	if cell_to_check.cell.y < ARENA_HEIGHT - 1 {
 		cell := game_state.arena[(cell_to_check.cell.y + 1) * ARENA_WIDTH + cell_to_check.cell.x]
 		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
+			log_error("bottom")
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
 			if check != nil {
+				log_error("nope0")
 				/*if cell_to_check.dist + dist < check.dist {
 					check.from_cell = cell_to_check
 					check.dist = cell_to_check.dist + dist
 				}*/
 			}
 			else if check2 != nil {
+				log_error("nope1")
 				/*if cell_to_check.dist + dist < check2.dist {
 					check2.from_cell = cell_to_check
 					check2.dist = cell_to_check.dist + dist

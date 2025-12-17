@@ -736,21 +736,13 @@ update_battle :: proc() {
 			}
 
 			cell := cells[rl.GetRandomValue(0, i32(len(cells)) - 1)]
-			log_error("move from", x, " ", y, " to ", cell.x, " ", cell.y)
 			clear(&game_state.order[game_state.order_index].path)
 			game_state.order[game_state.order_index].path = find_path(x, y, cell.x, cell.y)
-			log_error("length", len(game_state.order[game_state.order_index].path))
 			game_state.order[game_state.order_index].path_index = len(game_state.order[game_state.order_index].path) - 1
 			game_state.order[game_state.order_index].time_to_point = 0.25
 			game_state.order[game_state.order_index].moving = true
 			game_state.blocked = true
 		}
-
-		/*game_state.ai_turn_time += rl.GetFrameTime()
-		if game_state.ai_turn_time >= 0.5 {
-			game_state.ai_turn_time = 0
-			end_turn()
-		}*/
 	}
 
 	if rl.IsKeyPressed(.SPACE) {
@@ -870,7 +862,6 @@ update_battle :: proc() {
 				game_state.order[game_state.order_index].time_to_point = 0.25
 				game_state.order[game_state.order_index].moving = true
 				game_state.blocked = true
-				//place_entity(game_state.order[game_state.order_index], x, y)
 				game_state.order[game_state.order_index].movement_done = true 
 				end_movement()
 			}
