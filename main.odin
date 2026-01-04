@@ -220,7 +220,8 @@ setup_one_button :: proc(button : ^Button) {
 		if mouse_pos.x >= button.x && mouse_pos.x <= button.x + button.width &&
 			mouse_pos.y >= button.y && mouse_pos.y <= button.y + button.height {
 				button.is_hover = true
-				
+				button.on_hover(button)
+
 				if rl.IsMouseButtonPressed(.LEFT) {
 					button.is_clicked = true
 					button.on_click(button)
@@ -231,17 +232,25 @@ setup_one_button :: proc(button : ^Button) {
 				}
 		}
 		else {
+			if button.is_hover {
+				button.on_exit(button)
+			}
 			button.is_hover = false
 		}
 	}
 	button.draw = proc(button : ^Button) {
+		if button.disabled {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.disabled_color)
+			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+			return
+		}
 		if button.is_clicked {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.clicked_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.clicked_color)
 		}
 		else {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
 		}
-		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + + button.text_offset.y), button.text_size, rl.BLACK)
+		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2 + button.text_offset.y), button.text_size, rl.BLACK)
 	}
 
 	button.on_click = proc(button : ^Button) {
@@ -256,16 +265,28 @@ setup_one_button :: proc(button : ^Button) {
 	button.on_filled = proc(button : ^Button) {
 		
 	}
+	button.on_hover = proc(button : ^Button) {
+		
+	}
+
+	button.on_exit = proc(button : ^Button) {
+		
+	}
 }
 
 setup_filling_button :: proc(button : ^Button) {
 	button.button_type = .filling
 	button.update = proc(button : ^Button) {
+		if button.disabled {
+			return
+		}
+
 		mouse_pos := rl.GetMousePosition()
 
 		if mouse_pos.x >= button.x && mouse_pos.x <= button.x + button.width &&
 			mouse_pos.y >= button.y && mouse_pos.y <= button.y + button.height {
 				button.is_hover = true
+				button.on_hover(button)
 				
 				if rl.IsMouseButtonDown(.LEFT) {
 					button.is_clicked = true
@@ -291,18 +312,26 @@ setup_filling_button :: proc(button : ^Button) {
 				}
 		}
 		else {
+			if button.is_hover {
+				button.on_exit(button)
+			}
 			button.is_hover = false
 		}
 	}
 	button.draw = proc(button : ^Button) {
+		if button.disabled {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.disabled_color)
+			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+			return
+		}
 		if button.is_clicked {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.background_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.background_color)
 			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, f32(button.width * (button.fill_percent / button.fill_max)) , button.height}, button.fill_color)
 		}
 		else {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.is_hover ? button.hover_color : button.background_color)
 		}
-		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2+ button.text_offset.y), button.text_size, rl.BLACK)
 	}
 
 	button.on_click = proc(button : ^Button) {
@@ -315,6 +344,12 @@ setup_filling_button :: proc(button : ^Button) {
 		
 	}
 	button.on_filled = proc(button : ^Button) {
+		
+	}
+	button.on_hover = proc(button : ^Button) {
+		
+	}
+	button.on_exit = proc(button : ^Button) {
 		
 	}
 }
@@ -440,6 +475,9 @@ end_turn :: proc() {
 		game_state.order_index = 0
 	}
 
+	game_state.move_button.disabled = false
+	game_state.attack_button.disabled = false
+
 	game_state.order[game_state.order_index].movement_done = false
 	game_state.order[game_state.order_index].attack_done = false
 	game_state.order[game_state.order_index].current_endurance += END_BY_TURN
@@ -485,68 +523,6 @@ check_inspected :: proc() {
 	}
 	else {
 		game_state.info_entity = nil
-	}
-}
-
-check_move :: proc() {
-	if game_state.order[game_state.order_index].kind != .player {
-		return
-	}
-
-	mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
-	x := mouse_pos.x
-	y := mouse_pos.y
-	if x >= 0 && x <= 150 && y >= 1000 && y <= 1080 {
-		if !pulled_movement {
-			reset_active_cells()
-			x := game_state.order[game_state.order_index].cell.x
-			y := game_state.order[game_state.order_index].cell.y
-			movement_size := game_state.order[game_state.order_index].entity_stats.speed
-
-			movement := get_movement_cells(x, y, movement_size, false)
-
-			pulled_movement = true
-
-			for &move in movement {
-				game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
-			}
-		}
-	}
-	else {
-		if pulled_movement {
-			reset_active_cells()
-		}
-		pulled_movement = false
-	}
-}
-
-check_attack :: proc() {
-	if game_state.order[game_state.order_index].kind != .player {
-		return
-	}
-
-	mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
-	x := mouse_pos.x
-	y := mouse_pos.y
-	if x >= 160 && x <= 310 && y >= 1000 && y <= 1080 {
-		if !pulled_attack {
-			pulled_attack = true
-			reset_active_cells()
-			x := game_state.order[game_state.order_index].cell.x
-			y := game_state.order[game_state.order_index].cell.y
-			attack_size := game_state.order[game_state.order_index].class_stats.attack_size
-			movement := get_movement_cells(x, y, attack_size, true)
-
-			for &move in movement {
-				game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
-			}
-		}
-	}
-	else {
-		if pulled_attack {
-			reset_active_cells()
-		}
-		pulled_attack = false
 	}
 }
 
@@ -611,6 +587,7 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 			damaged_entity.sprite = bee_dead_sprite
 		}
 	}
+	game_state.attack_button.disabled = true
 	attacking_entity.current_endurance -= 2
 	attacking_entity.attack_done = true
 	check_all_dead()
@@ -760,6 +737,10 @@ update_battle :: proc() {
 			game_state.blocked = true
 		}
 	}
+	else {
+		game_state.move_button.update(&game_state.move_button)
+		game_state.attack_button.update(&game_state.attack_button)
+	}
 
 	if rl.IsKeyPressed(.SPACE) {
 		end_turn()
@@ -818,10 +799,6 @@ update_battle :: proc() {
 		}
 	}
 
-	check_move()
-
-	check_attack()
-
 	check_abilities()
 
 	if rl.IsMouseButtonPressed(.LEFT) && game_state.order[game_state.order_index].kind == .player && (game_state.want_to_move || game_state.want_to_attack || game_state.ability_1) {
@@ -845,6 +822,7 @@ update_battle :: proc() {
 				game_state.order[game_state.order_index].moving = true
 				game_state.blocked = true
 				game_state.order[game_state.order_index].movement_done = true 
+				game_state.move_button.disabled = true
 				end_movement()
 			}
 			else if game_state.want_to_attack && game_state.arena[y * ARENA_WIDTH + x].entity != nil {
@@ -919,6 +897,7 @@ init_main_menu_ui :: proc() {
 		background_color = rl.RED,
 		hover_color = rl.YELLOW,
 		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
 		text = "Start",
 		fill_percent = 0,
 		fill_max = 1.0,
@@ -938,6 +917,7 @@ init_main_menu_ui :: proc() {
 		background_color = rl.RED,
 		hover_color = rl.YELLOW,
 		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
 		text = "Next Clone",
 		fill_percent = 0,
 		fill_max = 1.0,
@@ -950,6 +930,104 @@ init_main_menu_ui :: proc() {
 		if game_state.order_index >= 4 {
 			game_state.order_index = 0
 		}
+	}
+
+	game_state.move_button = Button{
+		x = 0,
+		y = 930,
+		width = 150,
+		height = 75,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Move",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15}
+	}
+	setup_one_button(&game_state.move_button)
+	game_state.move_button.on_click = proc(button : ^Button) {
+		end_attack()
+		game_state.want_to_move = true
+	}
+	game_state.move_button.on_hover = proc(button : ^Button) {
+		if game_state.order[game_state.order_index].kind != .player {
+			return
+		}
+
+		mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
+		x := mouse_pos.x
+		y := mouse_pos.y
+		if !pulled_movement {
+			reset_active_cells()
+			x := game_state.order[game_state.order_index].cell.x
+			y := game_state.order[game_state.order_index].cell.y
+			movement_size := game_state.order[game_state.order_index].entity_stats.speed
+
+			movement := get_movement_cells(x, y, movement_size, false)
+
+			pulled_movement = true
+
+			for &move in movement {
+				game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+			}
+		}
+	}
+	game_state.move_button.on_exit = proc(button : ^Button) {
+		if pulled_movement {
+			reset_active_cells()
+		}
+		pulled_movement = false
+	}
+
+	game_state.attack_button = Button{
+		x = 160,
+		y = 930,
+		width = 150,
+		height = 75,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Attack",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {7, 15}
+	}
+	setup_one_button(&game_state.attack_button)
+	game_state.attack_button.on_click = proc(button : ^Button) {
+		end_movement()
+		game_state.want_to_attack = true
+	}
+	game_state.attack_button.on_hover = proc(button : ^Button) {
+		if game_state.order[game_state.order_index].kind != .player {
+			return
+		}
+
+		mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
+		x := mouse_pos.x
+		y := mouse_pos.y
+		if !pulled_attack {
+			pulled_attack = true
+			reset_active_cells()
+			x := game_state.order[game_state.order_index].cell.x
+			y := game_state.order[game_state.order_index].cell.y
+			attack_size := game_state.order[game_state.order_index].class_stats.attack_size
+			movement := get_movement_cells(x, y, attack_size, true)
+
+			for &move in movement {
+				game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+			}
+		}
+	}
+	game_state.attack_button.on_exit = proc(button : ^Button) {
+		if pulled_attack {
+			reset_active_cells()
+		}
+		pulled_attack = false
 	}
 }
 
@@ -1164,16 +1242,20 @@ draw_battle :: proc() {
 			end_turn()
 		}
 
-		move_text := fmt.ctprint("Move (", game_state.order[game_state.order_index].entity_stats.speed, ")", sep = "")
-		if rl.GuiButton(rl.Rectangle{0, 1000, 150, 50}, move_text) && game_state.order[game_state.order_index].kind == .player && !game_state.order[game_state.order_index].movement_done && !game_state.game_finished {
+		move_text := fmt.ctprint("Move\n(", game_state.order[game_state.order_index].entity_stats.speed, ")", sep = "")
+		game_state.move_button.text = string(move_text)
+		game_state.move_button.draw(&game_state.move_button)
+		/*if rl.GuiButton(rl.Rectangle{0, 1000, 150, 50}, move_text) && game_state.order[game_state.order_index].kind == .player && !game_state.order[game_state.order_index].movement_done && !game_state.game_finished {
 			end_attack()
 			game_state.want_to_move = true
-		}
-		attack_text := fmt.ctprint("Attack (dmg:", game_state.order[game_state.order_index].entity_stats.damage, " | rng:", game_state.order[game_state.order_index].class_stats.attack_size, ")", sep = "")
-		if rl.GuiButton(rl.Rectangle{160, 1000, 150, 50}, attack_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 && !game_state.game_finished {
+		}*/
+		attack_text := fmt.ctprint("Attack\n(dmg:", game_state.order[game_state.order_index].entity_stats.damage, " | rng:", game_state.order[game_state.order_index].class_stats.attack_size, ")", sep = "")
+		game_state.attack_button.text = string(attack_text)
+		game_state.attack_button.draw(&game_state.attack_button)
+		/*if rl.GuiButton(rl.Rectangle{160, 1000, 150, 50}, attack_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 && !game_state.game_finished {
 			end_movement()
 			game_state.want_to_attack = true
-		}
+		}*/
 
 		offset_ability := 0
 		for a in game_state.order[game_state.order_index].class_stats.ability {

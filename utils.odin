@@ -18,9 +18,11 @@ Button :: struct {
 	hover_color : rl.Color,
 	clicked_color : rl.Color,
 	fill_color : rl.Color,
+	disabled_color : rl.Color,
 	button_type : Button_Type,
 	is_hover : bool,
 	is_clicked : bool,
+	disabled : bool,
 
 	filled_done : bool,
 	fill_percent : f32,
@@ -37,6 +39,8 @@ Button :: struct {
 	on_down : proc(^Button),
 	on_release : proc(^Button),
 	on_filled : proc(^Button),
+	on_hover : proc(^Button),
+	on_exit : proc(^Button),
 }
 
 Check_Cell :: struct {

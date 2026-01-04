@@ -181,6 +181,9 @@ Game_State :: struct {
 	cloning_button : Button,
 	ready_button : Button,
 	next_clone_button : Button,
+
+	move_button : Button,
+	attack_button : Button,
 }
 
 Entity :: struct {
