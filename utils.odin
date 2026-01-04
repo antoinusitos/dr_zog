@@ -135,10 +135,7 @@ checked_has :: proc(cell : Cell) -> ^Check_Cell {
 test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	append(&checked, cell_to_check^)
 
-	log_error("test_cell x", cell_to_check.cell.x, " : ", cell_to_check.cell.y)
-
 	if cell_to_check.cell.x == to_x && cell_to_check.cell.y == to_y {
-		log_error("found")
 		return true
 	}
 
@@ -149,7 +146,6 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	if cell_to_check.cell.x > 0 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x - 1]
 		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
-			log_error("left")
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -183,7 +179,6 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	if cell_to_check.cell.x < ARENA_WIDTH - 1 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x + 1]
 		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
-			log_error("right")
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -217,7 +212,6 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	if cell_to_check.cell.y > 0 {
 		cell := game_state.arena[(cell_to_check.cell.y - 1) * ARENA_WIDTH + cell_to_check.cell.x]
 		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
-			log_error("top")
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -256,7 +250,6 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	if cell_to_check.cell.y < ARENA_HEIGHT - 1 {
 		cell := game_state.arena[(cell_to_check.cell.y + 1) * ARENA_WIDTH + cell_to_check.cell.x]
 		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
-			log_error("bottom")
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -323,13 +316,10 @@ get_movement_cells :: proc(x_start : int, y_start : int, max : int, can_go_throu
 	start_cell := Movement_Cell {range = 0, cell = game_state.arena[y_start * ARENA_WIDTH + x_start]}
 	append(&movement_cells_to_check, start_cell)
 
-	log_error("get:")
-
 	for len(movement_cells_to_check) > 0 {
 		current := movement_cells_to_check[0]
 		append(&movement_cells_checked, current.cell)
 
-		log_error("current cell x:", current.cell.x, "y:", current.cell.y)
 		if current.range > 0 {
 			append(&movement_cells, current.cell)
 		}
@@ -340,16 +330,13 @@ get_movement_cells :: proc(x_start : int, y_start : int, max : int, can_go_throu
 		}
 
 		if current.cell.x > 0 && !movement_cells_already_checked(game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1]) {
-			log_error("try right")
 			if (!can_go_through && game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1].entity == nil) || can_go_through {
-				log_error("ok")
 				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1]}
 				append(&movement_cells_to_check, added_cell)
 			}
 		}
 
 		if current.cell.x < ARENA_WIDTH - 1 && !movement_cells_already_checked(game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1]) {
-			log_error("try left")
 			if (!can_go_through && game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1].entity == nil) || can_go_through {
 				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1]}
 				append(&movement_cells_to_check, added_cell)
@@ -357,7 +344,6 @@ get_movement_cells :: proc(x_start : int, y_start : int, max : int, can_go_throu
 		}
 
 		if current.cell.y > 0 && !movement_cells_already_checked(game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x]) {
-			log_error("try top")
 			if (!can_go_through && game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x].entity == nil) || can_go_through {
 				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x]}
 				append(&movement_cells_to_check, added_cell)
@@ -365,7 +351,6 @@ get_movement_cells :: proc(x_start : int, y_start : int, max : int, can_go_throu
 		}
 
 		if current.cell.y < ARENA_HEIGHT - 1 && !movement_cells_already_checked(game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x]) {
-			log_error("try bottom")
 			if (!can_go_through && game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x].entity == nil) || can_go_through {
 				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x]}
 				append(&movement_cells_to_check, added_cell)

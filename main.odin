@@ -59,7 +59,8 @@ main :: proc() {
 				    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
 				    init_entity(c)
 
-				    game_state.clones[game_state.order_index].class = game_state.possible_class[i]
+				    //game_state.clones[game_state.order_index].class = game_state.possible_class[i]
+				    game_state.clones[game_state.order_index].class = game_state.possible_class[2]
 					apply_class(game_state.clones[game_state.order_index])
 				}
 				index += 1
@@ -440,6 +441,7 @@ end_turn :: proc() {
 	}
 
 	game_state.order[game_state.order_index].movement_done = false
+	game_state.order[game_state.order_index].attack_done = false
 	game_state.order[game_state.order_index].current_endurance += END_BY_TURN
 }
 
@@ -570,7 +572,6 @@ check_abilities :: proc() {
 							x := game_state.order[game_state.order_index].cell.x
 							y := game_state.order[game_state.order_index].cell.y
 							attack_size := a.value_2
-							pulled_attack = true
 							movement := get_movement_cells(x, y, attack_size, true)
 
 							for &move in movement {
@@ -600,6 +601,10 @@ reset_active_cells :: proc() {
 }
 
 attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
+	if damaged_entity == nil || attacking_entity.attack_done {
+		return
+	}
+
 	damaged_entity.current_life -= attacking_entity.entity_stats.damage
 	if damaged_entity.current_life <= 0 {
 		if damaged_entity.kind == .enemy {
@@ -607,6 +612,7 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 		}
 	}
 	attacking_entity.current_endurance -= 2
+	attacking_entity.attack_done = true
 	check_all_dead()
 	end_attack()
 }
@@ -627,6 +633,13 @@ check_all_dead :: proc() {
 }
 
 ability :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity, index : int) {
+	if damaged_entity == nil {
+		attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+		game_state.ability_1 = false
+		reset_active_cells()
+		return
+	}
+
 	#partial switch attacking_entity.class_stats.ability[index].ability_type {
 		case .damage:
 		{
@@ -637,6 +650,7 @@ ability :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity, index : in
 				}
 			}
 			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+			check_all_dead()
 		}
 	}
 	game_state.ability_1 = false
@@ -810,7 +824,7 @@ update_battle :: proc() {
 
 	check_abilities()
 
-	if rl.IsMouseButtonPressed(.LEFT) && game_state.order[game_state.order_index].kind == .player && (game_state.want_to_move || game_state.want_to_attack) {
+	if rl.IsMouseButtonPressed(.LEFT) && game_state.order[game_state.order_index].kind == .player && (game_state.want_to_move || game_state.want_to_attack || game_state.ability_1) {
 		mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
 		x := int(math.ceil_f32(mouse_pos.x / (SPRITE_SIZE * camera.zoom))) - 4
 		y := int(math.ceil_f32(mouse_pos.y / (SPRITE_SIZE * camera.zoom))) - 4
@@ -836,8 +850,8 @@ update_battle :: proc() {
 			else if game_state.want_to_attack && game_state.arena[y * ARENA_WIDTH + x].entity != nil {
 				attack(game_state.arena[y * ARENA_WIDTH + x].entity, game_state.order[game_state.order_index])
 			}
-			else if game_state.ability_1 && game_state.arena[y * ARENA_WIDTH + x].entity != nil {
-				attack(game_state.arena[y * ARENA_WIDTH + x].entity, game_state.order[game_state.order_index])
+			else if game_state.ability_1/* && game_state.arena[y * ARENA_WIDTH + x].entity != nil */{
+				ability(game_state.arena[y * ARENA_WIDTH + x].entity, game_state.order[game_state.order_index], 0)
 			}
 		}
 	}
@@ -1164,7 +1178,8 @@ draw_battle :: proc() {
 		offset_ability := 0
 		for a in game_state.order[game_state.order_index].class_stats.ability {
 			if a != nil {
-				if rl.GuiButton(rl.Rectangle{f32(320 + offset_ability), 1000, 150, 50}, fmt.ctprint(a.name)) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 {
+				ability_text := fmt.ctprint(a.name, " (dmg:", a.value, " | rng:", a.value_2, ")", sep = "")
+				if rl.GuiButton(rl.Rectangle{f32(320 + offset_ability), 1000, 150, 50}, ability_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 {
 					game_state.ability_1 = true
 				}
 				offset_ability += 160

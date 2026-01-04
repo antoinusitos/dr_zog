@@ -22,7 +22,7 @@ Class_stats :: struct {
 Ability_type :: enum {
 	damage,
 	heal,
-
+	passive,
 }
 
 Class_ability :: struct {
@@ -36,10 +36,10 @@ Class_ability :: struct {
 
 class_stats := [6]Class_stats {
 	{class = .tank, stats = {max_life = 3, psyche = 1, agility = -1}, attack_size = 1},
-	{class = .tech, stats = {technology = 3, chance = 1, max_life = -1}, attack_size = 2},
+	{class = .tech, stats = {technology = 3, chance = 1, max_life = -1}, attack_size = 1},
 	{class = .warrior, stats = {max_life = 2, agility = 1, psyche = -1}, attack_size = 1, ability = {&warrior_ability_1, nil}},
 	{class = .healer, stats = {psyche = 3, chance = 3, max_life = -1}, attack_size = 1},
-	{class = .sniper, stats = {agility = 3, max_life = -1, psyche = -1}, attack_size = 4},
+	{class = .sniper, stats = {agility = 3, max_life = -1, psyche = -1}, attack_size = 3},
 	{class = .spirit, stats = {psyche = 3, technology = -1, max_life = -1}, attack_size = 2},
 }
 
@@ -89,8 +89,8 @@ objects := [3]Object {
 
 warrior_ability_1 := Class_ability {
 	ability_type = .damage,
-	value = 2,
-	value_2 = 3,
+	value = 2, // dmg
+	value_2 = 3, // range
 	cost = 2,
 	name = "Warrior Ability",
 	id = "Warrior_Ability"
@@ -204,6 +204,7 @@ Entity :: struct {
 	action_per_turn : int, // 1-3
 	current_stress : int,
 	movement_done : bool,
+	attack_done : bool,
 	class : Class,
 	name : string,
 	mutation : Mutation,
