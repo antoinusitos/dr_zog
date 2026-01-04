@@ -499,7 +499,7 @@ check_move :: proc() {
 			reset_active_cells()
 			x := game_state.order[game_state.order_index].cell.x
 			y := game_state.order[game_state.order_index].cell.y
-			movement_size := game_state.order[game_state.order_index].class_stats.movement_size
+			movement_size := game_state.order[game_state.order_index].entity_stats.speed
 
 			movement := get_movement_cells(x, y, movement_size, false)
 
@@ -770,7 +770,7 @@ update_battle :: proc() {
 	if game_state.want_to_move {
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
-		movement_size := game_state.order[game_state.order_index].class_stats.movement_size
+		movement_size := game_state.order[game_state.order_index].entity_stats.speed
 		movement := get_movement_cells(x, y, movement_size, false)
 
 		for &move in movement {
@@ -1150,7 +1150,7 @@ draw_battle :: proc() {
 			end_turn()
 		}
 
-		move_text := fmt.ctprint("Move (", game_state.order[game_state.order_index].class_stats.movement_size, ")", sep = "")
+		move_text := fmt.ctprint("Move (", game_state.order[game_state.order_index].entity_stats.speed, ")", sep = "")
 		if rl.GuiButton(rl.Rectangle{0, 1000, 150, 50}, move_text) && game_state.order[game_state.order_index].kind == .player && !game_state.order[game_state.order_index].movement_done && !game_state.game_finished {
 			end_attack()
 			game_state.want_to_move = true

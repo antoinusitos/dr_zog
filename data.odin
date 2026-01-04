@@ -15,7 +15,6 @@ Class :: enum {
 Class_stats :: struct {
 	class : Class,
 	stats : Entity_Stats,
-	movement_size : int,
 	attack_size : int,
 	ability : [2]^Class_ability,
 }
@@ -36,12 +35,12 @@ Class_ability :: struct {
 }
 
 class_stats := [6]Class_stats {
-	{class = .tank, stats = {max_life = 3, psyche = 1, agility = -1}, movement_size = 3, attack_size = 1},
-	{class = .tech, stats = {technology = 3, chance = 1, max_life = -1}, movement_size = 4, attack_size = 2},
-	{class = .warrior, stats = {max_life = 2, agility = 1, psyche = -1}, movement_size = 4, attack_size = 1, ability = {&warrior_ability_1, nil}},
-	{class = .healer, stats = {psyche = 3, chance = 3, max_life = -1}, movement_size = 4, attack_size = 1},
-	{class = .sniper, stats = {agility = 3, max_life = -1, psyche = -1}, movement_size = 5, attack_size = 4},
-	{class = .spirit, stats = {psyche = 3, technology = -1, max_life = -1}, movement_size = 4, attack_size = 2},
+	{class = .tank, stats = {max_life = 3, psyche = 1, agility = -1}, attack_size = 1},
+	{class = .tech, stats = {technology = 3, chance = 1, max_life = -1}, attack_size = 2},
+	{class = .warrior, stats = {max_life = 2, agility = 1, psyche = -1}, attack_size = 1, ability = {&warrior_ability_1, nil}},
+	{class = .healer, stats = {psyche = 3, chance = 3, max_life = -1}, attack_size = 1},
+	{class = .sniper, stats = {agility = 3, max_life = -1, psyche = -1}, attack_size = 4},
+	{class = .spirit, stats = {psyche = 3, technology = -1, max_life = -1}, attack_size = 2},
 }
 
 Mutation :: enum {
