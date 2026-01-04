@@ -240,12 +240,12 @@ setup_one_button :: proc(button : ^Button) {
 	}
 	button.draw = proc(button : ^Button) {
 		if button.disabled {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.disabled_color)
-			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.disabled_color)
+			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2 + button.text_offset.y), button.text_size, rl.BLACK)
 			return
 		}
 		if button.is_clicked {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.clicked_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.clicked_color)
 		}
 		else {
 			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
@@ -320,18 +320,18 @@ setup_filling_button :: proc(button : ^Button) {
 	}
 	button.draw = proc(button : ^Button) {
 		if button.disabled {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.disabled_color)
-			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.disabled_color)
+			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2 + button.text_offset.y), button.text_size, rl.BLACK)
 			return
 		}
 		if button.is_clicked {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.background_color)
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, f32(button.width * (button.fill_percent / button.fill_max)) , button.height}, button.fill_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.background_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, f32(button.width * (button.fill_percent / button.fill_max)) , button.height}, button.fill_color)
 		}
 		else {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height / 2}, button.is_hover ? button.hover_color : button.background_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
 		}
-		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2+ button.text_offset.y), button.text_size, rl.BLACK)
+		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2 + button.text_offset.y), button.text_size, rl.BLACK)
 	}
 
 	button.on_click = proc(button : ^Button) {
