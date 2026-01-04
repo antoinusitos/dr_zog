@@ -305,3 +305,85 @@ cell_check_order :: proc(lhs, rhs: Check_Cell) -> bool {
 entity_order :: proc(lhs, rhs: ^Entity) -> bool {
     return lhs.entity_stats.speed > rhs.entity_stats.speed || (lhs.entity_stats.speed == rhs.entity_stats.speed && lhs.kind == .player)
 }
+
+movement_cells : [dynamic]Cell
+movement_cells_to_check : [dynamic]Movement_Cell
+movement_cells_checked : [dynamic]Cell
+
+Movement_Cell :: struct {
+	cell : Cell,
+	range : int,
+}
+
+get_movement_cells :: proc(x_start : int, y_start : int, max : int, can_go_through : bool) -> [dynamic]Cell {
+	clear(&movement_cells)
+	clear(&movement_cells_to_check)
+	clear(&movement_cells_checked)
+
+	start_cell := Movement_Cell {range = 0, cell = game_state.arena[y_start * ARENA_WIDTH + x_start]}
+	append(&movement_cells_to_check, start_cell)
+
+	log_error("get:")
+
+	for len(movement_cells_to_check) > 0 {
+		current := movement_cells_to_check[0]
+		append(&movement_cells_checked, current.cell)
+
+		log_error("current cell x:", current.cell.x, "y:", current.cell.y)
+		if current.range > 0 {
+			append(&movement_cells, current.cell)
+		}
+
+		if (current.range == max) {
+			ordered_remove(&movement_cells_to_check, 0)
+			continue
+		}
+
+		if current.cell.x > 0 && !movement_cells_already_checked(game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1]) {
+			log_error("try right")
+			if (!can_go_through && game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1].entity == nil) || can_go_through {
+				log_error("ok")
+				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1]}
+				append(&movement_cells_to_check, added_cell)
+			}
+		}
+
+		if current.cell.x < ARENA_WIDTH - 1 && !movement_cells_already_checked(game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1]) {
+			log_error("try left")
+			if (!can_go_through && game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1].entity == nil) || can_go_through {
+				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1]}
+				append(&movement_cells_to_check, added_cell)
+			}
+		}
+
+		if current.cell.y > 0 && !movement_cells_already_checked(game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x]) {
+			log_error("try top")
+			if (!can_go_through && game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x].entity == nil) || can_go_through {
+				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x]}
+				append(&movement_cells_to_check, added_cell)
+			}
+		}
+
+		if current.cell.y < ARENA_HEIGHT - 1 && !movement_cells_already_checked(game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x]) {
+			log_error("try bottom")
+			if (!can_go_through && game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x].entity == nil) || can_go_through {
+				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x]}
+				append(&movement_cells_to_check, added_cell)
+			}
+		}
+
+		ordered_remove(&movement_cells_to_check, 0)
+
+	}
+
+	return movement_cells
+}
+
+movement_cells_already_checked :: proc(cell : Cell) -> bool {
+	for move in movement_cells_checked {
+		if move == cell {
+			return true
+		}
+	}
+	return false
+}

@@ -135,6 +135,10 @@ teen_player_sprite : rl.Texture2D
 player_sprite : rl.Texture2D
 old_player_sprite : rl.Texture2D
 
+pulled_movement : bool
+pulled_attack : bool
+pulled_ability : bool
+
 entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 	new_index : int = -1
 	new_entity: ^Entity = nil
@@ -491,29 +495,26 @@ check_move :: proc() {
 	x := mouse_pos.x
 	y := mouse_pos.y
 	if x >= 0 && x <= 150 && y >= 1000 && y <= 1080 {
-		reset_active_cells()
-		x := game_state.order[game_state.order_index].cell.x
-		y := game_state.order[game_state.order_index].cell.y
-		movement_size := game_state.order[game_state.order_index].class_stats.movement_size
-		array : [dynamic]rl.Vector2
-		for dx := -movement_size; dx <= movement_size; dx += 1 {
-	        for dy := -movement_size; dy <= movement_size; dy += 1 {
-	            if abs(dx) + abs(dy) <= movement_size {
-	            	append(&array, rl.Vector2{f32(dx), f32(dy)})
-	            }
-	        }
-	    }
+		if !pulled_movement {
+			reset_active_cells()
+			x := game_state.order[game_state.order_index].cell.x
+			y := game_state.order[game_state.order_index].cell.y
+			movement_size := game_state.order[game_state.order_index].class_stats.movement_size
 
-		for move in array {
-			move_x := int(move[0])
-			move_y := int(move[1])
+			movement := get_movement_cells(x, y, movement_size, false)
 
-			if x + move_x < 0 || y + move_y < 0 do continue
-			if x + move_x >= ARENA_WIDTH || y + move_y >= ARENA_HEIGHT do continue
-			if game_state.arena[(y + move_y) * ARENA_WIDTH + x + move_x].entity != nil do continue
+			pulled_movement = true
 
-			game_state.arena[(y + move_y) * ARENA_WIDTH + x + move_x].cell_active = true
+			for &move in movement {
+				game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+			}
 		}
+	}
+	else {
+		if pulled_movement {
+			reset_active_cells()
+		}
+		pulled_movement = false
 	}
 }
 
@@ -526,24 +527,24 @@ check_attack :: proc() {
 	x := mouse_pos.x
 	y := mouse_pos.y
 	if x >= 160 && x <= 310 && y >= 1000 && y <= 1080 {
-		reset_active_cells()
-		x := game_state.order[game_state.order_index].cell.x
-		y := game_state.order[game_state.order_index].cell.y
-		attack_size := game_state.order[game_state.order_index].class_stats.attack_size
-		for move in -attack_size..=attack_size {
-			if x + move < 0 || y  < 0 do continue
-			if x + move == x do continue
-			if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
+		if !pulled_attack {
+			pulled_attack = true
+			reset_active_cells()
+			x := game_state.order[game_state.order_index].cell.x
+			y := game_state.order[game_state.order_index].cell.y
+			attack_size := game_state.order[game_state.order_index].class_stats.attack_size
+			movement := get_movement_cells(x, y, attack_size, true)
 
-			game_state.arena[y * ARENA_WIDTH + x + move].cell_active = true
+			for &move in movement {
+				game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+			}
 		}
-		for move in -attack_size..=attack_size {
-			if x < 0 || y + move < 0 do continue
-			if y + move == y do continue
-			if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
-
-			game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
+	}
+	else {
+		if pulled_attack {
+			reset_active_cells()
 		}
+		pulled_attack = false
 	}
 }
 
@@ -560,29 +561,30 @@ check_abilities :: proc() {
 	for a in game_state.order[game_state.order_index].class_stats.ability {
 		if a != nil {
 			if x >= f32(320 + offset_ability) && x <= f32(320 + offset_ability + 160) && y >= 1000 && y <= 1080 {
-				#partial switch a.ability_type {
-					case .damage :
-					{
-						reset_active_cells()
-						x := game_state.order[game_state.order_index].cell.x
-						y := game_state.order[game_state.order_index].cell.y
-						attack_size := a.value_2
-						for move in -attack_size..=attack_size {
-							if x + move < 0 || y  < 0 do continue
-							if x + move == x do continue
-							if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
+				if !pulled_ability {
+					pulled_ability = true
+					#partial switch a.ability_type {
+						case .damage :
+						{
+							reset_active_cells()
+							x := game_state.order[game_state.order_index].cell.x
+							y := game_state.order[game_state.order_index].cell.y
+							attack_size := a.value_2
+							pulled_attack = true
+							movement := get_movement_cells(x, y, attack_size, true)
 
-							game_state.arena[y * ARENA_WIDTH + x + move].cell_active = true
-						}
-						for move in -attack_size..=attack_size {
-							if x < 0 || y + move < 0 do continue
-							if y + move == y do continue
-							if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
-
-							game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
+							for &move in movement {
+								game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+							}
 						}
 					}
 				}
+			}
+			else {
+				if pulled_ability {
+					reset_active_cells()
+				}
+				pulled_ability = false
 			}
 			offset_ability += 160
 		}
@@ -765,49 +767,24 @@ update_battle :: proc() {
 
 	check_inspected()
 
-	reset_active_cells()
-
 	if game_state.want_to_move {
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
 		movement_size := game_state.order[game_state.order_index].class_stats.movement_size
-		array : [dynamic]rl.Vector2
-		for dx := -movement_size; dx <= movement_size; dx += 1 {
-	        for dy := -movement_size; dy <= movement_size; dy += 1 {
-	            if abs(dx) + abs(dy) <= movement_size {
-	            	append(&array, rl.Vector2{f32(dx), f32(dy)})
-	            }
-	        }
-	    }
+		movement := get_movement_cells(x, y, movement_size, false)
 
-	    for move in array {
-			move_x := int(move[0])
-			move_y := int(move[1])
-
-			if x + move_x < 0 || y + move_y < 0 do continue
-			if x + move_x >= ARENA_WIDTH || y + move_y >= ARENA_HEIGHT do continue
-			if game_state.arena[(y + move_y) * ARENA_WIDTH + x + move_x].entity != nil do continue
-
-			game_state.arena[(y + move_y) * ARENA_WIDTH + x + move_x].cell_active = true
+		for &move in movement {
+			game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
 		}
 	}
 	else if game_state.want_to_attack {
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
 		attack_size := game_state.order[game_state.order_index].class_stats.attack_size
-		for move in -attack_size..=attack_size {
-			if x + move < 0 || y  < 0 do continue
-			if x + move == x do continue
-			if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
+		movement := get_movement_cells(x, y, attack_size, true)
 
-			game_state.arena[y * ARENA_WIDTH + x + move].cell_active = true
-		}
-		for move in -attack_size..=attack_size {
-			if x < 0 || y + move < 0 do continue
-			if y + move == y do continue
-			if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
-
-			game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
+		for &move in movement {
+			game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
 		}
 	}
 	else if game_state.ability_1 && game_state.order[game_state.order_index].class_stats.ability[0] != nil {
@@ -818,19 +795,10 @@ update_battle :: proc() {
 				x := game_state.order[game_state.order_index].cell.x
 				y := game_state.order[game_state.order_index].cell.y
 				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].value_2
-				for move in -attack_size..=attack_size {
-					if x + move < 0 || y  < 0 do continue
-					if x + move == x do continue
-					if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
+				movement := get_movement_cells(x, y, attack_size, true)
 
-					game_state.arena[y * ARENA_WIDTH + x + move].cell_active = true
-				}
-				for move in -attack_size..=attack_size {
-					if x < 0 || y + move < 0 do continue
-					if y + move == y do continue
-					if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
-
-					game_state.arena[(y + move) * ARENA_WIDTH + x].cell_active = true
+				for &move in movement {
+					game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
 				}
 			}
 		}
