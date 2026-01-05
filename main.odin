@@ -75,24 +75,22 @@ main :: proc() {
 	    place_entity(game_state.clones[2], 2, 0)
 	    place_entity(game_state.clones[3], 3, 0)
 
-	    enemy := entity_create(.enemy)
-	    enemy.entity_stats = fly_stats
-	    enemy.name = "ass"
-	    init_entity(enemy)
-	    append(&game_state.enemies, enemy)
-	    place_entity(enemy, 9, 9)
-		enemy = entity_create(.enemy)
-	    enemy.entity_stats = fly_stats
-	    enemy.name = "mother fucker"
-	    init_entity(enemy)
-	    append(&game_state.enemies, enemy)
-	    place_entity(enemy, 8, 9)
-	    enemy = entity_create(.enemy)
-	    enemy.entity_stats = fly_stats
-	    enemy.name = "dummy"
-	    init_entity(enemy)
-	    place_entity(enemy, 7, 9)
-	    append(&game_state.enemies, enemy)
+	    for e in 0..<3 {
+	    	enemy := entity_create(.enemy)
+		    enemy.entity_stats = fly_stats
+		    if e == 0 {
+		    	 enemy.name = "mother fucker"
+		    }
+		    else if e == 1 {
+		    	enemy.name = "dummy"
+		    }
+		    else {
+		    	enemy.name = "ass"
+		    }
+		    init_entity(enemy)
+		    append(&game_state.enemies, enemy)
+		    place_entity(enemy, 9 - e, 9)
+	    }
 
 	    for &e in game_state.entities {
 	    	if !e.allocated do continue
@@ -596,8 +594,8 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 
 check_all_dead :: proc() {
 	all_dead := true
-	for e in game_state.enemies {
-		if e != nil && e.current_life >= 0 {
+	for &e in game_state.enemies {
+		if e != nil && e.current_life > 0 {
 			all_dead = false
 			break
 		}
@@ -605,6 +603,7 @@ check_all_dead :: proc() {
 
 	if all_dead {
 		game_state.game_finished = true
+		game_state.game_step = .cloning
 		// return to main menu
 	}
 }
