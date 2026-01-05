@@ -33,6 +33,7 @@ Class_ability :: struct {
 	cost : int,
 	name : string,
 	id : string,
+	tags : []string,
 }
 
 class_stats := [6]Class_stats {
@@ -102,7 +103,18 @@ tank_ability_1 := Class_ability {
 	value = 10, // range
 	cost = 4,
 	name = "TP",
-	id = "Tank_Ability"
+	id = "Tank_Ability",
+	tags = {"move_instant"}
+}
+
+ability_has_tag :: proc(ability : ^Class_ability, tag : string) -> bool {
+	for t in ability.tags {
+		if t == tag {
+			return true
+		}
+	}
+
+	return false
 }
 
 

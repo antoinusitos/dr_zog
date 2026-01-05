@@ -637,7 +637,9 @@ ability :: proc(damaged_cell : Cell, attacking_entity : ^Entity, index : int) {
 		case .movement:
 		{
 			log_error("move to ", damaged_cell.x, damaged_cell.y)
-			place_entity(attacking_entity, damaged_cell.x, damaged_cell.y)
+			if ability_has_tag(attacking_entity.class_stats.ability[index], "move_instant") {
+				place_entity(attacking_entity, damaged_cell.x, damaged_cell.y)
+			}
 			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
 			game_state.ability_1 = false
 			reset_active_cells()
