@@ -23,6 +23,7 @@ Ability_type :: enum {
 	damage,
 	heal,
 	passive,
+	movement,
 }
 
 Class_ability :: struct {
@@ -35,7 +36,7 @@ Class_ability :: struct {
 }
 
 class_stats := [6]Class_stats {
-	{class = .tank, stats = {max_life = 3, psyche = 1, agility = -1}, attack_size = 1},
+	{class = .tank, stats = {max_life = 3, psyche = 1, agility = -1}, attack_size = 1, ability = {&tank_ability_1, nil}},
 	{class = .tech, stats = {technology = 3, chance = 1, max_life = -1}, attack_size = 1},
 	{class = .warrior, stats = {max_life = 2, agility = 1, psyche = -1}, attack_size = 1, ability = {&warrior_ability_1, nil}},
 	{class = .healer, stats = {psyche = 3, chance = 3, max_life = -1}, attack_size = 1},
@@ -91,10 +92,19 @@ warrior_ability_1 := Class_ability {
 	ability_type = .damage,
 	value = 2, // dmg
 	value_2 = 3, // range
-	cost = 2,
-	name = "Warrior Ability",
+	cost = 4,
+	name = "Dash & Cut",
 	id = "Warrior_Ability"
 }
+
+tank_ability_1 := Class_ability {
+	ability_type = .movement,
+	value = 10, // range
+	cost = 4,
+	name = "TP",
+	id = "Tank_Ability"
+}
+
 
 Cell :: struct {
 	x : int,
@@ -184,6 +194,7 @@ Game_State :: struct {
 
 	move_button : Button,
 	attack_button : Button,
+	ability_button : Button,
 }
 
 Entity :: struct {
@@ -213,6 +224,8 @@ Entity :: struct {
 	mutation : Mutation,
 	mutation_stats : Mutation_stats,
 	class_stats : Class_stats,
+
+	tags : [dynamic]string,
 
 	//effects
 	burned : bool,

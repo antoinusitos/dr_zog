@@ -59,9 +59,9 @@ main :: proc() {
 				    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
 				    init_entity(c)
 
-				    //game_state.clones[game_state.order_index].class = game_state.possible_class[i]
-				    game_state.clones[game_state.order_index].class = game_state.possible_class[2]
-					apply_class(game_state.clones[game_state.order_index])
+				    game_state.clones[index].class = game_state.possible_class[index]
+				    //game_state.clones[index].class = game_state.possible_class[2]
+					apply_class(game_state.clones[index])
 				}
 				index += 1
 			}
@@ -475,6 +475,7 @@ end_turn :: proc() {
 
 	game_state.move_button.disabled = false
 	game_state.attack_button.disabled = false
+	game_state.ability_button.disabled = false
 
 	game_state.order[game_state.order_index].movement_done = false
 	game_state.order[game_state.order_index].attack_done = false
@@ -608,25 +609,41 @@ check_all_dead :: proc() {
 	}
 }
 
-ability :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity, index : int) {
-	if damaged_entity == nil {
-		attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
-		game_state.ability_1 = false
-		reset_active_cells()
-		return
-	}
-
+ability :: proc(damaged_cell : Cell, attacking_entity : ^Entity, index : int) {
 	#partial switch attacking_entity.class_stats.ability[index].ability_type {
 		case .damage:
 		{
-			damaged_entity.current_life -= attacking_entity.class_stats.ability[index].value
-			if damaged_entity.current_life <= 0 {
-				if damaged_entity.kind == .enemy {
-					damaged_entity.sprite = bee_dead_sprite
+			if damaged_cell.entity == nil {
+				attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+				if attacking_entity.current_endurance <= 0 {
+					game_state.ability_button.disabled = true
+				}
+				game_state.ability_1 = false
+				reset_active_cells()
+				return
+			}
+			damaged_cell.entity.current_life -= attacking_entity.class_stats.ability[index].value
+			if damaged_cell.entity.current_life <= 0 {
+				if damaged_cell.entity.kind == .enemy {
+					damaged_cell.entity.sprite = bee_dead_sprite
 				}
 			}
 			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+			if attacking_entity.current_endurance <= 0 {
+				game_state.ability_button.disabled = true
+			}
 			check_all_dead()
+		}
+		case .movement:
+		{
+			log_error("move to ", damaged_cell.x, damaged_cell.y)
+			place_entity(attacking_entity, damaged_cell.x, damaged_cell.y)
+			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+			game_state.ability_1 = false
+			reset_active_cells()
+			if attacking_entity.current_endurance <= 0 {
+				game_state.ability_button.disabled = true
+			}
 		}
 	}
 	game_state.ability_1 = false
@@ -739,6 +756,7 @@ update_battle :: proc() {
 	else {
 		game_state.move_button.update(&game_state.move_button)
 		game_state.attack_button.update(&game_state.attack_button)
+		game_state.ability_button.update(&game_state.ability_button)
 	}
 
 	if rl.IsKeyPressed(.SPACE) {
@@ -795,10 +813,20 @@ update_battle :: proc() {
 					game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
 				}
 			}
+			case .movement :
+			{
+				reset_active_cells()
+				x := game_state.order[game_state.order_index].cell.x
+				y := game_state.order[game_state.order_index].cell.y
+				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].value
+				movement := get_movement_cells(x, y, attack_size, false)
+
+				for &move in movement {
+					game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+				}
+			}
 		}
 	}
-
-	check_abilities()
 
 	if rl.IsMouseButtonPressed(.LEFT) && game_state.order[game_state.order_index].kind == .player && (game_state.want_to_move || game_state.want_to_attack || game_state.ability_1) {
 		mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
@@ -828,7 +856,7 @@ update_battle :: proc() {
 				attack(game_state.arena[y * ARENA_WIDTH + x].entity, game_state.order[game_state.order_index])
 			}
 			else if game_state.ability_1/* && game_state.arena[y * ARENA_WIDTH + x].entity != nil */{
-				ability(game_state.arena[y * ARENA_WIDTH + x].entity, game_state.order[game_state.order_index], 0)
+				ability(game_state.arena[y * ARENA_WIDTH + x], game_state.order[game_state.order_index], 0)
 			}
 		}
 	}
@@ -931,6 +959,8 @@ init_main_menu_ui :: proc() {
 		}
 	}
 
+	// BATTLE
+
 	game_state.move_button = Button{
 		x = 0,
 		y = 930,
@@ -948,6 +978,9 @@ init_main_menu_ui :: proc() {
 	}
 	setup_one_button(&game_state.move_button)
 	game_state.move_button.on_click = proc(button : ^Button) {
+		if button.disabled {
+			return
+		}
 		end_attack()
 		game_state.want_to_move = true
 	}
@@ -998,6 +1031,9 @@ init_main_menu_ui :: proc() {
 	}
 	setup_one_button(&game_state.attack_button)
 	game_state.attack_button.on_click = proc(button : ^Button) {
+		if button.disabled {
+			return
+		}
 		end_movement()
 		game_state.want_to_attack = true
 	}
@@ -1027,6 +1063,72 @@ init_main_menu_ui :: proc() {
 			reset_active_cells()
 		}
 		pulled_attack = false
+	}
+
+	game_state.ability_button = Button{
+		x = 160,
+		y = 930,
+		width = 150,
+		height = 75,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Ability",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {7, 15}
+	}
+	setup_one_button(&game_state.ability_button)
+	game_state.ability_button.on_click = proc(button : ^Button) {
+		if button.disabled {
+			return
+		}
+
+		game_state.ability_1 = true
+	}
+	game_state.ability_button.on_hover = proc(button : ^Button) {
+		if game_state.order[game_state.order_index].kind != .player {
+			return
+		}
+
+		a := game_state.order[game_state.order_index].class_stats.ability[0]
+		if a != nil && !pulled_ability {
+			pulled_ability = true
+			#partial switch a.ability_type {
+				case .damage :
+				{
+					reset_active_cells()
+					x := game_state.order[game_state.order_index].cell.x
+					y := game_state.order[game_state.order_index].cell.y
+					attack_size := a.value_2
+					movement := get_movement_cells(x, y, attack_size, true)
+
+					for &move in movement {
+						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+					}
+				}
+				case .movement :
+				{
+					reset_active_cells()
+					x := game_state.order[game_state.order_index].cell.x
+					y := game_state.order[game_state.order_index].cell.y
+					attack_size := a.value
+					movement := get_movement_cells(x, y, attack_size, false)
+
+					for &move in movement {
+						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+					}
+				}
+			}
+		}
+	}
+	game_state.ability_button.on_exit = proc(button : ^Button) {
+		if pulled_ability {
+			reset_active_cells()
+		}
+		pulled_ability = false
 	}
 }
 
@@ -1259,10 +1361,19 @@ draw_battle :: proc() {
 		offset_ability := 0
 		for a in game_state.order[game_state.order_index].class_stats.ability {
 			if a != nil {
-				ability_text := fmt.ctprint(a.name, " (dmg:", a.value, " | rng:", a.value_2, ")", sep = "")
-				if rl.GuiButton(rl.Rectangle{f32(320 + offset_ability), 1000, 150, 50}, ability_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 {
-					game_state.ability_1 = true
+				ability_text := fmt.ctprint()
+				if a.ability_type == .damage {
+					ability_text = fmt.ctprint(a.name, "\n(dmg:", a.value, " | rng:", a.value_2, ")", sep = "")
 				}
+				else if a.ability_type == .movement {
+					ability_text = fmt.ctprint(a.name, "\n(rng:", a.value, ")", sep = "")
+				}
+				game_state.ability_button.text = string(ability_text)
+				game_state.ability_button.x = f32(320 + offset_ability)
+				if game_state.order[game_state.order_index].current_endurance <= 0 {
+					game_state.ability_button.disabled = true
+				}
+				game_state.ability_button.draw(&game_state.ability_button)
 				offset_ability += 160
 			}
 		}
