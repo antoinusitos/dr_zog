@@ -210,149 +210,6 @@ setup_enemy :: proc(entity: ^Entity) {
 	}
 }
 
-setup_one_button :: proc(button : ^Button) {
-	button.button_type = .once
-	button.update = proc(button : ^Button) {
-		mouse_pos := rl.GetMousePosition()
-
-		if mouse_pos.x >= button.x && mouse_pos.x <= button.x + button.width &&
-			mouse_pos.y >= button.y && mouse_pos.y <= button.y + button.height {
-				button.is_hover = true
-				button.on_hover(button)
-
-				if rl.IsMouseButtonPressed(.LEFT) {
-					button.is_clicked = true
-					button.on_click(button)
-				}
-				else if rl.IsMouseButtonReleased(.LEFT) {
-					button.is_clicked = false
-					button.on_release(button)
-				}
-		}
-		else {
-			if button.is_hover {
-				button.on_exit(button)
-			}
-			button.is_hover = false
-		}
-	}
-	button.draw = proc(button : ^Button) {
-		if button.disabled {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.disabled_color)
-			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2 + button.text_offset.y), button.text_size, rl.BLACK)
-			return
-		}
-		if button.is_clicked {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.clicked_color)
-		}
-		else {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
-		}
-		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2 + button.text_offset.y), button.text_size, rl.BLACK)
-	}
-
-	button.on_click = proc(button : ^Button) {
-
-	}
-	button.on_down = proc(button : ^Button) {
-		
-	}
-	button.on_release = proc(button : ^Button) {
-		
-	}
-	button.on_filled = proc(button : ^Button) {
-		
-	}
-	button.on_hover = proc(button : ^Button) {
-		
-	}
-
-	button.on_exit = proc(button : ^Button) {
-		
-	}
-}
-
-setup_filling_button :: proc(button : ^Button) {
-	button.button_type = .filling
-	button.update = proc(button : ^Button) {
-		if button.disabled {
-			return
-		}
-
-		mouse_pos := rl.GetMousePosition()
-
-		if mouse_pos.x >= button.x && mouse_pos.x <= button.x + button.width &&
-			mouse_pos.y >= button.y && mouse_pos.y <= button.y + button.height {
-				button.is_hover = true
-				button.on_hover(button)
-				
-				if rl.IsMouseButtonDown(.LEFT) {
-					button.is_clicked = true
-					button.fill_percent += rl.GetFrameTime()
-					if button.fill_percent >= button.fill_max {
-						button.fill_percent = button.fill_max
-						if !button.fill_auto_reset {
-							if !button.filled_done {
-								button.filled_done = true
-								button.on_filled(button)
-							}
-						}
-						else {
-							button.fill_percent = 0
-							button.on_filled(button)
-						}
-					}
-				}
-				else if rl.IsMouseButtonReleased(.LEFT) {
-					button.is_clicked = false
-					button.fill_percent = 0
-					button.filled_done = false
-				}
-		}
-		else {
-			if button.is_hover {
-				button.on_exit(button)
-			}
-			button.is_hover = false
-		}
-	}
-	button.draw = proc(button : ^Button) {
-		if button.disabled {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.disabled_color)
-			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2 + button.text_offset.y), button.text_size, rl.BLACK)
-			return
-		}
-		if button.is_clicked {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.background_color)
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, f32(button.width * (button.fill_percent / button.fill_max)) , button.height}, button.fill_color)
-		}
-		else {
-			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y + button.height / 2, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
-		}
-		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.height / 2 + button.text_offset.y), button.text_size, rl.BLACK)
-	}
-
-	button.on_click = proc(button : ^Button) {
-
-	}
-	button.on_down = proc(button : ^Button) {
-		
-	}
-	button.on_release = proc(button : ^Button) {
-		
-	}
-	button.on_filled = proc(button : ^Button) {
-		
-	}
-	button.on_hover = proc(button : ^Button) {
-		
-	}
-	button.on_exit = proc(button : ^Button) {
-		
-	}
-}
-
-
 init_entity :: proc(entity: ^Entity) {
 	if entity.kind == .player {
 		switch entity.entity_stats.entity_age {
@@ -628,6 +485,12 @@ ability :: proc(damaged_cell : Cell, attacking_entity : ^Entity, index : int) {
 					damaged_cell.entity.sprite = bee_dead_sprite
 				}
 			}
+			else {
+				for t in attacking_entity.class_stats.ability[index].add_tags {
+					append(&damaged_cell.entity.tags, t)
+				}
+
+			}
 			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
 			if attacking_entity.current_endurance <= 0 {
 				game_state.ability_button.disabled = true
@@ -729,23 +592,9 @@ update_battle :: proc() {
 			x := game_state.order[game_state.order_index].cell.x
 			y := game_state.order[game_state.order_index].cell.y
 			attack_size := 3
-			cells : [dynamic]Cell
-			for move in -attack_size..=attack_size {
-				if x + move < 0 || y  < 0 do continue
-				if x + move == x do continue
-				if x + move >= ARENA_WIDTH || y >= ARENA_HEIGHT do continue
+			movement := get_movement_cells(x, y, attack_size, false)
 
-				append(&cells, game_state.arena[y * ARENA_WIDTH + x + move])
-			}
-			for move in -attack_size..=attack_size {
-				if x < 0 || y + move < 0 do continue
-				if y + move == y do continue
-				if x >= ARENA_WIDTH || y + move >= ARENA_HEIGHT do continue
-
-				append(&cells, game_state.arena[(y + move) * ARENA_WIDTH + x])
-			}
-
-			cell := cells[rl.GetRandomValue(0, i32(len(cells)) - 1)]
+			cell := movement[rl.GetRandomValue(0, i32(len(movement)) - 1)]
 			clear(&game_state.order[game_state.order_index].path)
 			game_state.order[game_state.order_index].path = find_path(x, y, cell.x, cell.y)
 			game_state.order[game_state.order_index].path_index = len(game_state.order[game_state.order_index].path) - 1
@@ -964,7 +813,7 @@ init_main_menu_ui :: proc() {
 
 	game_state.move_button = Button{
 		x = 0,
-		y = 930,
+		y = 1005,
 		width = 150,
 		height = 75,
 		background_color = rl.RED,
@@ -1017,7 +866,7 @@ init_main_menu_ui :: proc() {
 
 	game_state.attack_button = Button{
 		x = 160,
-		y = 930,
+		y = 1005,
 		width = 150,
 		height = 75,
 		background_color = rl.RED,
@@ -1068,7 +917,7 @@ init_main_menu_ui :: proc() {
 
 	game_state.ability_button = Button{
 		x = 160,
-		y = 930,
+		y = 1005,
 		width = 150,
 		height = 75,
 		background_color = rl.RED,
@@ -1325,6 +1174,11 @@ draw_battle :: proc() {
 		rl.DrawText(fmt.ctprint("mutation", game_state.info_entity.mutation), 1300, 200, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("class", game_state.info_entity.class), 1300, 220, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("cell", game_state.info_entity.cell.x, " : ", game_state.info_entity.cell.y), 1300, 240, 20, rl.WHITE)
+		index := 0
+		for t in game_state.info_entity.tags {
+			rl.DrawText(fmt.ctprint("tag :", t,), 1300, i32(260 + index), 20, rl.WHITE)
+			index += 20
+		}
 	}
 
 	x_offset := 0
@@ -1347,17 +1201,10 @@ draw_battle :: proc() {
 		move_text := fmt.ctprint("Move\n(", game_state.order[game_state.order_index].entity_stats.speed, ")", sep = "")
 		game_state.move_button.text = string(move_text)
 		game_state.move_button.draw(&game_state.move_button)
-		/*if rl.GuiButton(rl.Rectangle{0, 1000, 150, 50}, move_text) && game_state.order[game_state.order_index].kind == .player && !game_state.order[game_state.order_index].movement_done && !game_state.game_finished {
-			end_attack()
-			game_state.want_to_move = true
-		}*/
+
 		attack_text := fmt.ctprint("Attack\n(dmg:", game_state.order[game_state.order_index].entity_stats.damage, " | rng:", game_state.order[game_state.order_index].class_stats.attack_size, ")", sep = "")
 		game_state.attack_button.text = string(attack_text)
 		game_state.attack_button.draw(&game_state.attack_button)
-		/*if rl.GuiButton(rl.Rectangle{160, 1000, 150, 50}, attack_text) && game_state.order[game_state.order_index].kind == .player && game_state.order[game_state.order_index].current_endurance > 0 && !game_state.game_finished {
-			end_movement()
-			game_state.want_to_attack = true
-		}*/
 
 		offset_ability := 0
 		for a in game_state.order[game_state.order_index].class_stats.ability {

@@ -3,6 +3,7 @@ package game
 import rl "vendor:raylib"
 import "core:math"
 import "core:slice"
+import "core:fmt"
 
 Button_Type :: enum {
 	once,
@@ -41,6 +42,148 @@ Button :: struct {
 	on_filled : proc(^Button),
 	on_hover : proc(^Button),
 	on_exit : proc(^Button),
+}
+
+setup_one_button :: proc(button : ^Button) {
+	button.button_type = .once
+	button.update = proc(button : ^Button) {
+		mouse_pos := rl.GetMousePosition()
+
+		if mouse_pos.x >= button.x && mouse_pos.x <= button.x + button.width &&
+			mouse_pos.y >= button.y && mouse_pos.y <= button.y + button.height {
+				button.is_hover = true
+				button.on_hover(button)
+
+				if rl.IsMouseButtonPressed(.LEFT) {
+					button.is_clicked = true
+					button.on_click(button)
+				}
+				else if rl.IsMouseButtonReleased(.LEFT) {
+					button.is_clicked = false
+					button.on_release(button)
+				}
+		}
+		else {
+			if button.is_hover {
+				button.on_exit(button)
+			}
+			button.is_hover = false
+		}
+	}
+	button.draw = proc(button : ^Button) {
+		if button.disabled {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.disabled_color)
+			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+			return
+		}
+		if button.is_clicked {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.clicked_color)
+		}
+		else {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
+		}
+		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+	}
+
+	button.on_click = proc(button : ^Button) {
+
+	}
+	button.on_down = proc(button : ^Button) {
+		
+	}
+	button.on_release = proc(button : ^Button) {
+		
+	}
+	button.on_filled = proc(button : ^Button) {
+		
+	}
+	button.on_hover = proc(button : ^Button) {
+		
+	}
+
+	button.on_exit = proc(button : ^Button) {
+		
+	}
+}
+
+setup_filling_button :: proc(button : ^Button) {
+	button.button_type = .filling
+	button.update = proc(button : ^Button) {
+		if button.disabled {
+			return
+		}
+
+		mouse_pos := rl.GetMousePosition()
+
+		if mouse_pos.x >= button.x && mouse_pos.x <= button.x + button.width &&
+			mouse_pos.y >= button.y && mouse_pos.y <= button.y + button.height {
+				button.is_hover = true
+				button.on_hover(button)
+				
+				if rl.IsMouseButtonDown(.LEFT) {
+					button.is_clicked = true
+					button.fill_percent += rl.GetFrameTime()
+					if button.fill_percent >= button.fill_max {
+						button.fill_percent = button.fill_max
+						if !button.fill_auto_reset {
+							if !button.filled_done {
+								button.filled_done = true
+								button.on_filled(button)
+							}
+						}
+						else {
+							button.fill_percent = 0
+							button.on_filled(button)
+						}
+					}
+				}
+				else if rl.IsMouseButtonReleased(.LEFT) {
+					button.is_clicked = false
+					button.fill_percent = 0
+					button.filled_done = false
+				}
+		}
+		else {
+			if button.is_hover {
+				button.on_exit(button)
+			}
+			button.is_hover = false
+		}
+	}
+	button.draw = proc(button : ^Button) {
+		if button.disabled {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.disabled_color)
+			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+			return
+		}
+		if button.is_clicked {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.background_color)
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, f32(button.width * (button.fill_percent / button.fill_max)) , button.height}, button.fill_color)
+		}
+		else {
+			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.is_hover ? button.hover_color : button.background_color)
+		}
+		rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
+	}
+
+	button.on_click = proc(button : ^Button) {
+
+	}
+	button.on_down = proc(button : ^Button) {
+		
+	}
+	button.on_release = proc(button : ^Button) {
+		
+	}
+	button.on_filled = proc(button : ^Button) {
+		
+	}
+	button.on_hover = proc(button : ^Button) {
+		
+	}
+	button.on_exit = proc(button : ^Button) {
+		
+	}
 }
 
 Check_Cell :: struct {

@@ -34,6 +34,7 @@ Class_ability :: struct {
 	name : string,
 	id : string,
 	tags : []string,
+	add_tags : []string,
 }
 
 class_stats := [6]Class_stats {
@@ -88,6 +89,7 @@ objects := [3]Object {
 	{name = "changing arms", attack_size = 1},
 }
 
+// ABILITIES
 
 warrior_ability_1 := Class_ability {
 	ability_type = .damage,
@@ -107,6 +109,17 @@ tank_ability_1 := Class_ability {
 	tags = {"move_instant"}
 }
 
+fire_flamme_ability := Class_ability {
+	ability_type = .damage,
+	value = 2, // dmg
+	value_2 = 3, // range
+	cost = 4,
+	name = "Fire Flamme",
+	id = "Fire_Flamme_Ability",
+	add_tags = {"fire"},
+	tags = {"elemental"}
+}
+
 ability_has_tag :: proc(ability : ^Class_ability, tag : string) -> bool {
 	for t in ability.tags {
 		if t == tag {
@@ -117,6 +130,7 @@ ability_has_tag :: proc(ability : ^Class_ability, tag : string) -> bool {
 	return false
 }
 
+// END ABILITIES
 
 Cell :: struct {
 	x : int,
