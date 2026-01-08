@@ -21,6 +21,7 @@ main :: proc() {
 		for x in 0..<ARENA_WIDTH{
 			game_state.arena[y * ARENA_WIDTH + x].x = x
 			game_state.arena[y * ARENA_WIDTH + x].y = y
+			append(&game_state.arena[y * ARENA_WIDTH + x].tag_to_add, "fire")
 		}
 	}
 
@@ -319,6 +320,9 @@ place_entity :: proc(entity: ^Entity, x : int, y : int) {
 	game_state.arena[y * ARENA_WIDTH + x].entity = entity
 	game_state.arena[y * ARENA_WIDTH + x].entity.position = {f32(OFFSET_X + x * SPRITE_SIZE), f32(-OFFSET_Y - y * SPRITE_SIZE)}
 	entity.cell = &game_state.arena[y * ARENA_WIDTH + x]
+	for t in entity.cell.tag_to_add {
+		append(&entity.tags, t)
+	}
 }
 
 end_turn :: proc() {
@@ -379,48 +383,6 @@ check_inspected :: proc() {
 	}
 	else {
 		game_state.info_entity = nil
-	}
-}
-
-check_abilities :: proc() {
-	if game_state.order[game_state.order_index].kind != .player {
-		return
-	}
-
-	mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
-	x := mouse_pos.x
-	y := mouse_pos.y
-
-	offset_ability := 0
-	for a in game_state.order[game_state.order_index].class_stats.ability {
-		if a != nil {
-			if x >= f32(320 + offset_ability) && x <= f32(320 + offset_ability + 160) && y >= 1000 && y <= 1080 {
-				if !pulled_ability {
-					pulled_ability = true
-					#partial switch a.ability_type {
-						case .damage :
-						{
-							reset_active_cells()
-							x := game_state.order[game_state.order_index].cell.x
-							y := game_state.order[game_state.order_index].cell.y
-							attack_size := a.value_2
-							movement := get_movement_cells(x, y, attack_size, true)
-
-							for &move in movement {
-								game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
-							}
-						}
-					}
-				}
-			}
-			else {
-				if pulled_ability {
-					reset_active_cells()
-				}
-				pulled_ability = false
-			}
-			offset_ability += 160
-		}
 	}
 }
 
@@ -485,11 +447,8 @@ ability :: proc(damaged_cell : Cell, attacking_entity : ^Entity, index : int) {
 					damaged_cell.entity.sprite = bee_dead_sprite
 				}
 			}
-			else {
-				for t in attacking_entity.class_stats.ability[index].add_tags {
-					append(&damaged_cell.entity.tags, t)
-				}
-
+			for t in attacking_entity.class_stats.ability[index].add_tags {
+				append(&damaged_cell.entity.tags, t)
 			}
 			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
 			if attacking_entity.current_endurance <= 0 {
@@ -508,6 +467,27 @@ ability :: proc(damaged_cell : Cell, attacking_entity : ^Entity, index : int) {
 			if attacking_entity.current_endurance <= 0 {
 				game_state.ability_button.disabled = true
 			}
+		}
+		case .heal:
+		{
+			if damaged_cell.entity == nil {
+				attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+				if attacking_entity.current_endurance <= 0 {
+					game_state.ability_button.disabled = true
+				}
+				game_state.ability_1 = false
+				reset_active_cells()
+				return
+			}
+			damaged_cell.entity.current_life += attacking_entity.class_stats.ability[index].value
+			for t in attacking_entity.class_stats.ability[index].add_tags {
+				append(&damaged_cell.entity.tags, t)
+			}
+			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+			if attacking_entity.current_endurance <= 0 {
+				game_state.ability_button.disabled = true
+			}
+			check_all_dead()
 		}
 	}
 	game_state.ability_1 = false
@@ -607,6 +587,7 @@ update_battle :: proc() {
 		game_state.move_button.update(&game_state.move_button)
 		game_state.attack_button.update(&game_state.attack_button)
 		game_state.ability_button.update(&game_state.ability_button)
+		game_state.ability_2_button.update(&game_state.ability_2_button)
 	}
 
 	if rl.IsKeyPressed(.SPACE) {
@@ -656,7 +637,7 @@ update_battle :: proc() {
 				reset_active_cells()
 				x := game_state.order[game_state.order_index].cell.x
 				y := game_state.order[game_state.order_index].cell.y
-				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].value_2
+				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].range
 				movement := get_movement_cells(x, y, attack_size, true)
 
 				for &move in movement {
@@ -668,8 +649,20 @@ update_battle :: proc() {
 				reset_active_cells()
 				x := game_state.order[game_state.order_index].cell.x
 				y := game_state.order[game_state.order_index].cell.y
-				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].value
+				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].range
 				movement := get_movement_cells(x, y, attack_size, false)
+
+				for &move in movement {
+					game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+				}
+			}
+			case .heal :
+			{
+				reset_active_cells()
+				x := game_state.order[game_state.order_index].cell.x
+				y := game_state.order[game_state.order_index].cell.y
+				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].range
+				movement := get_movement_cells(x, y, attack_size, true)
 
 				for &move in movement {
 					game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -952,7 +945,7 @@ init_main_menu_ui :: proc() {
 					reset_active_cells()
 					x := game_state.order[game_state.order_index].cell.x
 					y := game_state.order[game_state.order_index].cell.y
-					attack_size := a.value_2
+					attack_size := a.range
 					movement := get_movement_cells(x, y, attack_size, true)
 
 					for &move in movement {
@@ -964,8 +957,20 @@ init_main_menu_ui :: proc() {
 					reset_active_cells()
 					x := game_state.order[game_state.order_index].cell.x
 					y := game_state.order[game_state.order_index].cell.y
-					attack_size := a.value
+					attack_size := a.range
 					movement := get_movement_cells(x, y, attack_size, false)
+
+					for &move in movement {
+						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+					}
+				}
+				case .heal :
+				{
+					reset_active_cells()
+					x := game_state.order[game_state.order_index].cell.x
+					y := game_state.order[game_state.order_index].cell.y
+					attack_size := a.range
+					movement := get_movement_cells(x, y, attack_size, true)
 
 					for &move in movement {
 						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -1211,10 +1216,13 @@ draw_battle :: proc() {
 			if a != nil {
 				ability_text := fmt.ctprint()
 				if a.ability_type == .damage {
-					ability_text = fmt.ctprint(a.name, "\n(dmg:", a.value, " | rng:", a.value_2, ")", sep = "")
+					ability_text = fmt.ctprint(a.name, "\n(dmg:", a.value, " | rng:", a.range, ")", sep = "")
 				}
 				else if a.ability_type == .movement {
-					ability_text = fmt.ctprint(a.name, "\n(rng:", a.value, ")", sep = "")
+					ability_text = fmt.ctprint(a.name, "\n(rng:", a.range, ")", sep = "")
+				}
+				else if a.ability_type == .heal {
+					ability_text = fmt.ctprint(a.name, "\n(heal:", a.value, " | rng:", a.range, ")", sep = "")
 				}
 				game_state.ability_button.text = string(ability_text)
 				game_state.ability_button.x = f32(320 + offset_ability)

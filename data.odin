@@ -30,6 +30,7 @@ Class_ability :: struct {
 	ability_type : Ability_type,
 	value : int,
 	value_2 : int,
+	range : int,
 	cost : int,
 	name : string,
 	id : string,
@@ -40,7 +41,7 @@ Class_ability :: struct {
 class_stats := [6]Class_stats {
 	{class = .tank, stats = {max_life = 3, psyche = 1, agility = -1}, attack_size = 1, ability = {&tank_ability_1, nil}},
 	{class = .tech, stats = {technology = 3, chance = 1, max_life = -1}, attack_size = 1},
-	{class = .warrior, stats = {max_life = 2, agility = 1, psyche = -1}, attack_size = 1, ability = {&warrior_ability_1, nil}},
+	{class = .warrior, stats = {max_life = 2, agility = 1, psyche = -1}, attack_size = 1, ability = {&fire_flamme_ability, nil}},
 	{class = .healer, stats = {psyche = 3, chance = 3, max_life = -1}, attack_size = 1},
 	{class = .sniper, stats = {agility = 3, max_life = -1, psyche = -1}, attack_size = 3},
 	{class = .spirit, stats = {psyche = 3, technology = -1, max_life = -1}, attack_size = 2},
@@ -94,7 +95,7 @@ objects := [3]Object {
 warrior_ability_1 := Class_ability {
 	ability_type = .damage,
 	value = 2, // dmg
-	value_2 = 3, // range
+	range = 3, // range
 	cost = 4,
 	name = "Dash & Cut",
 	id = "Warrior_Ability"
@@ -102,17 +103,26 @@ warrior_ability_1 := Class_ability {
 
 tank_ability_1 := Class_ability {
 	ability_type = .movement,
-	value = 10, // range
+	range = 10, // range
 	cost = 4,
 	name = "TP",
 	id = "Tank_Ability",
 	tags = {"move_instant"}
 }
 
+heal_ability := Class_ability {
+	ability_type = .heal,
+	range = 10, // range
+	value = 3, // heal
+	cost = 2,
+	name = "Heal",
+	id = "Heal_Ability"
+}
+
 fire_flamme_ability := Class_ability {
 	ability_type = .damage,
 	value = 2, // dmg
-	value_2 = 3, // range
+	range = 12, // range
 	cost = 4,
 	name = "Fire Flamme",
 	id = "Fire_Flamme_Ability",
@@ -137,6 +147,7 @@ Cell :: struct {
 	y : int,
 	cell_active : bool,
 	entity : ^Entity,
+	tag_to_add : [dynamic]string,
 }
 
 Entity_Age :: enum {
@@ -221,6 +232,7 @@ Game_State :: struct {
 	move_button : Button,
 	attack_button : Button,
 	ability_button : Button,
+	ability_2_button : Button,
 }
 
 Entity :: struct {
