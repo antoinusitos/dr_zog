@@ -288,7 +288,9 @@ Entity :: struct {
 	path : [dynamic]Check_Cell,
 	path_index : int,
 	time_to_point : f32,
+	time_to_attack : f32,
 	moving : bool,
+	attacking : bool,
 
 	target : ^Entity,
 

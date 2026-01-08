@@ -526,7 +526,7 @@ update_battle :: proc() {
 		// call the update function
 		entity.update(&entity)
 
-		if len(entity.path) > 0 {
+		if entity.moving {
 			if entity.time_to_point >= 0.25 {
 				place_entity(&entity, entity.path[entity.path_index].cell.x, entity.path[entity.path_index].cell.y)
 				entity.time_to_point = 0
@@ -536,22 +536,25 @@ update_battle :: proc() {
 					entity.path_index = 0
 					game_state.blocked = false
 					entity.moving = false
-					if entity.kind == .enemy {
-						end_turn()
-					}
+					entity.movement_done = true
 				}
 			}
 			else {
 				entity.time_to_point += rl.GetFrameTime()
 			}
 		}
-		else if entity.moving {
-			clear(&entity.path)
-			entity.path_index = 0
-			game_state.blocked = false
-			entity.moving = false
+		else if entity.attacking {
 			if entity.kind == .enemy {
-				end_turn()
+				if entity.time_to_attack < 0.5 {
+					entity.time_to_attack += rl.GetFrameTime()
+				}
+				else {
+					attack(entity.target, &entity)
+					entity.time_to_attack = 0
+					entity.attack_done = true
+					entity.attacking = false
+					game_state.blocked = false
+				}
 			}
 		}
 	}
@@ -569,30 +572,53 @@ update_battle :: proc() {
 			end_turn()
 			return
 		}
-		if !game_state.order[game_state.order_index].moving {
+		if !game_state.order[game_state.order_index].moving && !game_state.order[game_state.order_index].attacking {
 			x := game_state.order[game_state.order_index].cell.x
 			y := game_state.order[game_state.order_index].cell.y
 			target := game_state.order[game_state.order_index].target
 			attack_size := 3
 			movement := get_movement_cells(x, y, attack_size, false)
 
-			cell := movement[0]
+			target = game_state.clones[0]
 			dist := distance({f32(x), f32(y)}, {f32(target.cell.x), f32(target.cell.y)})
 
-			for c in movement {
-				temp_dist := distance({f32(c.x), f32(c.y)}, {f32(target.cell.x), f32(target.cell.y)})
+			for &t in game_state.clones {
+				temp_dist := distance({f32(x), f32(y)}, {f32(t.cell.x), f32(t.cell.y)})
 				if temp_dist < dist {
 					dist = temp_dist
-					cell = c
+					target = t
 				}
 			}
 
-			clear(&game_state.order[game_state.order_index].path)
-			game_state.order[game_state.order_index].path = find_path(x, y, cell.x, cell.y)
-			game_state.order[game_state.order_index].path_index = len(game_state.order[game_state.order_index].path) - 1
-			game_state.order[game_state.order_index].time_to_point = 0.25
-			game_state.order[game_state.order_index].moving = true
-			game_state.blocked = true
+			game_state.order[game_state.order_index].target = target
+
+			cell := movement[0]
+			dist = distance({f32(x), f32(y)}, {f32(target.cell.x), f32(target.cell.y)})
+
+			if dist != 1 && !game_state.order[game_state.order_index].movement_done {
+				for c in movement {
+					temp_dist := distance({f32(c.x), f32(c.y)}, {f32(target.cell.x), f32(target.cell.y)})
+					if temp_dist < dist {
+						dist = temp_dist
+						cell = c
+					}
+				}
+
+				clear(&game_state.order[game_state.order_index].path)
+				
+				game_state.order[game_state.order_index].path = find_path(x, y, cell.x, cell.y)
+				game_state.order[game_state.order_index].path_index = len(game_state.order[game_state.order_index].path) - 1
+				game_state.order[game_state.order_index].time_to_point = 0.25
+				game_state.order[game_state.order_index].moving = true
+				game_state.blocked = true
+			}
+			else if !game_state.order[game_state.order_index].attack_done && dist == 1 {
+				game_state.order[game_state.order_index].attacking = true
+				game_state.blocked = true
+			}
+			else {
+				end_turn()
+			}
 		}
 	}
 	else {
