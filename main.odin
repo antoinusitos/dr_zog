@@ -91,6 +91,7 @@ main :: proc() {
 		    init_entity(enemy)
 		    append(&game_state.enemies, enemy)
 		    place_entity(enemy, 9 - e, 9)
+		    enemy.target = game_state.clones[0]
 	    }
 
 	    for &e in game_state.entities {
@@ -571,10 +572,21 @@ update_battle :: proc() {
 		if !game_state.order[game_state.order_index].moving {
 			x := game_state.order[game_state.order_index].cell.x
 			y := game_state.order[game_state.order_index].cell.y
+			target := game_state.order[game_state.order_index].target
 			attack_size := 3
 			movement := get_movement_cells(x, y, attack_size, false)
 
-			cell := movement[rl.GetRandomValue(0, i32(len(movement)) - 1)]
+			cell := movement[0]
+			dist := distance({f32(x), f32(y)}, {f32(target.cell.x), f32(target.cell.y)})
+
+			for c in movement {
+				temp_dist := distance({f32(c.x), f32(c.y)}, {f32(target.cell.x), f32(target.cell.y)})
+				if temp_dist < dist {
+					dist = temp_dist
+					cell = c
+				}
+			}
+
 			clear(&game_state.order[game_state.order_index].path)
 			game_state.order[game_state.order_index].path = find_path(x, y, cell.x, cell.y)
 			game_state.order[game_state.order_index].path_index = len(game_state.order[game_state.order_index].path) - 1
@@ -587,7 +599,7 @@ update_battle :: proc() {
 		game_state.move_button.update(&game_state.move_button)
 		game_state.attack_button.update(&game_state.attack_button)
 		game_state.ability_button.update(&game_state.ability_button)
-		game_state.ability_2_button.update(&game_state.ability_2_button)
+		//game_state.ability_2_button.update(&game_state.ability_2_button)
 	}
 
 	if rl.IsKeyPressed(.SPACE) {

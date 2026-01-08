@@ -261,7 +261,7 @@ get_cell_check :: proc(from_id : int) -> Check_Cell{
 
 to_check_has :: proc(cell : Cell) -> ^Check_Cell {
 	for &c in to_check {
-		if c.cell == cell {
+		if Compare_Cell(c.cell, cell) {
 			return &c
 		}
 	}
@@ -271,7 +271,7 @@ to_check_has :: proc(cell : Cell) -> ^Check_Cell {
 
 checked_has :: proc(cell : Cell) -> ^Check_Cell {
 	for &c in checked {
-		if c.cell == cell {
+		if Compare_Cell(c.cell, cell) {
 			return &c
 		}
 	}
@@ -292,7 +292,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 
 	if cell_to_check.cell.x > 0 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x - 1]
-		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
+		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -325,7 +325,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	}
 	if cell_to_check.cell.x < ARENA_WIDTH - 1 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x + 1]
-		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
+		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -358,7 +358,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	}
 	if cell_to_check.cell.y > 0 {
 		cell := game_state.arena[(cell_to_check.cell.y - 1) * ARENA_WIDTH + cell_to_check.cell.x]
-		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
+		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -396,7 +396,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	}
 	if cell_to_check.cell.y < ARENA_HEIGHT - 1 {
 		cell := game_state.arena[(cell_to_check.cell.y + 1) * ARENA_WIDTH + cell_to_check.cell.x]
-		if (from.id == -1 || cell != from.cell) && cell.entity == nil {
+		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -513,7 +513,7 @@ get_movement_cells :: proc(x_start : int, y_start : int, max : int, can_go_throu
 
 movement_cells_already_checked :: proc(cell : Cell) -> bool {
 	for move in movement_cells_checked {
-		if move == cell {
+		if Compare_Cell(move, cell) {
 			return true
 		}
 	}

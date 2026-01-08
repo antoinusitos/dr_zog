@@ -150,6 +150,10 @@ Cell :: struct {
 	tag_to_add : [dynamic]string,
 }
 
+Compare_Cell :: proc(lhs : Cell, rhs : Cell) -> bool {
+	return lhs.x == rhs.x && lhs.y == rhs.y
+}
+
 Entity_Age :: enum {
 	baby,
 	kid,
@@ -285,6 +289,8 @@ Entity :: struct {
 	path_index : int,
 	time_to_point : f32,
 	moving : bool,
+
+	target : ^Entity,
 
 	update : proc(^Entity),
 	draw: proc(^Entity),
