@@ -245,7 +245,11 @@ Entity :: struct {
 	kind: Entity_Kind,
 
 	// player
-	sprite : rl.Texture,
+	current_sprite : rl.Texture,
+	sprite : []rl.Texture,
+	sprite_dead : rl.Texture,
+	sprite_index : int,
+	sprite_time : f32,
 	position : rl.Vector2,
 	sprite_size: f32,
 	color : rl.Color,

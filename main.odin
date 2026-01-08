@@ -29,6 +29,7 @@ main :: proc() {
 
 	floor_sprite = rl.LoadTexture("Floor.png")
 	bee_sprite = rl.LoadTexture("Bee.png")
+	bee_2_sprite = rl.LoadTexture("Bee_2.png")
 	bee_dead_sprite = rl.LoadTexture("Bee_Dead.png")
 	baby_player_sprite = rl.LoadTexture("Baby_Player.png")
 	child_player_sprite = rl.LoadTexture("Child_Player.png")
@@ -129,6 +130,7 @@ player : ^Entity
 
 floor_sprite : rl.Texture2D
 bee_sprite : rl.Texture2D
+bee_2_sprite : rl.Texture2D
 bee_dead_sprite : rl.Texture2D
 baby_player_sprite : rl.Texture2D
 child_player_sprite : rl.Texture2D
@@ -180,11 +182,12 @@ entity_destroy :: proc(entity: ^Entity) {
 }
 
 default_draw_based_on_entity_data :: proc(entity: ^Entity) {
-	rl.DrawTextureV(entity.sprite, {entity.position.x, -entity.position.y - 10}, entity.color)
+	rl.DrawTextureV(entity.current_sprite, {entity.position.x, -entity.position.y - 10}, entity.color)
 }
  
 setup_player :: proc(entity: ^Entity) {
-	entity.sprite = rl.LoadTexture("Player.png")
+	entity.sprite = {player_sprite}
+	entity.current_sprite = entity.sprite[0]
 	entity.kind = .player
 	entity.sprite_size = 32
 	entity.color = rl.WHITE
@@ -198,14 +201,29 @@ setup_player :: proc(entity: ^Entity) {
 }
 
 setup_enemy :: proc(entity: ^Entity) {
-	entity.sprite = bee_sprite
+	entity.sprite = {bee_sprite, bee_2_sprite}
+	entity.sprite_dead = bee_dead_sprite
+	entity.current_sprite = entity.sprite[0]
 	entity.kind = .enemy
 	entity.sprite_size = 32
 	entity.color = rl.WHITE
 	entity.class = .none
 	entity.current_life = 2
+	entity.sprite_index = int(rl.GetRandomValue(0, i32(len(entity.sprite) - 1)))
 
 	entity.update = proc(entity: ^Entity) {
+		entity.sprite = {bee_sprite, bee_2_sprite}
+		if len(entity.sprite) > 1 {
+			entity.sprite_time += rl.GetFrameTime()
+			if entity.sprite_time >= 0.2 {
+				entity.sprite_time = 0
+				entity.sprite_index += 1
+				if entity.sprite_index >= len(entity.sprite) {
+					entity.sprite_index = 0
+				}
+				entity.current_sprite = entity.sprite[entity.sprite_index]
+			}
+		}
 	}
 	entity.draw = proc(entity: ^Entity) {
 		default_draw_based_on_entity_data(entity)
@@ -216,15 +234,15 @@ init_entity :: proc(entity: ^Entity) {
 	if entity.kind == .player {
 		switch entity.entity_stats.entity_age {
 			case .baby:
-				entity.sprite = baby_player_sprite
+				entity.sprite = {baby_player_sprite}
 			case .kid:
-				entity.sprite = child_player_sprite
+				entity.sprite = {child_player_sprite}
 			case .teen:
-				entity.sprite = teen_player_sprite
+				entity.sprite = {teen_player_sprite}
 			case .adult:
-				entity.sprite = player_sprite
+				entity.sprite = {player_sprite}
 			case .senior:
-				entity.sprite = old_player_sprite
+				entity.sprite = {old_player_sprite}
 		}
 	}
 
@@ -403,7 +421,7 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 	damaged_entity.current_life -= attacking_entity.entity_stats.damage
 	if damaged_entity.current_life <= 0 {
 		if damaged_entity.kind == .enemy {
-			damaged_entity.sprite = bee_dead_sprite
+			damaged_entity.current_sprite = bee_dead_sprite
 		}
 	}
 	game_state.attack_button.disabled = true
@@ -445,7 +463,7 @@ ability :: proc(damaged_cell : Cell, attacking_entity : ^Entity, index : int) {
 			damaged_cell.entity.current_life -= attacking_entity.class_stats.ability[index].value
 			if damaged_cell.entity.current_life <= 0 {
 				if damaged_cell.entity.kind == .enemy {
-					damaged_cell.entity.sprite = bee_dead_sprite
+					damaged_cell.entity.current_sprite = bee_dead_sprite
 				}
 			}
 			for t in attacking_entity.class_stats.ability[index].add_tags {
@@ -1125,7 +1143,7 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_stats.description), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
 		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
 
-		rl.DrawTextureEx(game_state.clones[game_state.order_index].sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
+		rl.DrawTextureEx(game_state.clones[game_state.order_index].current_sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
 
 		rl.DrawText(fmt.ctprint("Chance - Slightly affects all actions"), 0, WINDOW_HEIGHT - 20, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Agility - Dodge chance and damage at long range"), 0, WINDOW_HEIGHT - 40, 20, rl.WHITE)
@@ -1151,7 +1169,7 @@ draw_main_menu :: proc() {
 				return
 			}
 
-			rl.DrawTextureEx(c.sprite, {f32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16)), f32(WINDOW_HEIGHT / 2)}, 0, 5, c.color)
+			rl.DrawTextureEx(c.current_sprite, {f32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16)), f32(WINDOW_HEIGHT / 2)}, 0, 5, c.color)
 			rl.DrawText(fmt.ctprint(c.name), i32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16) + 32), WINDOW_HEIGHT / 2 + 175, 30, rl.WHITE)
 			offset_clone_x += 1
 		}
@@ -1227,7 +1245,7 @@ draw_battle :: proc() {
 	x_offset := 0
 	index := 0
 	for &e in game_state.order {
-		rl.DrawTexturePro(e.sprite, rl.Rectangle{0, 0, 32, 32}, rl.Rectangle{f32(1500 + x_offset), 5, 32, 32}, {0, 0}, 0, e.color)
+		rl.DrawTexturePro(e.current_sprite, rl.Rectangle{0, 0, 32, 32}, rl.Rectangle{f32(1500 + x_offset), 5, 32, 32}, {0, 0}, 0, e.color)
 		if index == game_state.order_index {
 			rl.DrawText(fmt.ctprint("^"), i32(1500 + x_offset + 10), 45, 30, rl.WHITE)
 		}
