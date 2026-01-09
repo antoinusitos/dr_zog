@@ -2,68 +2,13 @@ package game
 
 import rl "vendor:raylib"
 
-Class :: enum {
-	none,
-	tank,
-	tech,
-	warrior,
-	healer,
-	sniper,
-	spirit
-}
-
-Class_stats :: struct {
-	class : Class,
-	stats : Entity_Stats,
-	attack_size : int,
-	ability : [2]^Class_ability,
-}
-
-Ability_type :: enum {
-	damage,
-	heal,
-	passive,
-	movement,
-}
-
-Class_ability :: struct {
-	ability_type : Ability_type,
-	value : int,
-	value_2 : int,
-	range : int,
-	cost : int,
-	name : string,
-	id : string,
-	tags : []string,
-	add_tags : []string,
-}
-
 class_stats := [6]Class_stats {
-	{class = .tank, stats = {max_life = 3, psyche = 1, agility = -1}, attack_size = 1, ability = {&tank_ability_1, nil}},
-	{class = .tech, stats = {technology = 3, chance = 1, max_life = -1}, attack_size = 1},
-	{class = .warrior, stats = {max_life = 2, agility = 1, psyche = -1}, attack_size = 1, ability = {&fire_flamme_ability, nil}},
-	{class = .healer, stats = {psyche = 3, chance = 3, max_life = -1}, attack_size = 1},
-	{class = .sniper, stats = {agility = 3, max_life = -1, psyche = -1}, attack_size = 3},
-	{class = .spirit, stats = {psyche = 3, technology = -1, max_life = -1}, attack_size = 2},
-}
-
-Mutation :: enum {
-	none,
-	cortex,
-	reflex,
-	lucky,
-	dna,
-	shaking,
-	microwave,
-	bad_luck,
-	bad_body
-}
-
-Mutation_stats :: struct {
-	mutation : Mutation,
-	stats : Entity_Stats,
-	good : bool,
-	description : string,
+	{class = .tank, stats = {max_life = 2, psyche = -1, agility = -1}, attack_size = 1, ability = {&tank_ability_1, nil}},
+	{class = .tech, stats = {technology = 2, speed = -1, max_life = -1}, attack_size = 1, ability = {&fire_flamme_ability, nil}},
+	{class = .warrior, stats = {damage = 2, chance = -1, psyche = -1}, attack_size = 1, ability = {&fire_flamme_ability, nil}},
+	{class = .healer, stats = {speed = 2, damage = -1, technology = -1}, attack_size = 1, ability = {&heal_ability, nil}},
+	{class = .sniper, stats = {agility = 2, max_life = -1, psyche = -1}, attack_size = 3},
+	{class = .spirit, stats = {psyche = 2, technology = -1, max_life = -1}, attack_size = 2},
 }
 
 mutation_stats := [8]Mutation_stats {
@@ -77,13 +22,6 @@ mutation_stats := [8]Mutation_stats {
 	{mutation = .bad_body, stats = {max_life = -1}, description = "Bad Body (-1 HP)"},
 }
 
-Object :: struct {
-	name : string,
-	stats : Entity_Stats,
-	movement_size : int,
-	attack_size : int,
-}
-
 objects := [3]Object {
 	{name = "boot no grav", movement_size = 1},
 	{name = "gloves ampli", stats = {technology = 1}},
@@ -94,7 +32,7 @@ objects := [3]Object {
 
 warrior_ability_1 := Class_ability {
 	ability_type = .damage,
-	value = 2, // dmg
+	value = 4, // dmg
 	range = 3, // range
 	cost = 4,
 	name = "Dash & Cut",
@@ -103,7 +41,7 @@ warrior_ability_1 := Class_ability {
 
 tank_ability_1 := Class_ability {
 	ability_type = .movement,
-	range = 10, // range
+	range = 5, // range
 	cost = 4,
 	name = "TP",
 	id = "Tank_Ability",
@@ -112,7 +50,7 @@ tank_ability_1 := Class_ability {
 
 heal_ability := Class_ability {
 	ability_type = .heal,
-	range = 10, // range
+	range = 4, // range
 	value = 3, // heal
 	cost = 2,
 	name = "Heal",
@@ -122,7 +60,7 @@ heal_ability := Class_ability {
 fire_flamme_ability := Class_ability {
 	ability_type = .damage,
 	value = 2, // dmg
-	range = 12, // range
+	range = 3, // range
 	cost = 4,
 	name = "Fire Flamme",
 	id = "Fire_Flamme_Ability",
@@ -130,61 +68,12 @@ fire_flamme_ability := Class_ability {
 	tags = {"elemental"}
 }
 
-ability_has_tag :: proc(ability : ^Class_ability, tag : string) -> bool {
-	for t in ability.tags {
-		if t == tag {
-			return true
-		}
-	}
-
-	return false
-}
-
-// END ABILITIES
-
-Cell :: struct {
-	x : int,
-	y : int,
-	cell_active : bool,
-	entity : ^Entity,
-	tag_to_add : [dynamic]string,
-}
-
-Compare_Cell :: proc(lhs : Cell, rhs : Cell) -> bool {
-	return lhs.x == rhs.x && lhs.y == rhs.y
-}
-
-Entity_Age :: enum {
-	baby,
-	kid,
-	teen,
-	adult,
-	senior,
-}
-
-Entity_Stats :: struct {
-	entity_age : Entity_Age,
-	max_life : int, // Vitalité, vie totale 
-	fatigue : int, // Vitalité, vie totale
-	damage : int, // Puissance d’attaque physique
-	psyche : int, // Puissance mentale/psychique 
-	speed : int, // Vitesse, initiative, esquive
-	technology : int, // Maîtrise des gadgets et objets
-	agility : int, // Chance d'esquive et dégâts sur les longue distance
-	chance : int, // Affecte légèrement toutes les actions
-}
-
 all_stats : [5]Entity_Stats = {
-	Entity_Stats { entity_age = .baby, max_life = 2, fatigue = 2, damage = 1, psyche = 3, speed = 5, technology = 2, chance = 5 },
-	Entity_Stats { entity_age = .kid, max_life = 3, fatigue = 2, damage = 2, psyche = 2, speed = 4, technology = 3, chance = 3 },
-	Entity_Stats { entity_age = .teen, max_life = 3, fatigue = 2, damage = 3, psyche = 4, speed = 3, technology = 1, chance = 1 },
-	Entity_Stats { entity_age = .adult, max_life = 4, fatigue = 2, damage = 4, psyche = 3, speed = 2, technology = 4, chance = 2 },
-	Entity_Stats { entity_age = .senior, max_life = 2, fatigue = 2, damage = 3, psyche = 5, speed = 1, technology = 3, chance = 4 },
-}
-
-Game_Step :: enum {
-	cloning,
-	battle,
+	Entity_Stats { entity_age = .baby, max_life = 1 },
+	Entity_Stats { entity_age = .kid, chance = 1 },
+	Entity_Stats { entity_age = .teen, speed = 1 },
+	Entity_Stats { entity_age = .adult, damage = 1 },
+	Entity_Stats { entity_age = .senior, psyche = 1 },
 }
 
 names := [12]string {
@@ -200,117 +89,6 @@ names := [12]string {
 	"Jacob",
 	"Mason",
 	"Robert"
-}
-
-Game_State :: struct {
-	initialized: bool,
-	entities: [MAX_ENTITIES]Entity,
-	entity_id_gen: u64,
-	entity_top_count: u64,
-	world_name: string,
-	player_handle: Entity_Handle,
-	arena: [ARENA_WIDTH * ARENA_HEIGHT]Cell,
-	clones: [4]^Entity,
-	info_entity: ^Entity,
-	want_to_move : bool,
-	want_to_attack : bool,
-	ability_1 : bool,
-	ability_2 : bool,
-	enemies : [dynamic]^Entity,
-	order : [dynamic]^Entity,
-	order_index : int,
-	ai_turn_time : f32,
-	game_step : Game_Step,
-	all_clone_created : bool,
-	all_clone_created_ready : bool,
-	possible_class : [dynamic]Class,
-	game_finished : bool,
-	gold : int,
-
-	blocked : bool,
-
-	cloning_button : Button,
-	ready_button : Button,
-	next_clone_button : Button,
-
-	move_button : Button,
-	attack_button : Button,
-	ability_button : Button,
-	ability_2_button : Button,
-}
-
-Entity :: struct {
-	allocated: bool,
-	handle: Entity_Handle,
-	kind: Entity_Kind,
-
-	// player
-	current_sprite : rl.Texture,
-	sprite : []rl.Texture,
-	sprite_dead : rl.Texture,
-	sprite_index : int,
-	sprite_time : f32,
-	position : rl.Vector2,
-	sprite_size: f32,
-	color : rl.Color,
-
-	//stats
-	entity_stats : Entity_Stats,
-
-	//details
-	current_level : int,
-	current_life : int,
-	current_endurance : int,
-	action_per_turn : int, // 1-3
-	current_stress : int,
-	movement_done : bool,
-	attack_done : bool,
-	class : Class,
-	name : string,
-	mutation : Mutation,
-	mutation_stats : Mutation_stats,
-	class_stats : Class_stats,
-
-	tags : [dynamic]string,
-
-	//effects
-	burned : bool,
-	acided : bool,
-	electrified : bool,
-	paradoxed : bool,
-	iced : bool,
-	bleed : bool,
-	stuned : bool,
-	lighted : bool,
-
-	//inventory
-	alien_objects : [2]Object,
-	zog_objects : [3]Object,
-	artefact : Object,
-
-	cell : ^Cell,
-	path : [dynamic]Check_Cell,
-	path_index : int,
-	time_to_point : f32,
-	time_to_attack : f32,
-	moving : bool,
-	attacking : bool,
-
-	target : ^Entity,
-
-	update : proc(^Entity),
-	draw: proc(^Entity),
-}
-
-Entity_Handle :: struct {
-	index: u64,
-	id: u64,
-}
-
-Entity_Kind :: enum {
-	nil,
-	player,
-	enemy,
 }
 
 fly_stats := Entity_Stats { max_life = 2, fatigue = 2, damage = 1, psyche = 3, speed = 5, technology = 2, chance = 5 }
