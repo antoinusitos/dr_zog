@@ -36,6 +36,7 @@ Class_ability :: struct {
 	id : string,
 	tags : []string,
 	add_tags : []string,
+	element_to_add : Element_Active,
 }
 
 Mutation :: enum {
@@ -83,6 +84,11 @@ Element_Active :: struct {
 	element : Element,
 	turn : int,
 	tag : string,
+}
+
+Element_Sprite :: struct {
+	element : Element,
+	sprite : rl.Texture2D
 }
 
 Cell :: struct {
@@ -168,6 +174,9 @@ Game_State :: struct {
 	possible_class : [dynamic]Class,
 	game_finished : bool,
 	gold : int,
+	turn_number : int,
+
+	damage_texts : [dynamic]Damage_Text,
 
 	blocked : bool,
 	applyed_dots : bool,
@@ -215,6 +224,7 @@ Entity :: struct {
 	class_stats : Class_stats,
 
 	tags : [dynamic]string,
+	elements : [dynamic]Element_Active,
 
 	//effects
 	burned : bool,
@@ -241,6 +251,9 @@ Entity :: struct {
 
 	target : ^Entity,
 
+	hit_state : int,
+	hit_timer : f32,
+
 	update : proc(^Entity),
 	draw: proc(^Entity),
 }
@@ -255,6 +268,16 @@ entity_has_tag :: proc(entity : ^Entity, tag : string) -> bool {
 	return false
 }
 
+entity_remove_tag :: proc(entity : ^Entity, tag : string) {
+	index := 0
+	for t in entity.tags {
+		if t == tag {
+			ordered_remove(&entity.tags, index)
+		}
+		index += 1
+	}
+}
+
 Entity_Handle :: struct {
 	index: u64,
 	id: u64,
@@ -264,4 +287,11 @@ Entity_Kind :: enum {
 	nil,
 	player,
 	enemy,
+}
+
+Damage_Text :: struct {
+	position : rl.Vector2,
+	text : string,
+	timer : f32,
+	color : rl.Color
 }

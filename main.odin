@@ -17,15 +17,6 @@ main :: proc() {
 
     camera.zoom = 2
 
-    for y in 0..<ARENA_HEIGHT{
-		for x in 0..<ARENA_WIDTH{
-			game_state.arena[y * ARENA_WIDTH + x].x = x
-			game_state.arena[y * ARENA_WIDTH + x].y = y
-		}
-	}
-
-	init_main_menu_ui()
-
 	floor_sprite = rl.LoadTexture("Floor.png")
 	bee_sprite = rl.LoadTexture("Bee.png")
 	bee_2_sprite = rl.LoadTexture("Bee_2.png")
@@ -37,6 +28,17 @@ main :: proc() {
 	old_player_sprite = rl.LoadTexture("Old_Player.png")
 
 	fire_sprite = rl.LoadTexture("Fire.png")
+
+    for y in 0..<ARENA_HEIGHT{
+		for x in 0..<ARENA_WIDTH{
+			game_state.arena[y * ARENA_WIDTH + x].x = x
+			game_state.arena[y * ARENA_WIDTH + x].y = y
+		}
+	}
+
+	init_main_menu_ui()
+
+	init_elements()
 
 	init_main_menu()
 
@@ -101,6 +103,7 @@ main :: proc() {
 	    }
 
 	    game_state.order_index = 0
+	    game_state.turn_number = 1
 		slice.sort_by(game_state.order[:], entity_order)
 		game_state.game_step = .battle
 	}
@@ -184,10 +187,34 @@ entity_destroy :: proc(entity: ^Entity) {
 }
 
 default_draw_based_on_entity_data :: proc(entity: ^Entity) {
-	rl.DrawTextureV(entity.current_sprite, {entity.position.x, -entity.position.y - 10}, entity.color)
+	col := entity.color
+	if entity.hit_state == 1 {
+		col = rl.RED
+	}
+	else if entity.hit_state == 2 {
+		col = rl.WHITE
+	}
 
-	if entity_has_tag(entity, "fire") {
-		rl.DrawTextureV(fire_sprite, {entity.position.x, -entity.position.y - 10 - 16}, rl.WHITE)
+	if entity.hit_state != 0 {
+		entity.hit_timer += rl.GetFrameTime()
+		if entity.hit_timer >= 0.1 {
+			entity.hit_timer = 0
+			entity.hit_state += 1
+			if entity.hit_state == 3 {
+				entity.hit_state = 0
+			}
+		}
+	}
+
+	rl.DrawTextureV(entity.current_sprite, {entity.position.x, -entity.position.y - 10}, col)
+
+	for e in entity.elements {
+		for &temp_e in element_sprites {
+			if temp_e.element == e.element {
+				rl.DrawTextureV(temp_e.sprite, {entity.position.x, -entity.position.y - 10 - 10}, rl.WHITE)
+				break
+			}
+		}
 	}
 }
  
@@ -219,7 +246,7 @@ setup_enemy :: proc(entity: ^Entity) {
 
 	entity.update = proc(entity: ^Entity) {
 		entity.sprite = {bee_sprite, bee_2_sprite}
-		if len(entity.sprite) > 1 {
+		if len(entity.sprite) > 1 && entity.current_life > 0 {
 			entity.sprite_time += rl.GetFrameTime()
 			if entity.sprite_time >= 0.2 {
 				entity.sprite_time = 0
@@ -290,6 +317,15 @@ init_entity :: proc(entity: ^Entity) {
 	}
 
 	resolve_stats(entity)
+}
+
+init_elements :: proc() {
+	for &e in element_sprites {
+		#partial switch e.element {
+			case .fire:
+				e.sprite = fire_sprite
+		}
+	}
 }
 
 remove_class :: proc (entity : ^Entity) {
@@ -371,10 +407,18 @@ place_entity :: proc(entity: ^Entity, x : int, y : int) {
 	for t in entity.cell.tag_to_add {
 		append(&entity.tags, t)
 	}
+	for e in entity.cell.elements {
+		if !entity_has_tag(entity, e.tag) {
+			if e.element != .none {
+				append(&entity.tags, e.tag)
+				append(&entity.elements, e)
+			}
+		}
+	}
 }
 
 all_units_have_played :: proc() {
-	
+	game_state.turn_number += 1
 }
 
 end_turn :: proc() {
@@ -399,6 +443,21 @@ end_turn :: proc() {
 				else {
 					index += 1
 				}
+			}
+		}
+	}
+
+	for &entity in game_state.entities {
+		if !entity.allocated do continue
+		index := 0
+		for &e in entity.elements {
+			e.turn -= 1
+			if e.turn <= 0 {
+				ordered_remove(&entity.elements, index)
+				entity_remove_tag(&entity, e.tag)
+			}
+			else {
+				index += 1
 			}
 		}
 	}
@@ -470,6 +529,8 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 	}
 
 	damaged_entity.current_life -= attacking_entity.entity_stats.damage
+	append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.entity_stats.damage)), position = {damaged_entity.position.x + 16, -damaged_entity.position.y - 20}, color = rl.RED})
+	damaged_entity.hit_state = 1
 	if damaged_entity.current_life <= 0 {
 		if damaged_entity.kind == .enemy {
 			damaged_entity.current_sprite = bee_dead_sprite
@@ -507,17 +568,17 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 				if attacking_entity.current_endurance <= 0 {
 					game_state.ability_button.disabled = true
 				}
-				for t in attacking_entity.class_stats.ability[index].add_tags {
-					append(&damaged_cell.tags, t)
-					if t == "fire" {
-						append(&damaged_cell.elements, Element_Active{element = .fire, turn = 6, tag = t})
-					}
+				if attacking_entity.class_stats.ability[index].element_to_add.element != .none {
+					append(&damaged_cell.tags, attacking_entity.class_stats.ability[index].element_to_add.tag)
+					append(&damaged_cell.elements, attacking_entity.class_stats.ability[index].element_to_add)
 				}
 				game_state.ability_1 = false
 				reset_active_cells()
 				return
 			}
 			damaged_cell.entity.current_life -= attacking_entity.class_stats.ability[index].value
+			damaged_cell.entity.hit_state = 1
+			append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.class_stats.ability[index].value)), position = {damaged_cell.entity.position.x + 16, -damaged_cell.entity.position.y - 20}, color = rl.RED})
 			if damaged_cell.entity.current_life <= 0 {
 				if damaged_cell.entity.kind == .enemy {
 					damaged_cell.entity.current_sprite = bee_dead_sprite
@@ -525,6 +586,10 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 			}
 			for t in attacking_entity.class_stats.ability[index].add_tags {
 				append(&damaged_cell.entity.tags, t)
+			}
+			if attacking_entity.class_stats.ability[index].element_to_add.element != .none {
+				append(&damaged_cell.entity.tags, attacking_entity.class_stats.ability[index].element_to_add.tag)
+				append(&damaged_cell.entity.elements, attacking_entity.class_stats.ability[index].element_to_add)
 			}
 			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
 			if attacking_entity.current_endurance <= 0 {
@@ -555,6 +620,7 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 				reset_active_cells()
 				return
 			}
+			append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.class_stats.ability[index].value)), position = {damaged_cell.entity.position.x + 16, -damaged_cell.entity.position.y - 20}, color = rl.GREEN})
 			damaged_cell.entity.current_life += attacking_entity.class_stats.ability[index].value
 			for t in attacking_entity.class_stats.ability[index].add_tags {
 				append(&damaged_cell.entity.tags, t)
@@ -1161,6 +1227,8 @@ draw_main_menu :: proc() {
 			    game_state.order_index = 0
 				slice.sort_by(game_state.order[:], entity_order)
 				game_state.game_step = .battle
+
+				game_state.turn_number = 1
 			}
 		}
 
@@ -1259,13 +1327,34 @@ draw_battle :: proc() {
 			}
 			rl.DrawTextureV(floor_sprite, {f32(OFFSET_X + x * SPRITE_SIZE), f32(OFFSET_Y + y * SPRITE_SIZE)}, col)
 
-			if cell_has_tag(&game_state.arena[y * ARENA_WIDTH + x], "fire") {
-				rl.DrawTextureV(fire_sprite, {f32(OFFSET_X + x * SPRITE_SIZE) + 8, f32(OFFSET_Y + y * SPRITE_SIZE) + 8}, rl.WHITE)
+			for &e in game_state.arena[y * ARENA_WIDTH + x].elements {
+				for &temp_e in element_sprites {
+					if temp_e.element == e.element {
+						rl.DrawTextureV(temp_e.sprite, {f32(OFFSET_X + x * SPRITE_SIZE) + 8, f32(OFFSET_Y + y * SPRITE_SIZE) + 8}, rl.WHITE)
+						break
+					}
+				}
 			}
 
 			if game_state.arena[y * ARENA_WIDTH + x].entity != nil {
 				game_state.arena[y * ARENA_WIDTH + x].entity.draw(game_state.arena[y * ARENA_WIDTH + x].entity)
 			}
+		}
+	}
+
+	index := 0
+	for &dt in game_state.damage_texts {
+		dt.color = dt.color
+		dt.timer += rl.GetFrameTime()
+		lerp := math.lerp(f32(255), f32(0), dt.timer)
+		dt.color.a = u8(lerp)
+		dt.position.y -= rl.GetFrameTime() * 10
+		rl.DrawText(fmt.ctprint(dt.text), i32(dt.position.x), i32(dt.position.y), 20, dt.color)
+		if dt.timer >= 0.5 {
+			ordered_remove(&game_state.damage_texts, index)
+		}
+		else {
+			index += 1
 		}
 	}
 
@@ -1323,7 +1412,7 @@ draw_battle :: proc() {
 	}
 
 	x_offset := 0
-	index := 0
+	index = 0
 	for &e in game_state.order {
 		rl.DrawTexturePro(e.current_sprite, rl.Rectangle{0, 0, 32, 32}, rl.Rectangle{f32(1500 + x_offset), 5, 32, 32}, {0, 0}, 0, e.color)
 		if index == game_state.order_index {
@@ -1335,7 +1424,7 @@ draw_battle :: proc() {
 
 	if game_state.order[game_state.order_index].kind == .player {
 
-		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "End Turn") && !game_state.game_finished {
+		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "End Turn") && !game_state.game_finished && !game_state.blocked {
 			end_turn()
 		}
 

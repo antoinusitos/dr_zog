@@ -64,7 +64,7 @@ fire_flamme_ability := Class_ability {
 	cost = 4,
 	name = "Fire Flamme",
 	id = "Fire_Flamme_Ability",
-	add_tags = {"fire"},
+	element_to_add = fire_element,
 	tags = {"elemental"}
 }
 
@@ -75,6 +75,12 @@ all_stats : [5]Entity_Stats = {
 	Entity_Stats { entity_age = .adult, damage = 1 },
 	Entity_Stats { entity_age = .senior, psyche = 1 },
 }
+
+element_sprites := []Element_Sprite {
+	{element = .fire}
+}
+
+fire_element := Element_Active {tag = "fire", turn = 4, element = .fire}
 
 names := [12]string {
 	"Oliver",
