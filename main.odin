@@ -730,7 +730,7 @@ update_battle :: proc() {
 			y := game_state.order[game_state.order_index].cell.y
 			target := game_state.order[game_state.order_index].target
 			attack_size := 3
-			movement := get_movement_cells(x, y, attack_size, false)
+			movement := get_movement_cells(x, y, attack_size, false, false)
 
 			target = game_state.clones[0]
 			dist := distance({f32(x), f32(y)}, {f32(target.cell.x), f32(target.cell.y)})
@@ -805,7 +805,7 @@ update_battle :: proc() {
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
 		movement_size := game_state.order[game_state.order_index].entity_stats.speed
-		movement := get_movement_cells(x, y, movement_size, false)
+		movement := get_movement_cells(x, y, movement_size, false, false)
 
 		for &move in movement {
 			game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -815,7 +815,7 @@ update_battle :: proc() {
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
 		attack_size := game_state.order[game_state.order_index].class_stats.attack_size
-		movement := get_movement_cells(x, y, attack_size, true)
+		movement := get_movement_cells(x, y, attack_size, true, false)
 
 		for &move in movement {
 			game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -829,7 +829,7 @@ update_battle :: proc() {
 				x := game_state.order[game_state.order_index].cell.x
 				y := game_state.order[game_state.order_index].cell.y
 				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].range
-				movement := get_movement_cells(x, y, attack_size, true)
+				movement := get_movement_cells(x, y, attack_size, true, false)
 
 				for &move in movement {
 					game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -841,7 +841,7 @@ update_battle :: proc() {
 				x := game_state.order[game_state.order_index].cell.x
 				y := game_state.order[game_state.order_index].cell.y
 				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].range
-				movement := get_movement_cells(x, y, attack_size, false)
+				movement := get_movement_cells(x, y, attack_size, false, false)
 
 				for &move in movement {
 					game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -853,7 +853,7 @@ update_battle :: proc() {
 				x := game_state.order[game_state.order_index].cell.x
 				y := game_state.order[game_state.order_index].cell.y
 				attack_size := game_state.order[game_state.order_index].class_stats.ability[0].range
-				movement := get_movement_cells(x, y, attack_size, true)
+				movement := get_movement_cells(x, y, attack_size, true, true)
 
 				for &move in movement {
 					game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -1032,7 +1032,7 @@ init_main_menu_ui :: proc() {
 			y := game_state.order[game_state.order_index].cell.y
 			movement_size := game_state.order[game_state.order_index].entity_stats.speed
 
-			movement := get_movement_cells(x, y, movement_size, false)
+			movement := get_movement_cells(x, y, movement_size, false, false)
 
 			pulled_movement = true
 
@@ -1085,7 +1085,7 @@ init_main_menu_ui :: proc() {
 			x := game_state.order[game_state.order_index].cell.x
 			y := game_state.order[game_state.order_index].cell.y
 			attack_size := game_state.order[game_state.order_index].class_stats.attack_size
-			movement := get_movement_cells(x, y, attack_size, true)
+			movement := get_movement_cells(x, y, attack_size, true, false)
 
 			for &move in movement {
 				game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -1137,7 +1137,7 @@ init_main_menu_ui :: proc() {
 					x := game_state.order[game_state.order_index].cell.x
 					y := game_state.order[game_state.order_index].cell.y
 					attack_size := a.range
-					movement := get_movement_cells(x, y, attack_size, true)
+					movement := get_movement_cells(x, y, attack_size, true, false)
 
 					for &move in movement {
 						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -1149,7 +1149,7 @@ init_main_menu_ui :: proc() {
 					x := game_state.order[game_state.order_index].cell.x
 					y := game_state.order[game_state.order_index].cell.y
 					attack_size := a.range
-					movement := get_movement_cells(x, y, attack_size, false)
+					movement := get_movement_cells(x, y, attack_size, false, false)
 
 					for &move in movement {
 						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
@@ -1161,7 +1161,7 @@ init_main_menu_ui :: proc() {
 					x := game_state.order[game_state.order_index].cell.x
 					y := game_state.order[game_state.order_index].cell.y
 					attack_size := a.range
-					movement := get_movement_cells(x, y, attack_size, true)
+					movement := get_movement_cells(x, y, attack_size, true, true)
 
 					for &move in movement {
 						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true

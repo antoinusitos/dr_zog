@@ -455,13 +455,17 @@ Movement_Cell :: struct {
 	range : int,
 }
 
-get_movement_cells :: proc(x_start : int, y_start : int, max : int, can_go_through : bool) -> [dynamic]Cell {
+get_movement_cells :: proc(x_start : int, y_start : int, max : int, can_go_through : bool, including_self : bool) -> [dynamic]Cell {
 	clear(&movement_cells)
 	clear(&movement_cells_to_check)
 	clear(&movement_cells_checked)
 
 	start_cell := Movement_Cell {range = 0, cell = game_state.arena[y_start * ARENA_WIDTH + x_start]}
 	append(&movement_cells_to_check, start_cell)
+
+	if including_self {
+		append(&movement_cells, start_cell.cell)
+	}
 
 	for len(movement_cells_to_check) > 0 {
 		current := movement_cells_to_check[0]
