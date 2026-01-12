@@ -1,3 +1,6 @@
 todo :
 
-- Allow healer to heal himslef
+- reroll shop to give you character level 1
+- 3d view
+- shop
+- events
