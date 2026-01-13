@@ -44,6 +44,8 @@ main :: proc() {
 
 	init_main_menu()
 
+	init_map()
+
 	if quick_test {
 		for i in 0..<4 {
 			index := 0
@@ -81,7 +83,7 @@ main :: proc() {
 	    place_entity(game_state.clones[2], 2, 0)
 	    place_entity(game_state.clones[3], 3, 0)
 
-	    for e in 0..<1 {//3 {
+	    for e in 0..<3 {
 	    	enemy := entity_create(.enemy)
 		    enemy.entity_stats = fly_stats
 		    if e == 0 {
@@ -329,6 +331,52 @@ init_elements :: proc() {
 			case .fire:
 				e.sprite = fire_sprite
 		}
+	}
+}
+
+init_map :: proc() {
+	append(&game_state.map_elements, Map_Point { type = .home, done = true})
+	append(&game_state.map_elements, Map_Point { type = .battle})
+
+	index := 0
+	for &e in game_state.map_elements {
+		button := Button {
+			x = WINDOW_WIDTH / 2 - 75,
+			y = f32(200 + 150 * index),
+			width = 150,
+			height = 50,
+			background_color = rl.RED,
+			hover_color = rl.YELLOW,
+			clicked_color = rl.GREEN,
+			disabled_color = rl.GRAY,
+			text = string(fmt.ctprint(e.type)),
+			fill_percent = 0,
+			fill_max = 1.0,
+			text_size = 20,
+			text_offset = {40, 15}
+		}
+		append(&game_state.map_buttons, button)
+		setup_one_button(&game_state.map_buttons[index])
+		if e.done {
+			game_state.map_buttons[index].disabled = true
+		}
+		switch e.type {
+			case .home: {
+				
+			}
+			case .battle: {
+				game_state.map_buttons[index].on_click = proc(button : ^Button) {
+					game_state.game_step = .battle
+				}
+			}
+			case .event: {
+				
+			}
+			case .shop: {
+				
+			}
+		}
+		index += 1
 	}
 }
 
@@ -639,9 +687,11 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 }
 
 update :: proc() {
-	switch game_state.game_step {
+	#partial switch game_state.game_step {
 		case .cloning:
 			update_main_menu()
+		case .mapping:
+			update_map()
 		case .battle:
 			update_battle()
 	}
@@ -676,6 +726,13 @@ update_main_menu :: proc() {
 		else {
 			game_state.cloning_button.update(&game_state.cloning_button)
 		}
+	}
+}
+
+update_map :: proc() {
+	index := 0
+	for &e in game_state.map_buttons {
+		e.update(&e)
 	}
 }
 
@@ -1050,11 +1107,11 @@ init_main_menu_ui :: proc() {
 		hover_color = rl.YELLOW,
 		clicked_color = rl.GREEN,
 		disabled_color = rl.GRAY,
-		text = "Start Battle",
+		text = "To Space Map",
 		fill_percent = 0,
 		fill_max = 1.0,
 		text_size = 20,
-		text_offset = {20, 15}
+		text_offset = {5, 15}
 	}
 	setup_one_button(&game_state.start_battle_button)
 	game_state.start_battle_button.on_click = proc(button : ^Button) {
@@ -1089,7 +1146,7 @@ init_main_menu_ui :: proc() {
 
 	    game_state.order_index = 0
 		slice.sort_by(game_state.order[:], entity_order)
-		game_state.game_step = .battle
+		game_state.game_step = .mapping
 
 		game_state.turn_number = 1
 	}
@@ -1411,9 +1468,11 @@ init_main_menu_ui :: proc() {
 }
 
 draw :: proc() {
-	switch game_state.game_step {
+	#partial switch game_state.game_step {
 		case .cloning:
 			draw_main_menu()
+		case .mapping:
+			draw_map()
 		case .battle:
 			draw_battle()
 	}
@@ -1519,6 +1578,15 @@ draw_main_menu :: proc() {
 			rl.DrawText(fmt.ctprint(c.name), i32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16) + 32), WINDOW_HEIGHT / 2 + 175, 30, rl.WHITE)
 			offset_clone_x += 1
 		}
+	}
+}
+
+draw_map :: proc() {
+	rl.DrawText(fmt.ctprint("World Map"), WINDOW_WIDTH / 2 - 100, 20, 50, rl.WHITE)
+
+	index := 0
+	for &e in game_state.map_buttons {
+		e.draw(&e)
 	}
 }
 

@@ -75,6 +75,18 @@ ability_has_tag :: proc(ability : ^Class_ability, tag : string) -> bool {
 	return false
 }
 
+Map_Point_Type :: enum {
+	home,
+	battle,
+	event,
+	shop
+}
+
+Map_Point :: struct {
+	type : Map_Point_Type,
+	done : bool,
+}
+
 Element :: enum {
 	none,
 	fire
@@ -147,6 +159,7 @@ Entity_Stats :: struct {
 
 Game_Step :: enum {
 	cloning,
+	mapping,
 	battle,
 }
 
@@ -197,6 +210,9 @@ Game_State :: struct {
 	ability_2_button : Button,
 	end_combat_button : Button,
 	end_turn_button : Button,
+
+	map_elements : [dynamic]Map_Point,
+	map_buttons : [dynamic]Button,
 }
 
 Entity :: struct {
