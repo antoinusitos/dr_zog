@@ -34,9 +34,13 @@ Button :: struct {
 	text_size : i32,
 	text_offset : rl.Vector2,
 
+	// Class Buttons
+	class : Class,
+	index : int,
+
 	update : proc(^Button),
 	draw : proc(^Button),
-	on_click : proc(^Button),
+	on_click : proc(button : ^Button),
 	on_down : proc(^Button),
 	on_release : proc(^Button),
 	on_filled : proc(^Button),
@@ -47,6 +51,11 @@ Button :: struct {
 setup_one_button :: proc(button : ^Button) {
 	button.button_type = .once
 	button.update = proc(button : ^Button) {
+		if button.disabled {
+			button.is_clicked = false
+			return
+		}
+
 		mouse_pos := rl.GetMousePosition()
 
 		if mouse_pos.x >= button.x && mouse_pos.x <= button.x + button.width &&
@@ -64,6 +73,13 @@ setup_one_button :: proc(button : ^Button) {
 				}
 		}
 		else {
+			if rl.IsMouseButtonReleased(.LEFT) {
+				if button.is_clicked {
+					button.on_release(button)
+				}
+				button.is_clicked = false
+			}
+
 			if button.is_hover {
 				button.on_exit(button)
 			}

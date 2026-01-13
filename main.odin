@@ -9,7 +9,7 @@ import rl "vendor:raylib"
 import "core:strings"
 import "core:strconv"
 
-quick_test := true
+quick_test := false
 
 main :: proc() {
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Dr_Zog")
@@ -81,7 +81,7 @@ main :: proc() {
 	    place_entity(game_state.clones[2], 2, 0)
 	    place_entity(game_state.clones[3], 3, 0)
 
-	    for e in 0..<3 {
+	    for e in 0..<1 {//3 {
 	    	enemy := entity_create(.enemy)
 		    enemy.entity_stats = fly_stats
 		    if e == 0 {
@@ -558,8 +558,6 @@ check_all_dead :: proc() {
 
 	if all_dead {
 		game_state.game_finished = true
-		game_state.game_step = .cloning
-		// return to main menu
 	}
 }
 
@@ -641,7 +639,6 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 }
 
 update :: proc() {
-	
 	switch game_state.game_step {
 		case .cloning:
 			update_main_menu()
@@ -652,7 +649,25 @@ update :: proc() {
 
 update_main_menu :: proc() {
 	if game_state.all_clone_created_ready {
+		if len(game_state.possible_class) == 0 {
+			game_state.start_battle_button.update(&game_state.start_battle_button)
+		}
+
 		game_state.next_clone_button.update(&game_state.next_clone_button)
+
+		if game_state.clones[game_state.order_index].class != .none {
+			game_state.remove_class_button.disabled = false	
+		}
+		else
+		{
+			game_state.remove_class_button.disabled = true
+		}
+		game_state.remove_class_button.update(&game_state.remove_class_button)
+
+		game_state.class_1_button.update(&game_state.class_1_button)
+		game_state.class_2_button.update(&game_state.class_2_button)
+		game_state.class_3_button.update(&game_state.class_3_button)
+		game_state.class_4_button.update(&game_state.class_4_button)
 	}
 	else {
 		if game_state.all_clone_created && !game_state.all_clone_created_ready {
@@ -672,6 +687,7 @@ update_battle :: proc() {
 		entity.update(&entity)
 
 		if entity.moving {
+			game_state.end_turn_button.disabled = true
 			if entity.time_to_point >= 0.25 {
 				place_entity(&entity, entity.path[entity.path_index].cell.x, entity.path[entity.path_index].cell.y)
 				entity.time_to_point = 0
@@ -689,6 +705,7 @@ update_battle :: proc() {
 			}
 		}
 		else if entity.attacking {
+			game_state.end_turn_button.disabled = true
 			if entity.kind == .enemy {
 				if entity.time_to_attack < 0.5 {
 					entity.time_to_attack += rl.GetFrameTime()
@@ -702,9 +719,13 @@ update_battle :: proc() {
 				}
 			}
 		}
+		else {
+			game_state.end_turn_button.disabled = false
+		}
 	}
 
 	if game_state.game_finished {
+		game_state.end_combat_button.update(&game_state.end_combat_button)
 		return
 	}
 
@@ -723,6 +744,8 @@ update_battle :: proc() {
 			}
 		}
 	}
+
+	game_state.end_turn_button.update(&game_state.end_turn_button)
 
 	if game_state.order[game_state.order_index].kind != .player {
 		if game_state.order[game_state.order_index].current_life <= 0 {
@@ -997,6 +1020,160 @@ init_main_menu_ui :: proc() {
 		}
 	}
 
+	game_state.remove_class_button = Button{
+		x = 160,
+		y = 250,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Remove Class",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {20, 15}
+	}
+	setup_one_button(&game_state.remove_class_button)
+	game_state.remove_class_button.on_click = proc(button : ^Button) {
+		append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
+		remove_class(game_state.clones[game_state.order_index])
+	}
+
+	game_state.start_battle_button = Button {
+		x = WINDOW_WIDTH / 2,
+		y = WINDOW_HEIGHT / 2 - 200,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start Battle",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {20, 15}
+	}
+	setup_one_button(&game_state.start_battle_button)
+	game_state.start_battle_button.on_click = proc(button : ^Button) {
+		place_entity(game_state.clones[0], 0, 0)
+	    place_entity(game_state.clones[1], 1, 0)
+	    place_entity(game_state.clones[2], 2, 0)
+	    place_entity(game_state.clones[3], 3, 0)
+
+	    enemy := entity_create(.enemy)
+	    enemy.entity_stats = fly_stats
+	    enemy.name = "ass"
+	    init_entity(enemy)
+	    append(&game_state.enemies, enemy)
+	    place_entity(enemy, 9, 9)
+		enemy = entity_create(.enemy)
+	    enemy.entity_stats = fly_stats
+	    enemy.name = "mother fucker"
+	    init_entity(enemy)
+	    append(&game_state.enemies, enemy)
+	    place_entity(enemy, 8, 9)
+	    enemy = entity_create(.enemy)
+	    enemy.entity_stats = fly_stats
+	    enemy.name = "dummy"
+	    init_entity(enemy)
+	    place_entity(enemy, 7, 9)
+	    append(&game_state.enemies, enemy)
+
+	    for &e in game_state.entities {
+	    	if !e.allocated do continue
+	    	append(&game_state.order, &e)
+	    }
+
+	    game_state.order_index = 0
+		slice.sort_by(game_state.order[:], entity_order)
+		game_state.game_step = .battle
+
+		game_state.turn_number = 1
+	}
+
+	game_state.class_1_button = Button {
+		x = 300,
+		y = 50,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15}
+	}
+	setup_one_button(&game_state.class_1_button)
+	game_state.class_1_button.on_click = proc(button : ^Button) {
+		
+	}
+
+	game_state.class_2_button = Button {
+		x = 300,
+		y = 50,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15}
+	}
+	setup_one_button(&game_state.class_2_button)
+	game_state.class_2_button.on_click = proc(button : ^Button) {
+		
+	}
+
+	game_state.class_3_button = Button {
+		x = 300,
+		y = 50,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15}
+	}
+	setup_one_button(&game_state.class_3_button)
+	game_state.class_3_button.on_click = proc(button : ^Button) {
+		
+	}
+
+	game_state.class_4_button = Button {
+		x = 300,
+		y = 50,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15}
+	}
+	setup_one_button(&game_state.class_4_button)
+	game_state.class_4_button.on_click = proc(button : ^Button) {
+		
+	}
+
 	// BATTLE
 
 	game_state.move_button = Button{
@@ -1180,6 +1357,57 @@ init_main_menu_ui :: proc() {
 		}
 		pulled_ability = false
 	}
+
+	game_state.end_combat_button = Button{
+		x = WINDOW_WIDTH / 2 - 25,
+		y = WINDOW_HEIGHT / 2 + 100,
+		width = 150,
+		height = 75,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "End Combat",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {7, 15}
+	}
+	setup_one_button(&game_state.end_combat_button)
+	game_state.end_combat_button.on_click = proc(button : ^Button) {
+		game_state.game_step = .cloning
+
+		game_state.all_clone_created_ready = true
+		game_state.all_clone_created = true
+
+		for &e in game_state.enemies {
+			entity_destroy(e)
+		}
+		clear(&game_state.enemies)
+		game_state.order_index = 0
+		game_state.gold += 10
+		init_main_menu()
+	}
+
+	game_state.end_turn_button = Button{
+		x = WINDOW_WIDTH - 150,
+		y = 0,
+		width = 150,
+		height = 75,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "End Turn",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {20, 25}
+	}
+	setup_one_button(&game_state.end_turn_button)
+	game_state.end_turn_button.on_click = proc(button : ^Button) {
+		end_turn()
+	}
 }
 
 draw :: proc() {
@@ -1198,42 +1426,7 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("Gold : ", game_state.gold, sep = ""), WINDOW_WIDTH - 100, 10, 20, rl.WHITE)
 
 		if len(game_state.possible_class) == 0 {
-			if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 200, 150, 50}, "Start Battle") {
-				place_entity(game_state.clones[0], 0, 0)
-			    place_entity(game_state.clones[1], 1, 0)
-			    place_entity(game_state.clones[2], 2, 0)
-			    place_entity(game_state.clones[3], 3, 0)
-
-			    enemy := entity_create(.enemy)
-			    enemy.entity_stats = fly_stats
-			    enemy.name = "ass"
-			    init_entity(enemy)
-			    append(&game_state.enemies, enemy)
-			    place_entity(enemy, 9, 9)
-				enemy = entity_create(.enemy)
-			    enemy.entity_stats = fly_stats
-			    enemy.name = "mother fucker"
-			    init_entity(enemy)
-			    append(&game_state.enemies, enemy)
-			    place_entity(enemy, 8, 9)
-			    enemy = entity_create(.enemy)
-			    enemy.entity_stats = fly_stats
-			    enemy.name = "dummy"
-			    init_entity(enemy)
-			    place_entity(enemy, 7, 9)
-			    append(&game_state.enemies, enemy)
-
-			    for &e in game_state.entities {
-			    	if !e.allocated do continue
-			    	append(&game_state.order, &e)
-			    }
-
-			    game_state.order_index = 0
-				slice.sort_by(game_state.order[:], entity_order)
-				game_state.game_step = .battle
-
-				game_state.turn_number = 1
-			}
+			game_state.start_battle_button.draw(&game_state.start_battle_button)
 		}
 
 		game_state.next_clone_button.draw(&game_state.next_clone_button)
@@ -1245,28 +1438,40 @@ draw_main_menu :: proc() {
 		    init_entity(game_state.clones[game_state.order_index])
 		}*/
 
-		if game_state.clones[game_state.order_index].class != .none {
-			if rl.GuiButton(rl.Rectangle{160, 250, 150, 50}, "Remove Class") {
-				append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
-				remove_class(game_state.clones[game_state.order_index])
-			}
-		}
+		game_state.remove_class_button.draw(&game_state.remove_class_button)
 
 		rl.DrawText(fmt.ctprint("Assign a class to each clone"), WINDOW_WIDTH / 2 - 150, 20, 20, rl.WHITE)
 
 		offset_class_x := 0
 		index := 0
 		for c in game_state.possible_class {
-			if rl.GuiButton(rl.Rectangle{f32(300 + offset_class_x), 50, 150, 50}, fmt.ctprint(c)) {
+			button : ^Button
+			if index == 0 {
+				button = &game_state.class_1_button
+			}
+			else if index == 1 {
+				button = &game_state.class_2_button
+			}
+			else if index == 2 {
+				button = &game_state.class_3_button
+			}
+			else if index == 3 {
+				button = &game_state.class_4_button
+			}
+			button.x = f32(400 + offset_class_x)
+			button.text = string(fmt.ctprint(c))
+			button.class = c
+			button.index = index
+			button.on_click = proc(button : ^Button) {
 				if game_state.clones[game_state.order_index].class != .none {
 					append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
 					remove_class(game_state.clones[game_state.order_index])
 				}
-				game_state.clones[game_state.order_index].class = c
+				game_state.clones[game_state.order_index].class = button.class
 				apply_class(game_state.clones[game_state.order_index])
-				ordered_remove(&game_state.possible_class, index)
-
+				ordered_remove(&game_state.possible_class, button.index)
 			}
+			button.draw(button)
 			index += 1
 			offset_class_x += 160
 		}
@@ -1330,19 +1535,6 @@ draw_battle :: proc() {
 				col = rl.GREEN
 			}
 			rl.DrawTextureV(floor_sprite, {f32(OFFSET_X + x * SPRITE_SIZE), f32(OFFSET_Y + y * SPRITE_SIZE)}, col)
-
-			/*for &e in game_state.arena[y * ARENA_WIDTH + x].elements {
-				for &temp_e in element_sprites {
-					if temp_e.element == e.element {
-						rl.DrawTextureV(temp_e.sprite, {f32(OFFSET_X + x * SPRITE_SIZE) + 8, f32(OFFSET_Y + y * SPRITE_SIZE) + 8}, rl.WHITE)
-						break
-					}
-				}
-			}
-
-			if game_state.arena[y * ARENA_WIDTH + x].entity != nil {
-				game_state.arena[y * ARENA_WIDTH + x].entity.draw(game_state.arena[y * ARENA_WIDTH + x].entity)
-			}*/
 		}
 	}
 
@@ -1447,9 +1639,7 @@ draw_battle :: proc() {
 
 	if game_state.order[game_state.order_index].kind == .player {
 
-		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH - 150, 0, 150, 50}, "End Turn") && !game_state.game_finished && !game_state.blocked {
-			end_turn()
-		}
+		game_state.end_turn_button.draw(&game_state.end_turn_button)
 
 		move_text := fmt.ctprint("Move\n(", game_state.order[game_state.order_index].entity_stats.speed, ")", sep = "")
 		game_state.move_button.text = string(move_text)
@@ -1488,22 +1678,7 @@ draw_battle :: proc() {
 		rl.DrawText(fmt.ctprint("YOU WIN !"), WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT / 2 - 150, 50, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Rewards : "), WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT / 2 - 100, 40, rl.WHITE)
 		rl.DrawText(fmt.ctprint("10 interstellar coins "), WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT / 2 - 50, 25, rl.WHITE)
-		if rl.GuiButton(rl.Rectangle{WINDOW_WIDTH / 2 - 25, WINDOW_HEIGHT / 2 + 100, 150, 50}, "End Combat") {
-			game_state.game_step = .cloning
-			for &c in game_state.clones {
-				entity_destroy(c)
-				c = nil
-			}
-			for &e in game_state.enemies {
-				entity_destroy(e)
-			}
-			clear(&game_state.enemies)
-			game_state.order_index = 0
-			game_state.all_clone_created = false
-			game_state.all_clone_created_ready = false
-			game_state.gold += 10
-			init_main_menu()
-		}
+		game_state.end_combat_button.draw(&game_state.end_combat_button)
 	}
 }
 

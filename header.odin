@@ -184,11 +184,19 @@ Game_State :: struct {
 	cloning_button : Button,
 	ready_button : Button,
 	next_clone_button : Button,
+	start_battle_button : Button,
+	remove_class_button : Button,
+	class_1_button : Button,
+	class_2_button : Button,
+	class_3_button : Button,
+	class_4_button : Button,
 
 	move_button : Button,
 	attack_button : Button,
 	ability_button : Button,
 	ability_2_button : Button,
+	end_combat_button : Button,
+	end_turn_button : Button,
 }
 
 Entity :: struct {
