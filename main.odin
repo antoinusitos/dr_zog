@@ -29,6 +29,8 @@ main :: proc() {
 
 	fire_sprite = rl.LoadTexture("Fire.png")
 
+	hover_cell_sprite = rl.LoadTexture("Hover_Cell.png")
+
     for y in 0..<ARENA_HEIGHT{
 		for x in 0..<ARENA_WIDTH{
 			game_state.arena[y * ARENA_WIDTH + x].x = x
@@ -142,6 +144,8 @@ player_sprite : rl.Texture2D
 old_player_sprite : rl.Texture2D
 
 fire_sprite : rl.Texture2D
+
+hover_cell_sprite : rl.Texture2D
 
 pulled_movement : bool
 pulled_attack : bool
@@ -1327,6 +1331,25 @@ draw_battle :: proc() {
 			}
 			rl.DrawTextureV(floor_sprite, {f32(OFFSET_X + x * SPRITE_SIZE), f32(OFFSET_Y + y * SPRITE_SIZE)}, col)
 
+			/*for &e in game_state.arena[y * ARENA_WIDTH + x].elements {
+				for &temp_e in element_sprites {
+					if temp_e.element == e.element {
+						rl.DrawTextureV(temp_e.sprite, {f32(OFFSET_X + x * SPRITE_SIZE) + 8, f32(OFFSET_Y + y * SPRITE_SIZE) + 8}, rl.WHITE)
+						break
+					}
+				}
+			}
+
+			if game_state.arena[y * ARENA_WIDTH + x].entity != nil {
+				game_state.arena[y * ARENA_WIDTH + x].entity.draw(game_state.arena[y * ARENA_WIDTH + x].entity)
+			}*/
+		}
+	}
+
+	check_mouse_hover_cell()
+
+	for y in 0..<ARENA_HEIGHT{
+		for x in 0..<ARENA_WIDTH{
 			for &e in game_state.arena[y * ARENA_WIDTH + x].elements {
 				for &temp_e in element_sprites {
 					if temp_e.element == e.element {
@@ -1451,7 +1474,7 @@ draw_battle :: proc() {
 				}
 				game_state.ability_button.text = string(ability_text)
 				game_state.ability_button.x = f32(320 + offset_ability)
-				if game_state.order[game_state.order_index].current_endurance <= 0 {
+				if a.cost > game_state.order[game_state.order_index].current_endurance {
 					game_state.ability_button.disabled = true
 				}
 				game_state.ability_button.draw(&game_state.ability_button)
@@ -1482,4 +1505,18 @@ draw_battle :: proc() {
 			init_main_menu()
 		}
 	}
+}
+
+check_mouse_hover_cell :: proc() {
+	mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
+	x := int(math.ceil_f32(mouse_pos.x / (SPRITE_SIZE * camera.zoom))) - 4
+	y := int(math.ceil_f32(mouse_pos.y / (SPRITE_SIZE * camera.zoom))) - 4
+	if x >= ARENA_WIDTH || x < 0 {
+		return
+	}
+	if y >= ARENA_HEIGHT || y < 0 {
+		return
+	}
+
+	rl.DrawTextureV(hover_cell_sprite, {f32(OFFSET_X + x * SPRITE_SIZE), f32(OFFSET_Y + y * SPRITE_SIZE)}, rl.RED)
 }
