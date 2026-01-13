@@ -213,6 +213,7 @@ Game_State :: struct {
 
 	map_elements : [dynamic]Map_Point,
 	map_buttons : [dynamic]Button,
+	current_map_point : int,
 }
 
 Entity :: struct {

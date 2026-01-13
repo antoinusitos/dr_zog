@@ -5,6 +5,7 @@ todo :
 - shop
 - events
 - map
+- leveling
 
 
 

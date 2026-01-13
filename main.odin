@@ -337,6 +337,9 @@ init_elements :: proc() {
 init_map :: proc() {
 	append(&game_state.map_elements, Map_Point { type = .home, done = true})
 	append(&game_state.map_elements, Map_Point { type = .battle})
+	append(&game_state.map_elements, Map_Point { type = .battle})
+
+	game_state.current_map_point = 1
 
 	index := 0
 	for &e in game_state.map_elements {
@@ -357,7 +360,7 @@ init_map :: proc() {
 		}
 		append(&game_state.map_buttons, button)
 		setup_one_button(&game_state.map_buttons[index])
-		if e.done {
+		if e.done || index != game_state.current_map_point {
 			game_state.map_buttons[index].disabled = true
 		}
 		switch e.type {
@@ -606,6 +609,7 @@ check_all_dead :: proc() {
 
 	if all_dead {
 		game_state.game_finished = true
+		game_state.current_map_point += 1
 	}
 }
 
