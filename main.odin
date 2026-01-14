@@ -370,6 +370,8 @@ init_map :: proc() {
 			case .battle: {
 				game_state.map_buttons[index].on_click = proc(button : ^Button) {
 					game_state.game_step = .battle
+					game_state.map_elements[game_state.current_map_point].done = true
+					game_state.current_map_point += 1
 				}
 			}
 			case .event: {
@@ -531,7 +533,7 @@ init_main_menu :: proc() {
 	game_state.game_step = .cloning
 
 	append(&game_state.possible_class, Class.tank)
-	append(&game_state.possible_class, Class.tech)
+	append(&game_state.possible_class, Class.spirit)
 	append(&game_state.possible_class, Class.warrior)
 	append(&game_state.possible_class, Class.healer)
 }
@@ -609,7 +611,6 @@ check_all_dead :: proc() {
 
 	if all_dead {
 		game_state.game_finished = true
-		game_state.current_map_point += 1
 	}
 }
 
@@ -734,7 +735,36 @@ update_main_menu :: proc() {
 }
 
 update_map :: proc() {
+	//index := 0
 	index := 0
+	for &e in game_state.map_elements {
+		if e.done || index != game_state.current_map_point {
+			game_state.map_buttons[index].disabled = true
+		}
+		else {
+			game_state.map_buttons[index].disabled = false
+		}
+		switch e.type {
+			case .home: {
+				
+			}
+			case .battle: {
+				game_state.map_buttons[index].on_click = proc(button : ^Button) {
+					game_state.game_step = .battle
+					game_state.map_elements[game_state.current_map_point].done = true
+					game_state.current_map_point += 1
+				}
+			}
+			case .event: {
+				
+			}
+			case .shop: {
+				
+			}
+		}
+		index += 1
+	}
+
 	for &e in game_state.map_buttons {
 		e.update(&e)
 	}
@@ -1124,13 +1154,15 @@ init_main_menu_ui :: proc() {
 	    place_entity(game_state.clones[2], 2, 0)
 	    place_entity(game_state.clones[3], 3, 0)
 
+	    clear(&game_state.enemies)
+
 	    enemy := entity_create(.enemy)
 	    enemy.entity_stats = fly_stats
 	    enemy.name = "ass"
 	    init_entity(enemy)
 	    append(&game_state.enemies, enemy)
 	    place_entity(enemy, 9, 9)
-		enemy = entity_create(.enemy)
+		/*enemy = entity_create(.enemy)
 	    enemy.entity_stats = fly_stats
 	    enemy.name = "mother fucker"
 	    init_entity(enemy)
@@ -1141,7 +1173,7 @@ init_main_menu_ui :: proc() {
 	    enemy.name = "dummy"
 	    init_entity(enemy)
 	    place_entity(enemy, 7, 9)
-	    append(&game_state.enemies, enemy)
+	    append(&game_state.enemies, enemy)*/
 
 	    for &e in game_state.entities {
 	    	if !e.allocated do continue
@@ -1436,9 +1468,16 @@ init_main_menu_ui :: proc() {
 	}
 	setup_one_button(&game_state.end_combat_button)
 	game_state.end_combat_button.on_click = proc(button : ^Button) {
-		game_state.game_step = .cloning
+		game_state.game_step = .mapping
 
-		game_state.all_clone_created_ready = true
+		game_state.game_finished = false
+
+		for &e in game_state.enemies {
+			entity_destroy(e)
+		}
+		clear(&game_state.enemies)
+
+		/*game_state.all_clone_created_ready = true
 		game_state.all_clone_created = true
 
 		for &e in game_state.enemies {
@@ -1447,7 +1486,7 @@ init_main_menu_ui :: proc() {
 		clear(&game_state.enemies)
 		game_state.order_index = 0
 		game_state.gold += 10
-		init_main_menu()
+		init_main_menu()*/
 	}
 
 	game_state.end_turn_button = Button{
@@ -1552,6 +1591,11 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_stats.description), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
 		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
 
+		if game_state.clones[game_state.order_index].class != .none {
+			rl.DrawText(fmt.ctprint("ability:", game_state.clones[game_state.order_index].class_stats.ability[0].name), 0, 300, 20, rl.WHITE)
+			rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].class_stats.ability[0].description, ")"), 0, 320, 20, rl.WHITE)
+		}
+
 		rl.DrawTextureEx(game_state.clones[game_state.order_index].current_sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
 
 		rl.DrawText(fmt.ctprint("Chance - Slightly affects all actions"), 0, WINDOW_HEIGHT - 20, 20, rl.WHITE)
@@ -1562,6 +1606,8 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("Damage - Physical attack power "), 0, WINDOW_HEIGHT - 120, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Fatigue - Number of actions per turn "), 0, WINDOW_HEIGHT - 140, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Heal Point - Total life "), 0, WINDOW_HEIGHT - 160, 20, rl.WHITE)
+
+
 	}
 	else {
 		rl.DrawText(fmt.ctprint("Dr. Zog - A Revenge Story"), WINDOW_WIDTH / 2 - 500, 20, 75, rl.WHITE)

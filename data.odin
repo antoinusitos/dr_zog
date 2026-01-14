@@ -3,12 +3,12 @@ package game
 import rl "vendor:raylib"
 
 class_stats := [6]Class_stats {
-	{class = .tank, stats = {max_life = 2, psyche = -1, agility = -1}, attack_size = 1, ability = {&tank_ability_1, nil}},
-	{class = .tech, stats = {technology = 2, speed = -1, max_life = -1}, attack_size = 1, ability = {&fire_flamme_ability, nil}},
-	{class = .warrior, stats = {damage = 2, chance = -1, psyche = -1}, attack_size = 1, ability = {&fire_flamme_ability, nil}},
+	{class = .tank, stats = {max_life = 2, psyche = -1, agility = -1}, attack_size = 1, ability = {&push_ability, nil}},
+	{class = .tech, stats = {technology = 2, speed = -1, max_life = -1}, attack_size = 1},
+	{class = .warrior, stats = {damage = 2, chance = -1, psyche = -1}, attack_size = 1, ability = {&patator_ability, nil}},
 	{class = .healer, stats = {speed = 2, damage = -1, technology = -1}, attack_size = 1, ability = {&heal_ability, nil}},
 	{class = .sniper, stats = {agility = 2, max_life = -1, psyche = -1}, attack_size = 3},
-	{class = .spirit, stats = {psyche = 2, technology = -1, max_life = -1}, attack_size = 2},
+	{class = .spirit, stats = {psyche = 2, technology = -1, max_life = -1}, attack_size = 2, ability = {&fire_flamme_ability, nil}},
 }
 
 mutation_stats := [8]Mutation_stats {
@@ -30,22 +30,26 @@ objects := [3]Object {
 
 // ABILITIES
 
-warrior_ability_1 := Class_ability {
+patator_ability := Class_ability {
 	ability_type = .damage,
 	value = 4, // dmg
 	range = 3, // range
 	cost = 4,
-	name = "Dash & Cut",
-	id = "Warrior_Ability"
+	name = "Patator",
+	id = "Patator_Ability",
+	description = "Shoot a big potato ! (stat : damage)",
+	base_stat = .damage,
+	stat_calculation = 1,
 }
 
-tank_ability_1 := Class_ability {
+tp_ability := Class_ability {
 	ability_type = .movement,
 	range = 5, // range
 	cost = 4,
 	name = "TP",
-	id = "Tank_Ability",
-	tags = {"move_instant"}
+	id = "TP_Ability",
+	tags = {"move_instant"},
+	description = "TP on an empty cell"
 }
 
 heal_ability := Class_ability {
@@ -54,7 +58,22 @@ heal_ability := Class_ability {
 	value = 3, // heal
 	cost = 2,
 	name = "Heal",
-	id = "Heal_Ability"
+	id = "Heal_Ability",
+	description = "heal any one ! (stat : psyche)",
+	base_stat = .psyche,
+	stat_calculation = 1,
+}
+
+push_ability := Class_ability {
+	ability_type = .movement,
+	range = 1, // range
+	value = 2, // push length
+	cost = 2,
+	name = "push",
+	id = "Push_Ability",
+	description = "Push any one in the direction ! (stat : speed)",
+	base_stat = .speed,
+	stat_calculation = 1,
 }
 
 fire_flamme_ability := Class_ability {
@@ -65,7 +84,10 @@ fire_flamme_ability := Class_ability {
 	name = "Fire Flamme",
 	id = "Fire_Flamme_Ability",
 	element_to_add = fire_element,
-	tags = {"elemental"}
+	tags = {"elemental"},
+	description = "Shoot a big potato ! (stat : psyche)",
+	base_stat = .psyche,
+	stat_calculation = 1,
 }
 
 all_stats : [5]Entity_Stats = {

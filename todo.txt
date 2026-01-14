@@ -6,7 +6,6 @@ todo :
 - events
 - map
 - leveling
-
-
+- reset the combat map when starting a new combat (BUG)
 
 https://pixelfrog-assets.itch.io/tiny-swords

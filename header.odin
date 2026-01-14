@@ -37,6 +37,9 @@ Class_ability :: struct {
 	tags : []string,
 	add_tags : []string,
 	element_to_add : Element_Active,
+	description : string,
+	base_stat : Entity_Stats_Type,
+	stat_calculation : f32,
 }
 
 Mutation :: enum {
@@ -148,13 +151,25 @@ Entity_Age :: enum {
 Entity_Stats :: struct {
 	entity_age : Entity_Age,
 	max_life : int, // Vitalité, vie totale 
-	fatigue : int, // Vitalité, vie totale
+	fatigue : int, // Nombre de PA de base
 	damage : int, // Puissance d’attaque physique
 	psyche : int, // Puissance mentale/psychique 
 	speed : int, // Vitesse, initiative, esquive
 	technology : int, // Maîtrise des gadgets et objets
 	agility : int, // Chance d'esquive et dégâts sur les longue distance
 	chance : int, // Affecte légèrement toutes les actions
+}
+
+Entity_Stats_Type :: enum {
+	none,
+	max_life,
+	fatigue,
+	damage,
+	psyche,
+	speed,
+	technology,
+	agility,
+	chance
 }
 
 Game_Step :: enum {
