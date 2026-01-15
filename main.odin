@@ -338,8 +338,8 @@ init_elements :: proc() {
 
 init_map :: proc() {
 	append(&game_state.map_elements, Map_Point { type = .home, done = true})
-	append(&game_state.map_elements, Map_Point { type = .battle})
-	append(&game_state.map_elements, Map_Point { type = .battle})
+	//append(&game_state.map_elements, Map_Point { type = .battle})
+	append(&game_state.map_elements, Map_Point { type = .event})
 
 	game_state.current_map_point = 1
 
@@ -367,7 +367,10 @@ init_map :: proc() {
 		}
 		switch e.type {
 			case .home: {
-				on_home_enter()
+				game_state.map_buttons[index].on_click = proc(button : ^Button) {
+					on_home_back()
+					game_state.game_step = .cloning
+				}
 			}
 			case .battle: {
 				game_state.map_buttons[index].on_click = proc(button : ^Button) {
@@ -377,10 +380,18 @@ init_map :: proc() {
 				}
 			}
 			case .event: {
-				
+				game_state.map_buttons[index].on_click = proc(button : ^Button) {
+					game_state.game_step = .event
+					game_state.map_elements[game_state.current_map_point].done = true
+					game_state.current_map_point += 1
+				}
 			}
 			case .shop: {
-				
+				game_state.map_buttons[index].on_click = proc(button : ^Button) {
+					game_state.game_step = .shop
+					game_state.map_elements[game_state.current_map_point].done = true
+					game_state.current_map_point += 1
+				}
 			}
 		}
 		index += 1
@@ -582,7 +593,12 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 		return
 	}
 
-	damaged_entity.current_life -= attacking_entity.current_damage
+	rand := int(rl.GetRandomValue(0, 20))
+	mult := 1
+	if rand < attacking_entity.entity_stats.chance {
+		mult = 2
+	}
+	damaged_entity.current_life -= attacking_entity.current_damage * mult
 	append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.entity_stats.strength)), position = {damaged_entity.position.x + 16, -damaged_entity.position.y - 20}, color = rl.RED})
 	damaged_entity.hit_state = 1
 	if damaged_entity.current_life <= 0 {
@@ -628,7 +644,13 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 				reset_active_cells()
 				return
 			}
-			damaged_cell.entity.current_life -= attacking_entity.class_stats.ability[index].value
+
+			rand := int(rl.GetRandomValue(0, 20))
+			mult := 1
+			if rand < attacking_entity.entity_stats.chance {
+				mult = 2
+			}
+			damaged_cell.entity.current_life -= attacking_entity.class_stats.ability[index].value * mult
 			damaged_cell.entity.hit_state = 1
 			append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.class_stats.ability[index].value)), position = {damaged_cell.entity.position.x + 16, -damaged_cell.entity.position.y - 20}, color = rl.RED})
 			if damaged_cell.entity.current_life <= 0 {
@@ -1499,6 +1521,8 @@ draw :: proc() {
 			draw_map()
 		case .battle:
 			draw_battle()
+		case .event:
+			draw_event()
 	}
 
 	rl.EndDrawing()	
@@ -1559,15 +1583,16 @@ draw_main_menu :: proc() {
 			offset_class_x += 160
 		}
 
-		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].entity_stats.entity_age), 0, 0, 20, game_state.clones[game_state.order_index].color)
+		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].name), 0, 0, 20, game_state.clones[game_state.order_index].color)
 		rl.DrawText(fmt.ctprint("HP:", game_state.clones[game_state.order_index].current_life), 0, 20, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("DMG:", game_state.clones[game_state.order_index].entity_stats.strength), 0, 40, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("SPEED:", game_state.clones[game_state.order_index].entity_stats.speed), 0, 60, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("PSY:", game_state.clones[game_state.order_index].entity_stats.psyche), 0, 80, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("VIT:", game_state.clones[game_state.order_index].entity_stats.vitality), 0, 40, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("STR:", game_state.clones[game_state.order_index].entity_stats.strength), 0, 60, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("SPEED:", game_state.clones[game_state.order_index].entity_stats.speed), 0, 80, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("PSY:", game_state.clones[game_state.order_index].entity_stats.psyche), 0, 100, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("CHANCE:", game_state.clones[game_state.order_index].entity_stats.chance), 0, 120, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("END:", game_state.clones[game_state.order_index].current_endurance), 0, 140, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("AGI:", game_state.clones[game_state.order_index].entity_stats.agility), 0, 160, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].name), 0, 180, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("age:", game_state.clones[game_state.order_index].entity_stats.entity_age), 0, 180, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_stats.description), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
 		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
 
@@ -1587,13 +1612,12 @@ draw_main_menu :: proc() {
 		rl.DrawTextureEx(game_state.clones[game_state.order_index].current_sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
 
 		rl.DrawText(fmt.ctprint("Chance - Slightly affects all actions"), 0, WINDOW_HEIGHT - 20, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("Agility - Dodge chance and damage at long range"), 0, WINDOW_HEIGHT - 40, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("Technology - Mastery of gadgets and objects"), 0, WINDOW_HEIGHT - 60, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Agility - damage at long range"), 0, WINDOW_HEIGHT - 40, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Speed - Initiative"), 0, WINDOW_HEIGHT - 80, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Psyche - Mental/psychic power"), 0, WINDOW_HEIGHT - 100, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("Damage - Physical attack power "), 0, WINDOW_HEIGHT - 120, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("Fatigue - Number of actions per turn "), 0, WINDOW_HEIGHT - 140, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("Heal Point - Total life "), 0, WINDOW_HEIGHT - 160, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Strength - Physical attack power "), 0, WINDOW_HEIGHT - 120, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Endurance - Points of actions per turn "), 0, WINDOW_HEIGHT - 140, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Vitality - Total life "), 0, WINDOW_HEIGHT - 160, 20, rl.WHITE)
 	}
 	else {
 		rl.DrawText(fmt.ctprint("Dr. Zog - A Revenge Story"), WINDOW_WIDTH / 2 - 500, 20, 75, rl.WHITE)
@@ -1718,7 +1742,7 @@ draw_battle :: proc() {
 		rl.DrawText(fmt.ctprint("VIT:", game_state.info_entity.entity_stats.vitality), 1300, 100, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("CHANCE:", game_state.info_entity.entity_stats.chance), 1300, 120, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("AGI:", game_state.info_entity.entity_stats.agility), 1300, 140, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("DMG:", game_state.info_entity.entity_stats.strength), 1300, 160, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("STR:", game_state.info_entity.entity_stats.strength), 1300, 160, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("NAME:", game_state.info_entity.name), 1300, 180, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("mutation", game_state.info_entity.mutation), 1300, 200, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("class", game_state.info_entity.class), 1300, 220, 20, rl.WHITE)
@@ -1789,6 +1813,15 @@ draw_battle :: proc() {
 	}
 }
 
+draw_event :: proc() {
+	rl.DrawText(fmt.ctprint(events[0].description), WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT / 2 - 100, 40, rl.WHITE)
+	index := 0
+	for o in events[0].outcome {
+		rl.DrawText(fmt.ctprint(o.text), WINDOW_WIDTH / 2 - 50, i32(WINDOW_HEIGHT / 2 - 100 + 40 + index * 40), 40, rl.WHITE)
+		index += 1
+	}
+}
+
 check_mouse_hover_cell :: proc() {
 	mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
 	x := int(math.ceil_f32(mouse_pos.x / (SPRITE_SIZE * camera.zoom))) - 4
@@ -1847,7 +1880,14 @@ on_battle_enter :: proc() {
 }
 
 on_home_enter :: proc() {
-	for &c in game_state.clones {
-    	c.current_life = c.entity_stats.vitality * 4
-    }
+	if game_state.clones[0] != nil
+	{
+		for &c in game_state.clones {
+    		c.current_life = c.entity_stats.vitality * 4
+    	}
+	}
+}
+
+on_home_back :: proc() {
+
 }

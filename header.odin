@@ -101,6 +101,17 @@ Map_Point :: struct {
 	done : bool,
 }
 
+Event :: struct {
+	id : string,
+	description : string,
+	outcome : []Event_Outcome,
+}
+
+Event_Outcome :: struct {
+	id : string,
+	text : string,
+}
+
 Element :: enum {
 	none,
 	fire
@@ -185,6 +196,8 @@ Game_Step :: enum {
 	cloning,
 	mapping,
 	battle,
+	event,
+	shop,
 }
 
 Game_State :: struct {

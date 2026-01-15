@@ -38,6 +38,16 @@ objects := [2]Object {
 	{name = "changing arms", attack_size = 1},
 }
 
+events := [1]Event {
+	{
+		id = "event_test", description = "this is a test event", outcome = 
+		{
+			Event_Outcome{id = "outcome_1", text = "outcome_1"},
+			Event_Outcome{id = "outcome_2", text = "outcome_2"},
+		}
+	}
+}
+
 // BASIC ATTACK
 
 close_attack_ability := Class_ability {
