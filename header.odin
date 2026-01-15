@@ -20,18 +20,28 @@ Class_stats :: struct {
 }
 
 Ability_type :: enum {
+	none,
 	damage,
 	heal,
 	passive,
 	movement,
 }
 
+Damage_Type :: enum {
+	none,
+	close,
+	range,
+}
+
 Class_ability :: struct {
 	ability_type : Ability_type,
+	damage_type : Damage_Type,
 	value : int,
 	value_2 : int,
 	range : int,
 	cost : int,
+	number_of_use : int,
+	current_number_of_use : int,
 	name : string,
 	id : string,
 	tags : []string,
@@ -40,6 +50,7 @@ Class_ability :: struct {
 	description : string,
 	base_stat : Entity_Stats_Type,
 	stat_calculation : f32,
+	stats : Entity_Stats,
 }
 
 Mutation :: enum {
@@ -150,24 +161,22 @@ Entity_Age :: enum {
 
 Entity_Stats :: struct {
 	entity_age : Entity_Age,
-	max_life : int, // Vitalité, vie totale 
-	fatigue : int, // Nombre de PA de base
-	damage : int, // Puissance d’attaque physique
-	psyche : int, // Puissance mentale/psychique 
+	vitality : int, // Vitalité, vie totale = 4 * VIT 
+	endurance : int, // Nombre de PA de base, regen de PA
+	strength : int, // Puissance d’attaque physique
+	psyche : int, // Puissance mentale/psychique, si trop bas, peut empêcher d'effectuer une action
 	speed : int, // Vitesse, initiative, esquive
-	technology : int, // Maîtrise des gadgets et objets
-	agility : int, // Chance d'esquive et dégâts sur les longue distance
+	agility : int, // dégâts sur les longue distance, distance de shoot, damage = agility / 2
 	chance : int, // Affecte légèrement toutes les actions
 }
 
 Entity_Stats_Type :: enum {
 	none,
-	max_life,
-	fatigue,
+	strength,
+	endurance,
 	damage,
 	psyche,
 	speed,
-	technology,
 	agility,
 	chance
 }
@@ -208,6 +217,7 @@ Game_State :: struct {
 
 	blocked : bool,
 	applyed_dots : bool,
+	entity_animated : int,
 
 	cloning_button : Button,
 	ready_button : Button,
@@ -253,6 +263,7 @@ Entity :: struct {
 	current_level : int,
 	current_life : int,
 	current_endurance : int,
+	current_damage : int,
 	action_per_turn : int, // 1-3
 	current_stress : int,
 	movement_done : bool,
@@ -261,7 +272,9 @@ Entity :: struct {
 	name : string,
 	mutation : Mutation,
 	mutation_stats : Mutation_stats,
+	mutation_ability : ^Class_ability,
 	class_stats : Class_stats,
+	base_attack : Class_ability,
 
 	tags : [dynamic]string,
 	elements : [dynamic]Element_Active,

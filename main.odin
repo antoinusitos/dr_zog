@@ -230,7 +230,7 @@ setup_player :: proc(entity: ^Entity) {
 	entity.kind = .player
 	entity.sprite_size = 32
 	entity.color = rl.WHITE
-	entity.mutation = Mutation(int(rl.GetRandomValue(0, len(Mutation) - 1)))
+	entity.mutation_ability = &mutations[(int(rl.GetRandomValue(0, len(mutations) - 1)))]
 
 	entity.update = proc(entity: ^Entity) {
 	}
@@ -274,12 +274,11 @@ init_entity :: proc(entity: ^Entity) {
 
 		entity.entity_stats.agility = int(5 + rl.GetRandomValue(-2, 2))
 		entity.entity_stats.chance = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.damage = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.fatigue = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.max_life = int(5 + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.strength = int(5 + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.endurance = int(5 + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.vitality = int(5 + rl.GetRandomValue(-2, 2))
 		entity.entity_stats.psyche = int(5 + rl.GetRandomValue(-2, 2))
 		entity.entity_stats.speed = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.technology = int(5 + rl.GetRandomValue(-2, 2))
 
 		age := all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
 
@@ -287,12 +286,11 @@ init_entity :: proc(entity: ^Entity) {
 
 		entity.entity_stats.agility += age.agility
 		entity.entity_stats.chance += age.chance
-		entity.entity_stats.damage += age.damage
-		entity.entity_stats.fatigue += age.fatigue
-		entity.entity_stats.max_life += age.max_life
+		entity.entity_stats.strength += age.strength
+		entity.entity_stats.endurance += age.endurance
+		entity.entity_stats.vitality += age.vitality
 		entity.entity_stats.psyche += age.psyche
 		entity.entity_stats.speed += age.speed
-		entity.entity_stats.technology += age.technology
 		switch entity.entity_stats.entity_age {
 			case .baby:
 				entity.sprite = {baby_player_sprite}
@@ -308,21 +306,25 @@ init_entity :: proc(entity: ^Entity) {
 		entity.current_sprite = entity.sprite[0]
 	}
 
-	for m in mutation_stats {
-		if m.mutation == entity.mutation {
-			entity.mutation_stats = m
-			entity.entity_stats.agility += m.stats.agility
-			entity.entity_stats.chance += m.stats.chance
-			entity.entity_stats.damage += m.stats.damage
-			entity.entity_stats.fatigue += m.stats.fatigue
-			entity.entity_stats.max_life += m.stats.max_life
-			entity.entity_stats.psyche += m.stats.psyche
-			entity.entity_stats.speed += m.stats.speed
-			entity.entity_stats.technology += m.stats.technology
-		}
+	if entity.mutation_ability != nil {
+		entity.entity_stats.agility += entity.mutation_ability.stats.agility
+		entity.entity_stats.chance += entity.mutation_ability.stats.chance
+		entity.entity_stats.strength += entity.mutation_ability.stats.strength
+		entity.entity_stats.endurance += entity.mutation_ability.stats.endurance
+		entity.entity_stats.vitality += entity.mutation_ability.stats.vitality
+		entity.entity_stats.psyche += entity.mutation_ability.stats.psyche
+		entity.entity_stats.speed += entity.mutation_ability.stats.speed
 	}
 
 	resolve_stats(entity)
+
+	random_attack := rl.GetRandomValue(0, 1)
+	if random_attack == 0 {
+		entity.base_attack = close_attack_ability
+	}
+	else {
+		entity.base_attack = range_attack_ability
+	}
 }
 
 init_elements :: proc() {
@@ -365,7 +367,7 @@ init_map :: proc() {
 		}
 		switch e.type {
 			case .home: {
-				
+				on_home_enter()
 			}
 			case .battle: {
 				game_state.map_buttons[index].on_click = proc(button : ^Button) {
@@ -391,12 +393,11 @@ remove_class :: proc (entity : ^Entity) {
 			entity.class = .none
 			entity.entity_stats.agility -= c.stats.agility
 			entity.entity_stats.chance -= c.stats.chance
-			entity.entity_stats.damage -= c.stats.damage
-			entity.entity_stats.fatigue -= c.stats.fatigue
-			entity.entity_stats.max_life -= c.stats.max_life
+			entity.entity_stats.strength -= c.stats.strength
+			entity.entity_stats.endurance -= c.stats.endurance
+			entity.entity_stats.vitality -= c.stats.vitality
 			entity.entity_stats.psyche -= c.stats.psyche
 			entity.entity_stats.speed -= c.stats.speed
-			entity.entity_stats.technology -= c.stats.technology
 		}
 	}
 
@@ -409,12 +410,11 @@ apply_class :: proc (entity : ^Entity) {
 			entity.class_stats = c
 			entity.entity_stats.agility += c.stats.agility
 			entity.entity_stats.chance += c.stats.chance
-			entity.entity_stats.damage += c.stats.damage
-			entity.entity_stats.fatigue += c.stats.fatigue
-			entity.entity_stats.max_life += c.stats.max_life
+			entity.entity_stats.strength += c.stats.strength
+			entity.entity_stats.endurance += c.stats.endurance
+			entity.entity_stats.vitality += c.stats.vitality
 			entity.entity_stats.psyche += c.stats.psyche
 			entity.entity_stats.speed += c.stats.speed
-			entity.entity_stats.technology += c.stats.technology
 		}
 	}
 
@@ -428,14 +428,14 @@ resolve_stats  :: proc(entity: ^Entity) {
 	if entity.entity_stats.chance <= 0 {
 		entity.entity_stats.chance = 1
 	}
-	if entity.entity_stats.damage <= 0 {
-		entity.entity_stats.damage = 1
+	if entity.entity_stats.strength <= 0 {
+		entity.entity_stats.strength = 1
 	}
-	if entity.entity_stats.fatigue <= 0 {
-		entity.entity_stats.fatigue = 1
+	if entity.entity_stats.endurance <= 0 {
+		entity.entity_stats.endurance = 1
 	}
-	if entity.entity_stats.max_life <= 0 {
-		entity.entity_stats.max_life = 1
+	if entity.entity_stats.vitality <= 0 {
+		entity.entity_stats.vitality = 1
 	}
 	if entity.entity_stats.psyche <= 0 {
 		entity.entity_stats.psyche = 1
@@ -443,15 +443,12 @@ resolve_stats  :: proc(entity: ^Entity) {
 	if entity.entity_stats.speed <= 0 {
 		entity.entity_stats.speed = 1
 	}
-	if entity.entity_stats.technology <= 0 {
-		entity.entity_stats.technology = 1
-	}
 
-	entity.current_life = entity.entity_stats.max_life
+	entity.current_life = entity.entity_stats.vitality * 4
 	entity.current_level = 1
-	entity.action_per_turn = 1
 	entity.current_stress = 0
-	entity.current_endurance = entity.entity_stats.fatigue
+	entity.current_endurance = entity.entity_stats.endurance
+	entity.current_damage = entity.entity_stats.strength
 }
 
 place_entity :: proc(entity: ^Entity, x : int, y : int) {
@@ -585,8 +582,8 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 		return
 	}
 
-	damaged_entity.current_life -= attacking_entity.entity_stats.damage
-	append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.entity_stats.damage)), position = {damaged_entity.position.x + 16, -damaged_entity.position.y - 20}, color = rl.RED})
+	damaged_entity.current_life -= attacking_entity.current_damage
+	append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.entity_stats.strength)), position = {damaged_entity.position.x + 16, -damaged_entity.position.y - 20}, color = rl.RED})
 	damaged_entity.hit_state = 1
 	if damaged_entity.current_life <= 0 {
 		if damaged_entity.kind == .enemy {
@@ -753,6 +750,7 @@ update_map :: proc() {
 					game_state.game_step = .battle
 					game_state.map_elements[game_state.current_map_point].done = true
 					game_state.current_map_point += 1
+					on_battle_enter()
 				}
 			}
 			case .event: {
@@ -771,13 +769,21 @@ update_map :: proc() {
 }
 
 update_battle :: proc() {
+	game_state.entity_animated = 0
 	for &entity in game_state.entities {
 		if !entity.allocated do continue
+
+		animated := 0
 
 		// call the update function
 		entity.update(&entity)
 
+		if entity.hit_state != 0 {
+			animated = 1
+		}
+
 		if entity.moving {
+			animated = 1
 			game_state.end_turn_button.disabled = true
 			if entity.time_to_point >= 0.25 {
 				place_entity(&entity, entity.path[entity.path_index].cell.x, entity.path[entity.path_index].cell.y)
@@ -813,6 +819,8 @@ update_battle :: proc() {
 		else {
 			game_state.end_turn_button.disabled = false
 		}
+
+		game_state.entity_animated += animated
 	}
 
 	if game_state.game_finished {
@@ -932,7 +940,10 @@ update_battle :: proc() {
 	else if game_state.want_to_attack {
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
-		attack_size := game_state.order[game_state.order_index].class_stats.attack_size
+		attack_size := game_state.order[game_state.order_index].base_attack.range
+		if game_state.order[game_state.order_index].base_attack.damage_type == .range {
+			attack_size = game_state.order[game_state.order_index].entity_stats.agility
+		}
 		movement := get_movement_cells(x, y, attack_size, true, false)
 
 		for &move in movement {
@@ -1149,39 +1160,6 @@ init_main_menu_ui :: proc() {
 	}
 	setup_one_button(&game_state.start_battle_button)
 	game_state.start_battle_button.on_click = proc(button : ^Button) {
-		place_entity(game_state.clones[0], 0, 0)
-	    place_entity(game_state.clones[1], 1, 0)
-	    place_entity(game_state.clones[2], 2, 0)
-	    place_entity(game_state.clones[3], 3, 0)
-
-	    clear(&game_state.enemies)
-
-	    enemy := entity_create(.enemy)
-	    enemy.entity_stats = fly_stats
-	    enemy.name = "ass"
-	    init_entity(enemy)
-	    append(&game_state.enemies, enemy)
-	    place_entity(enemy, 9, 9)
-		/*enemy = entity_create(.enemy)
-	    enemy.entity_stats = fly_stats
-	    enemy.name = "mother fucker"
-	    init_entity(enemy)
-	    append(&game_state.enemies, enemy)
-	    place_entity(enemy, 8, 9)
-	    enemy = entity_create(.enemy)
-	    enemy.entity_stats = fly_stats
-	    enemy.name = "dummy"
-	    init_entity(enemy)
-	    place_entity(enemy, 7, 9)
-	    append(&game_state.enemies, enemy)*/
-
-	    for &e in game_state.entities {
-	    	if !e.allocated do continue
-	    	append(&game_state.order, &e)
-	    }
-
-	    game_state.order_index = 0
-		slice.sort_by(game_state.order[:], entity_order)
 		game_state.game_step = .mapping
 
 		game_state.turn_number = 1
@@ -1358,7 +1336,10 @@ init_main_menu_ui :: proc() {
 			reset_active_cells()
 			x := game_state.order[game_state.order_index].cell.x
 			y := game_state.order[game_state.order_index].cell.y
-			attack_size := game_state.order[game_state.order_index].class_stats.attack_size
+			attack_size := game_state.order[game_state.order_index].base_attack.range
+			if game_state.order[game_state.order_index].base_attack.damage_type == .range {
+				attack_size = game_state.order[game_state.order_index].entity_stats.agility
+			}
 			movement := get_movement_cells(x, y, attack_size, true, false)
 
 			for &move in movement {
@@ -1580,10 +1561,9 @@ draw_main_menu :: proc() {
 
 		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].entity_stats.entity_age), 0, 0, 20, game_state.clones[game_state.order_index].color)
 		rl.DrawText(fmt.ctprint("HP:", game_state.clones[game_state.order_index].current_life), 0, 20, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("DMG:", game_state.clones[game_state.order_index].entity_stats.damage), 0, 40, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("DMG:", game_state.clones[game_state.order_index].entity_stats.strength), 0, 40, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("SPEED:", game_state.clones[game_state.order_index].entity_stats.speed), 0, 60, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("PSY:", game_state.clones[game_state.order_index].entity_stats.psyche), 0, 80, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("TECH:", game_state.clones[game_state.order_index].entity_stats.technology), 0, 100, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("CHANCE:", game_state.clones[game_state.order_index].entity_stats.chance), 0, 120, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("END:", game_state.clones[game_state.order_index].current_endurance), 0, 140, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("AGI:", game_state.clones[game_state.order_index].entity_stats.agility), 0, 160, 20, rl.WHITE)
@@ -1591,9 +1571,17 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_stats.description), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
 		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
 
+		rl.DrawText(fmt.ctprint("ability:", game_state.clones[game_state.order_index].base_attack.name), 0, 300, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].base_attack.description, ")"), 0, 320, 20, rl.WHITE)
+
 		if game_state.clones[game_state.order_index].class != .none {
-			rl.DrawText(fmt.ctprint("ability:", game_state.clones[game_state.order_index].class_stats.ability[0].name), 0, 300, 20, rl.WHITE)
-			rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].class_stats.ability[0].description, ")"), 0, 320, 20, rl.WHITE)
+			rl.DrawText(fmt.ctprint("ability:", game_state.clones[game_state.order_index].class_stats.ability[0].name), 0, 380, 20, rl.WHITE)
+			rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].class_stats.ability[0].description, ")"), 0, 400, 20, rl.WHITE)
+		}
+
+		if game_state.clones[game_state.order_index].mutation_ability.ability_type != .none {
+			rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_ability.name), 0, 340, 20, game_state.clones[game_state.order_index].mutation_ability.value > 0 ? rl.GREEN : rl.RED)
+			rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].mutation_ability.description, ")"), 0, 360, 20, game_state.clones[game_state.order_index].mutation_ability.value > 0 ? rl.GREEN : rl.RED)
 		}
 
 		rl.DrawTextureEx(game_state.clones[game_state.order_index].current_sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
@@ -1606,8 +1594,6 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("Damage - Physical attack power "), 0, WINDOW_HEIGHT - 120, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Fatigue - Number of actions per turn "), 0, WINDOW_HEIGHT - 140, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Heal Point - Total life "), 0, WINDOW_HEIGHT - 160, 20, rl.WHITE)
-
-
 	}
 	else {
 		rl.DrawText(fmt.ctprint("Dr. Zog - A Revenge Story"), WINDOW_WIDTH / 2 - 500, 20, 75, rl.WHITE)
@@ -1729,10 +1715,10 @@ draw_battle :: proc() {
 		}
 		rl.DrawText(fmt.ctprint("SPEED:", game_state.info_entity.entity_stats.speed), 1300, 60, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("PSY:", game_state.info_entity.entity_stats.psyche), 1300, 80, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("TECH:", game_state.info_entity.entity_stats.technology), 1300, 100, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("VIT:", game_state.info_entity.entity_stats.vitality), 1300, 100, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("CHANCE:", game_state.info_entity.entity_stats.chance), 1300, 120, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("AGI:", game_state.info_entity.entity_stats.agility), 1300, 140, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("DMG:", game_state.info_entity.entity_stats.damage), 1300, 160, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("DMG:", game_state.info_entity.entity_stats.strength), 1300, 160, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("NAME:", game_state.info_entity.name), 1300, 180, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("mutation", game_state.info_entity.mutation), 1300, 200, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("class", game_state.info_entity.class), 1300, 220, 20, rl.WHITE)
@@ -1763,7 +1749,10 @@ draw_battle :: proc() {
 		game_state.move_button.text = string(move_text)
 		game_state.move_button.draw(&game_state.move_button)
 
-		attack_text := fmt.ctprint("Attack\n(dmg:", game_state.order[game_state.order_index].entity_stats.damage, " | rng:", game_state.order[game_state.order_index].class_stats.attack_size, ")", sep = "")
+		attack_text := fmt.ctprint(game_state.order[game_state.order_index].base_attack.name, "\n(dmg:", game_state.order[game_state.order_index].current_damage, " | rng:", game_state.order[game_state.order_index].base_attack.range, ")", sep = "")
+		if game_state.order[game_state.order_index].base_attack.damage_type == .range {
+			attack_text = fmt.ctprint(game_state.order[game_state.order_index].base_attack.name, "\n(dmg:", game_state.order[game_state.order_index].current_damage, " | rng:", game_state.order[game_state.order_index].entity_stats.agility, ")", sep = "")
+		}
 		game_state.attack_button.text = string(attack_text)
 		game_state.attack_button.draw(&game_state.attack_button)
 
@@ -1791,7 +1780,7 @@ draw_battle :: proc() {
 		}
 	}
 
-	if game_state.game_finished {
+	if game_state.game_finished && game_state.entity_animated == 0 {
 		rl.DrawRectangleRec(rl.Rectangle{(WINDOW_WIDTH - 1000) / 2, (WINDOW_HEIGHT - 1000) / 2, 1000, 1000}, rl.GRAY)
 		rl.DrawText(fmt.ctprint("YOU WIN !"), WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT / 2 - 150, 50, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Rewards : "), WINDOW_WIDTH / 2 - 50, WINDOW_HEIGHT / 2 - 100, 40, rl.WHITE)
@@ -1812,4 +1801,53 @@ check_mouse_hover_cell :: proc() {
 	}
 
 	rl.DrawTextureV(hover_cell_sprite, {f32(OFFSET_X + x * SPRITE_SIZE), f32(OFFSET_Y + y * SPRITE_SIZE)}, rl.RED)
+}
+
+on_battle_enter :: proc() {
+	place_entity(game_state.clones[0], 0, 0)
+    place_entity(game_state.clones[1], 1, 0)
+    place_entity(game_state.clones[2], 2, 0)
+    place_entity(game_state.clones[3], 3, 0)
+
+    for &c in game_state.clones {
+    	c.current_endurance = c.entity_stats.endurance
+		c.current_damage = c.entity_stats.strength
+    }
+
+    clear(&game_state.enemies)
+
+    for e in 0..<1 {
+    	enemy := entity_create(.enemy)
+	    enemy.entity_stats = fly_stats
+	    if e == 0 {
+	    	 enemy.name = "mother fucker"
+	    }
+	    else if e == 1 {
+	    	enemy.name = "dummy"
+	    }
+	    else {
+	    	enemy.name = "ass"
+	    }
+	    init_entity(enemy)
+	    append(&game_state.enemies, enemy)
+	    place_entity(enemy, 9 - e, 9)
+	    enemy.target = game_state.clones[0]
+    }
+
+    clear(&game_state.order)
+
+    for &e in game_state.entities {
+    	if !e.allocated do continue
+    	append(&game_state.order, &e)
+    }
+
+    game_state.order_index = 0
+    game_state.turn_number = 1
+	slice.sort_by(game_state.order[:], entity_order)
+}
+
+on_home_enter :: proc() {
+	for &c in game_state.clones {
+    	c.current_life = c.entity_stats.vitality * 4
+    }
 }

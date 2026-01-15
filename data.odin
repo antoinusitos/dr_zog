@@ -2,42 +2,80 @@ package game
 
 import rl "vendor:raylib"
 
-class_stats := [6]Class_stats {
-	{class = .tank, stats = {max_life = 2, psyche = -1, agility = -1}, attack_size = 1, ability = {&push_ability, nil}},
-	{class = .tech, stats = {technology = 2, speed = -1, max_life = -1}, attack_size = 1},
-	{class = .warrior, stats = {damage = 2, chance = -1, psyche = -1}, attack_size = 1, ability = {&patator_ability, nil}},
-	{class = .healer, stats = {speed = 2, damage = -1, technology = -1}, attack_size = 1, ability = {&heal_ability, nil}},
-	{class = .sniper, stats = {agility = 2, max_life = -1, psyche = -1}, attack_size = 3},
-	{class = .spirit, stats = {psyche = 2, technology = -1, max_life = -1}, attack_size = 2, ability = {&fire_flamme_ability, nil}},
+class_stats := [5]Class_stats {
+	{class = .tank, stats = {vitality = 2, psyche = -1, agility = -1}, attack_size = 1, ability = {&push_ability, nil}},
+	{class = .warrior, stats = {strength = 2, chance = -1, psyche = -1}, attack_size = 1, ability = {&patator_ability, nil}},
+	{class = .healer, stats = {speed = 2, strength = -1, agility = -1}, attack_size = 1, ability = {&heal_ability, nil}},
+	{class = .sniper, stats = {agility = 2, vitality = -1, psyche = -1}, attack_size = 3},
+	{class = .spirit, stats = {psyche = 2, strength = -1, vitality = -1}, attack_size = 2, ability = {&fire_flamme_ability, nil}},
 }
 
 mutation_stats := [8]Mutation_stats {
-	{mutation = .cortex, stats = {psyche = 1, technology = 1}, good = true, description = "Big Brain (+1 psyche, +1 tech)"},
+	{mutation = .cortex, stats = {psyche = 1, chance = 1}, good = true, description = "Big Brain (+1 psyche, +1 chance)"},
 	{mutation = .reflex, stats = {agility = 1}, good = true, description = "Strong Reflex (+1 agility)"},
 	{mutation = .lucky, stats = {chance = 1}, good = true, description = "Strong Luck (+1 chance)"},
-	{mutation = .dna, stats = {max_life = 1}, good = true, description = "Strong DNA (+1 HP)"},
+	{mutation = .dna, stats = {vitality = 1}, good = true, description = "Strong DNA (+1 HP)"},
 	{mutation = .shaking, stats = {agility = -1}, description = "Bad Shake (-1 agility)"},
 	{mutation = .microwave, stats = {psyche = -1}, description = "Radiated (-1 psyche)"},
 	{mutation = .bad_luck, stats = {chance = -1}, description = "Bad Luck (-1 chance)"},
-	{mutation = .bad_body, stats = {max_life = -1}, description = "Bad Body (-1 HP)"},
+	{mutation = .bad_body, stats = {vitality = -1}, description = "Bad Body (-1 HP)"},
 }
 
-objects := [3]Object {
+mutations := [9]Class_ability {
+	Class_ability{ability_type = .none},
+	cortex_ability,
+	reflex_ability,
+	lucky_ability,
+	dna_ability,
+	shaking_ability,
+	microwave_ability,
+	bad_luck_ability,
+	bad_body_ability
+}
+
+objects := [2]Object {
 	{name = "boot no grav", movement_size = 1},
-	{name = "gloves ampli", stats = {technology = 1}},
 	{name = "changing arms", attack_size = 1},
 }
 
-// ABILITIES
+// BASIC ATTACK
+
+close_attack_ability := Class_ability {
+	ability_type = .damage,
+	damage_type = .close,
+	range = 1, // range
+	cost = 0,
+	number_of_use = 1,
+	name = "close attack",
+	id = "close_attack_ability",
+	description = "basic attack (stat : strength)",
+	base_stat = .damage,
+	stat_calculation = 1,
+}
+
+range_attack_ability := Class_ability {
+	ability_type = .damage,
+	damage_type = .range,
+	cost = 0,
+	number_of_use = 1,
+	name = "range attack",
+	id = "range_attack_ability",
+	description = "basic attack (stat : strength)",
+	base_stat = .damage,
+	stat_calculation = 1,
+}
+
+// ACTIVE ABILITIES
 
 patator_ability := Class_ability {
 	ability_type = .damage,
+	damage_type = .close,
 	value = 4, // dmg
-	range = 3, // range
+	range = 1, // range
 	cost = 4,
 	name = "Patator",
 	id = "Patator_Ability",
-	description = "Shoot a big potato ! (stat : damage)",
+	description = "Shoot a big potato ! (stat : strength)",
 	base_stat = .damage,
 	stat_calculation = 1,
 }
@@ -78,6 +116,7 @@ push_ability := Class_ability {
 
 fire_flamme_ability := Class_ability {
 	ability_type = .damage,
+	damage_type = .range,
 	value = 2, // dmg
 	range = 3, // range
 	cost = 4,
@@ -90,11 +129,85 @@ fire_flamme_ability := Class_ability {
 	stat_calculation = 1,
 }
 
+// PASSIVE ABILITIES
+
+cortex_ability := Class_ability {
+	ability_type = .passive,
+	value = 1,
+	name = "Big Brain",
+	id = "cortex_ability",
+	description = "Passive (+1 psyche, +1 chance)",
+	stats = {psyche = 1, chance = 1}
+}
+
+reflex_ability := Class_ability {
+	ability_type = .passive,
+	value = 1,
+	name = "Strong Reflex",
+	id = "reflex_ability",
+	description = "Passive (+1 agility)",
+	stats = {agility = 1}
+}
+
+lucky_ability := Class_ability {
+	ability_type = .passive,
+	value = 1,
+	name = "Strong Luck",
+	id = "lucky_ability",
+	description = "Passive (+1 chance)",
+	stats = {chance = 1}
+}
+
+dna_ability := Class_ability {
+	ability_type = .passive,
+	value = 1,
+	name = "Strong DNA",
+	id = "dna_ability",
+	description = "Passive (+1 vitality)",
+	stats = {vitality = 1}
+}
+
+shaking_ability := Class_ability {
+	ability_type = .passive,
+	value = -1,
+	name = "Bad Shake",
+	id = "shaking_ability",
+	description = "Passive (-1 agility)",
+	stats = {agility = -1}
+}
+
+microwave_ability := Class_ability {
+	ability_type = .passive,
+	value = -1,
+	name = "Radiated",
+	id = "microwave_ability",
+	description = "Passive (-1 psyche)",
+	stats = {psyche = -1}
+}
+
+bad_luck_ability := Class_ability {
+	ability_type = .passive,
+	value = -1,
+	name = "Bad Luck",
+	id = "bad_luck_ability",
+	description = "Passive (-1 chance)",
+	stats = {chance = -1}
+}
+
+bad_body_ability := Class_ability {
+	ability_type = .passive,
+	value = -1,
+	name = "Bad Body",
+	id = "bad_body_ability",
+	description = "Passive (-1 vitality)",
+	stats = {vitality = -1}
+}
+
 all_stats : [5]Entity_Stats = {
-	Entity_Stats { entity_age = .baby, max_life = 1 },
+	Entity_Stats { entity_age = .baby, vitality = 1 },
 	Entity_Stats { entity_age = .kid, chance = 1 },
 	Entity_Stats { entity_age = .teen, speed = 1 },
-	Entity_Stats { entity_age = .adult, damage = 1 },
+	Entity_Stats { entity_age = .adult, strength = 1 },
 	Entity_Stats { entity_age = .senior, psyche = 1 },
 }
 
@@ -119,7 +232,7 @@ names := [12]string {
 	"Robert"
 }
 
-fly_stats := Entity_Stats { max_life = 2, fatigue = 2, damage = 1, psyche = 3, speed = 5, technology = 2, chance = 5 }
+fly_stats := Entity_Stats { vitality = 2, endurance = 2, strength = 1, psyche = 3, speed = 5, chance = 5 }
 
 
 WINDOW_WIDTH :: 1920
