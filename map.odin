@@ -4,82 +4,12 @@ import "core:fmt"
 import rl "vendor:raylib"
 
 init_map_ui :: proc() {
-	game_state.outcome_1_button = Button{
-		x = WINDOW_WIDTH / 2,
-		y = 0,
-		width = 150,
-		height = 75,
-		background_color = rl.RED,
-		hover_color = rl.YELLOW,
-		clicked_color = rl.GREEN,
-		disabled_color = rl.GRAY,
-		text = "",
-		fill_percent = 0,
-		fill_max = 1.0,
-		text_size = 20,
-		text_offset = {20, 25}
-	}
-	setup_one_button(&game_state.outcome_1_button)
-	game_state.outcome_1_button.active = false
 
-	game_state.outcome_2_button = Button{
-		x = WINDOW_WIDTH / 2,
-		y = 0,
-		width = 150,
-		height = 75,
-		background_color = rl.RED,
-		hover_color = rl.YELLOW,
-		clicked_color = rl.GREEN,
-		disabled_color = rl.GRAY,
-		text = "",
-		fill_percent = 0,
-		fill_max = 1.0,
-		text_size = 20,
-		text_offset = {20, 25}
-	}
-	setup_one_button(&game_state.outcome_2_button)
-	game_state.outcome_2_button.active = false
-
-	game_state.outcome_3_button = Button{
-		x = WINDOW_WIDTH / 2,
-		y = 0,
-		width = 150,
-		height = 75,
-		background_color = rl.RED,
-		hover_color = rl.YELLOW,
-		clicked_color = rl.GREEN,
-		disabled_color = rl.GRAY,
-		text = "",
-		fill_percent = 0,
-		fill_max = 1.0,
-		text_size = 20,
-		text_offset = {20, 25}
-	}
-	setup_one_button(&game_state.outcome_3_button)
-	game_state.outcome_3_button.active = false
-
-	game_state.outcome_4_button = Button{
-		x = WINDOW_WIDTH / 2,
-		y = 0,
-		width = 150,
-		height = 75,
-		background_color = rl.RED,
-		hover_color = rl.YELLOW,
-		clicked_color = rl.GREEN,
-		disabled_color = rl.GRAY,
-		text = "",
-		fill_percent = 0,
-		fill_max = 1.0,
-		text_size = 20,
-		text_offset = {20, 25}
-	}
-	setup_one_button(&game_state.outcome_4_button)
-	game_state.outcome_4_button.active = false
 }
 
 init_map :: proc() {
 	append(&game_state.map_elements, Map_Point { type = .home, done = true})
-	append(&game_state.map_elements, Map_Point { type = .battle})
+	//append(&game_state.map_elements, Map_Point { type = .battle})
 	append(&game_state.map_elements, Map_Point { type = .event})
 	append(&game_state.map_elements, Map_Point { type = .battle})
 	append(&game_state.map_elements, Map_Point { type = .event})

@@ -44,6 +44,8 @@ main :: proc() {
 
 	init_map_ui()
 
+	init_event_ui()
+
 	init_elements()
 
 	init_main_menu()

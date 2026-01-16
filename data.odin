@@ -44,13 +44,50 @@ objects := [2]Object {
 // - reroll shop to give you character level 1 (event)
 
 events := [1]Event {
+	chest_event,
+}
+
+chest_event := Event {
+	id = "event_test", 
+	description = "You found a chest in the street, what do you do ?", 
+	choice = 
 	{
-		id = "event_test", description = "this is a test event", outcome = 
-		{
-			Event_Outcome{id = "outcome_1", text = "outcome_1"},
-			Event_Outcome{id = "outcome_2", text = "outcome_2"},
-		}
+		open_chest
 	}
+}
+
+open_chest := Event_Choice {
+	id = "open_chest",
+	text = "open the chest",
+	outcome = {
+		open_chest_crit_success,
+		open_chest_success,
+		open_chest_fail,
+		open_chest_crit_fail
+	}
+}
+
+open_chest_crit_success := Event_Outcome {
+	id = "open_chest_crit_success",
+	text = "%clone successfuly open the chest and get 10 gold",
+	tag = "add-gold-10"
+}
+
+open_chest_success := Event_Outcome {
+	id = "open_chest_success",
+	text = "%clone open the chest and get 5 gold",
+	tag = "add-gold-5"
+}
+
+open_chest_fail := Event_Outcome {
+	id = "open_chest_fail",
+	text = "%clone fail to open the chest"
+}
+
+open_chest_crit_fail := Event_Outcome {
+	id = "open_chest_crit_fail",
+	text = "while trying to open, %clone cut himself and lost some health",
+	tag = "remove-life-5"
 }
 
 // BASIC ATTACK

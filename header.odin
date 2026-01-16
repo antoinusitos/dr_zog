@@ -104,12 +104,26 @@ Map_Point :: struct {
 Event :: struct {
 	id : string,
 	description : string,
+	choice : []Event_Choice,
+}
+
+Event_Choice :: struct {
+	id : string,
+	text : string,
 	outcome : []Event_Outcome,
 }
 
 Event_Outcome :: struct {
 	id : string,
 	text : string,
+	tag : string,
+}
+
+Event_state :: enum {
+	choice,
+	outcome,
+	wait,
+	end
 }
 
 Element :: enum {
@@ -256,6 +270,9 @@ Game_State :: struct {
 	outcome_2_button : Button,
 	outcome_3_button : Button,
 	outcome_4_button : Button,
+	end_event_button : Button,
+
+	event_clone : ^Entity,
 }
 
 Entity :: struct {
