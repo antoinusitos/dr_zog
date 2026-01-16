@@ -69,24 +69,24 @@ open_chest := Event_Choice {
 
 open_chest_crit_success := Event_Outcome {
 	id = "open_chest_crit_success",
-	text = "%clone successfuly open the chest and get 10 gold",
+	text = "%clone open the chest and see a big pile of money.\nyou earn 10 gold",
 	tag = "add-gold-10"
 }
 
 open_chest_success := Event_Outcome {
 	id = "open_chest_success",
-	text = "%clone open the chest and get 5 gold",
+	text = "%clone open the chest and see some coins.\nyou earn 5 gold",
 	tag = "add-gold-5"
 }
 
 open_chest_fail := Event_Outcome {
 	id = "open_chest_fail",
-	text = "%clone fail to open the chest"
+	text = "%clone fail to open the chest as the lock was too hard."
 }
 
 open_chest_crit_fail := Event_Outcome {
 	id = "open_chest_crit_fail",
-	text = "while trying to open, %clone cut himself and lost some health",
+	text = "while trying to open, %clone cut himself and lost some health.",
 	tag = "remove-life-5"
 }
 

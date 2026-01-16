@@ -1,9 +1,8 @@
 doing :
-- events
-- map
 
 todo :
 
+- map
 - 3d view
 - shop
 - leveling

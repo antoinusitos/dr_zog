@@ -148,17 +148,18 @@ init_event :: proc() {
 
 process_choice :: proc(index : int) {
 	rand := int(rl.GetRandomValue(0, 20))
+
 	if rand == 20 {
 		outcome = events[0].choice[index].outcome[0]
 	}
-	else if rand > 10 {
+	else if rand == 0 {
+		outcome = events[0].choice[index].outcome[3]
+	}
+	else if rand > game_state.event_clone.entity_stats.chance {
 		outcome = events[0].choice[index].outcome[1]
 	}
-	else if rand > 0 {
-		outcome = events[0].choice[index].outcome[2]
-	}
 	else {
-		outcome = events[0].choice[index].outcome[3]
+		outcome = events[0].choice[index].outcome[2]
 	}
 
 	s, ok := strings.replace(outcome.text, "%clone", game_state.event_clone.name, 1) 

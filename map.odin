@@ -9,7 +9,7 @@ init_map_ui :: proc() {
 
 init_map :: proc() {
 	append(&game_state.map_elements, Map_Point { type = .home, done = true})
-	//append(&game_state.map_elements, Map_Point { type = .battle})
+	append(&game_state.map_elements, Map_Point { type = .battle})
 	append(&game_state.map_elements, Map_Point { type = .event})
 	append(&game_state.map_elements, Map_Point { type = .battle})
 	append(&game_state.map_elements, Map_Point { type = .event})
