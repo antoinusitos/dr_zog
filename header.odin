@@ -252,6 +252,10 @@ Game_State :: struct {
 	map_elements : [dynamic]Map_Point,
 	map_buttons : [dynamic]Button,
 	current_map_point : int,
+	outcome_1_button : Button,
+	outcome_2_button : Button,
+	outcome_3_button : Button,
+	outcome_4_button : Button,
 }
 
 Entity :: struct {
@@ -301,6 +305,8 @@ Entity :: struct {
 	bleed : bool,
 	stuned : bool,
 	lighted : bool,
+
+	exploded : bool,
 
 	//inventory
 	alien_objects : [2]Object,

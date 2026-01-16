@@ -24,6 +24,7 @@ Button :: struct {
 	is_hover : bool,
 	is_clicked : bool,
 	disabled : bool,
+	active : bool, // don't update or draw
 
 	filled_done : bool,
 	fill_percent : f32,
@@ -51,6 +52,10 @@ Button :: struct {
 setup_one_button :: proc(button : ^Button) {
 	button.button_type = .once
 	button.update = proc(button : ^Button) {
+		if !button.active {
+			return
+		}
+
 		if button.disabled {
 			button.is_clicked = false
 			return
@@ -87,6 +92,10 @@ setup_one_button :: proc(button : ^Button) {
 		}
 	}
 	button.draw = proc(button : ^Button) {
+		if !button.active {
+			return
+		}
+
 		if button.disabled {
 			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.disabled_color)
 			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)
@@ -125,6 +134,10 @@ setup_one_button :: proc(button : ^Button) {
 setup_filling_button :: proc(button : ^Button) {
 	button.button_type = .filling
 	button.update = proc(button : ^Button) {
+		if !button.active {
+			return
+		}
+
 		if button.disabled {
 			return
 		}
@@ -167,6 +180,10 @@ setup_filling_button :: proc(button : ^Button) {
 		}
 	}
 	button.draw = proc(button : ^Button) {
+		if !button.active {
+			return
+		}
+		
 		if button.disabled {
 			rl.DrawRectangleRec(rl.Rectangle{button.x, button.y, button.width, button.height}, button.disabled_color)
 			rl.DrawText(fmt.ctprint(button.text), i32(button.x + button.text_offset.x), i32(button.y + button.text_offset.y), button.text_size, rl.BLACK)

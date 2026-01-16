@@ -1,11 +1,16 @@
-todo :
-
-- reroll shop to give you character level 1
-- 3d view
-- shop
+doing :
 - events
 - map
+
+todo :
+
+- 3d view
+- shop
 - leveling
 - passive abilities (when hit : gain +1 str, etc.)
+- explosion when life < -5
+- blockers on map
+- bush
+- handcrafted levels
 
 https://pixelfrog-assets.itch.io/tiny-swords

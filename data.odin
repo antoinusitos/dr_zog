@@ -38,6 +38,11 @@ objects := [2]Object {
 	{name = "changing arms", attack_size = 1},
 }
 
+// EVENTS
+
+// IDEAS
+// - reroll shop to give you character level 1 (event)
+
 events := [1]Event {
 	{
 		id = "event_test", description = "this is a test event", outcome = 
@@ -76,6 +81,9 @@ range_attack_ability := Class_ability {
 }
 
 // ACTIVE ABILITIES
+
+// IDEAS
+// -kick the baby (shoot an adjacent baby to a choosen cell)
 
 patator_ability := Class_ability {
 	ability_type = .damage,

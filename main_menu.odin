@@ -1,0 +1,388 @@
+package game
+
+import "core:fmt"
+import rl "vendor:raylib"
+
+init_main_menu_ui :: proc() {
+	game_state.cloning_button = Button{
+		x = WINDOW_WIDTH / 2 - 75,
+		y = WINDOW_HEIGHT / 2 - 200,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		fill_color = rl.GREEN,
+		text = "Generate\n Clone",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {30, 5},
+		fill_auto_reset = true,
+		active = true
+	}
+	setup_filling_button(&game_state.cloning_button)
+	game_state.cloning_button.on_filled = proc(button : ^Button) {
+		index := 0
+		for &c in game_state.clones {
+			if c == nil {
+				c = entity_create(.player)
+			    c.entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+			    if index == 0 {
+			    	c.color = rl.BLUE
+			    }
+			    else if index == 1 {
+			    	c.color = rl.RED
+			    }
+			    else if index == 2 {
+			    	c.color = rl.GREEN
+			    }
+			    else if index == 3 {
+			    	c.color = rl.YELLOW
+			    }
+			    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
+			    init_entity(c)
+			    break
+			}
+			index += 1
+		}
+
+		for &c in game_state.clones {
+			if c == nil {
+				return
+			}
+		}
+
+		game_state.all_clone_created = true
+		game_state.all_clone_created_ready = false
+		game_state.order_index = 0
+	}
+
+	game_state.ready_button = Button{
+		x = WINDOW_WIDTH / 2 - 75,
+		y = WINDOW_HEIGHT / 2 - 200,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15},
+		active = true
+	}
+	setup_one_button(&game_state.ready_button)
+	game_state.ready_button.on_click = proc(button : ^Button) {
+		game_state.all_clone_created_ready = true
+	}
+
+	game_state.next_clone_button = Button{
+		x = 0,
+		y = 250,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Next Clone",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {20, 15},
+		active = true
+	}
+	setup_one_button(&game_state.next_clone_button)
+	game_state.next_clone_button.on_click = proc(button : ^Button) {
+		game_state.order_index += 1
+		if game_state.order_index >= 4 {
+			game_state.order_index = 0
+		}
+	}
+
+	game_state.remove_class_button = Button{
+		x = 160,
+		y = 250,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Remove Class",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {20, 15},
+		active = true
+	}
+	setup_one_button(&game_state.remove_class_button)
+	game_state.remove_class_button.on_click = proc(button : ^Button) {
+		append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
+		remove_class(game_state.clones[game_state.order_index])
+	}
+
+	game_state.start_battle_button = Button {
+		x = WINDOW_WIDTH / 2,
+		y = WINDOW_HEIGHT / 2 - 200,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "To Space Map",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {5, 15},
+		active = true
+	}
+	setup_one_button(&game_state.start_battle_button)
+	game_state.start_battle_button.on_click = proc(button : ^Button) {
+		game_state.game_step = .mapping
+
+		game_state.turn_number = 1
+	}
+
+	game_state.class_1_button = Button {
+		x = 300,
+		y = 50,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15},
+		active = true
+	}
+	setup_one_button(&game_state.class_1_button)
+	game_state.class_1_button.on_click = proc(button : ^Button) {
+		
+	}
+
+	game_state.class_2_button = Button {
+		x = 300,
+		y = 50,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15},
+		active = true
+	}
+	setup_one_button(&game_state.class_2_button)
+	game_state.class_2_button.on_click = proc(button : ^Button) {
+		
+	}
+
+	game_state.class_3_button = Button {
+		x = 300,
+		y = 50,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15},
+		active = true
+	}
+	setup_one_button(&game_state.class_3_button)
+	game_state.class_3_button.on_click = proc(button : ^Button) {
+		
+	}
+
+	game_state.class_4_button = Button {
+		x = 300,
+		y = 50,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Start",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {40, 15},
+		active = true
+	}
+	setup_one_button(&game_state.class_4_button)
+	game_state.class_4_button.on_click = proc(button : ^Button) {
+		
+	}
+}
+
+init_main_menu :: proc() {
+	game_state.game_step = .cloning
+
+	append(&game_state.possible_class, Class.tank)
+	append(&game_state.possible_class, Class.spirit)
+	append(&game_state.possible_class, Class.warrior)
+	append(&game_state.possible_class, Class.healer)
+}
+
+update_main_menu :: proc() {
+	if game_state.all_clone_created_ready {
+		if len(game_state.possible_class) == 0 {
+			game_state.start_battle_button.update(&game_state.start_battle_button)
+		}
+
+		game_state.next_clone_button.update(&game_state.next_clone_button)
+
+		if game_state.clones[game_state.order_index].class != .none {
+			game_state.remove_class_button.disabled = false	
+		}
+		else
+		{
+			game_state.remove_class_button.disabled = true
+		}
+		game_state.remove_class_button.update(&game_state.remove_class_button)
+
+		game_state.class_1_button.update(&game_state.class_1_button)
+		game_state.class_2_button.update(&game_state.class_2_button)
+		game_state.class_3_button.update(&game_state.class_3_button)
+		game_state.class_4_button.update(&game_state.class_4_button)
+	}
+	else {
+		if game_state.all_clone_created && !game_state.all_clone_created_ready {
+			game_state.ready_button.update(&game_state.ready_button)
+		}
+		else {
+			game_state.cloning_button.update(&game_state.cloning_button)
+		}
+	}
+}
+
+draw_main_menu :: proc() {
+	if game_state.all_clone_created_ready {
+		rl.DrawText(fmt.ctprint("Gold : ", game_state.gold, sep = ""), WINDOW_WIDTH - 100, 10, 20, rl.WHITE)
+
+		if len(game_state.possible_class) == 0 {
+			game_state.start_battle_button.draw(&game_state.start_battle_button)
+		}
+
+		game_state.next_clone_button.draw(&game_state.next_clone_button)
+
+		/*if rl.GuiButton(rl.Rectangle{0, 350, 150, 50}, "Recycle Clone") {
+			game_state.clones[game_state.order_index].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+		    game_state.clones[game_state.order_index].name = names[rl.GetRandomValue(0, len(names) - 1)]
+		    game_state.clones[game_state.order_index].mutation = Mutation(int(rl.GetRandomValue(0, len(Mutation) - 1)))
+		    init_entity(game_state.clones[game_state.order_index])
+		}*/
+
+		game_state.remove_class_button.draw(&game_state.remove_class_button)
+
+		rl.DrawText(fmt.ctprint("Assign a class to each clone"), WINDOW_WIDTH / 2 - 150, 20, 20, rl.WHITE)
+
+		offset_class_x := 0
+		index := 0
+		for c in game_state.possible_class {
+			button : ^Button
+			if index == 0 {
+				button = &game_state.class_1_button
+			}
+			else if index == 1 {
+				button = &game_state.class_2_button
+			}
+			else if index == 2 {
+				button = &game_state.class_3_button
+			}
+			else if index == 3 {
+				button = &game_state.class_4_button
+			}
+			button.x = f32(400 + offset_class_x)
+			button.text = string(fmt.ctprint(c))
+			button.class = c
+			button.index = index
+			button.on_click = proc(button : ^Button) {
+				if game_state.clones[game_state.order_index].class != .none {
+					append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
+					remove_class(game_state.clones[game_state.order_index])
+				}
+				game_state.clones[game_state.order_index].class = button.class
+				apply_class(game_state.clones[game_state.order_index])
+				ordered_remove(&game_state.possible_class, button.index)
+			}
+			button.draw(button)
+			index += 1
+			offset_class_x += 160
+		}
+
+		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].name), 0, 0, 20, game_state.clones[game_state.order_index].color)
+		rl.DrawText(fmt.ctprint("HP:", game_state.clones[game_state.order_index].current_life), 0, 20, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("VIT:", game_state.clones[game_state.order_index].entity_stats.vitality), 0, 40, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("STR:", game_state.clones[game_state.order_index].entity_stats.strength), 0, 60, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("SPEED:", game_state.clones[game_state.order_index].entity_stats.speed), 0, 80, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("PSY:", game_state.clones[game_state.order_index].entity_stats.psyche), 0, 100, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("CHANCE:", game_state.clones[game_state.order_index].entity_stats.chance), 0, 120, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("END:", game_state.clones[game_state.order_index].current_endurance), 0, 140, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("AGI:", game_state.clones[game_state.order_index].entity_stats.agility), 0, 160, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("age:", game_state.clones[game_state.order_index].entity_stats.entity_age), 0, 180, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_stats.description), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
+		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
+
+		rl.DrawText(fmt.ctprint("ability:", game_state.clones[game_state.order_index].base_attack.name), 0, 300, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].base_attack.description, ")"), 0, 320, 20, rl.WHITE)
+
+		if game_state.clones[game_state.order_index].class != .none {
+			rl.DrawText(fmt.ctprint("ability:", game_state.clones[game_state.order_index].class_stats.ability[0].name), 0, 380, 20, rl.WHITE)
+			rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].class_stats.ability[0].description, ")"), 0, 400, 20, rl.WHITE)
+		}
+
+		if game_state.clones[game_state.order_index].mutation_ability.ability_type != .none {
+			rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_ability.name), 0, 340, 20, game_state.clones[game_state.order_index].mutation_ability.value > 0 ? rl.GREEN : rl.RED)
+			rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].mutation_ability.description, ")"), 0, 360, 20, game_state.clones[game_state.order_index].mutation_ability.value > 0 ? rl.GREEN : rl.RED)
+		}
+
+		rl.DrawTextureEx(game_state.clones[game_state.order_index].current_sprite, {f32(WINDOW_WIDTH / 2), f32(WINDOW_HEIGHT / 2)}, 0, 5, game_state.clones[game_state.order_index].color)
+
+		rl.DrawText(fmt.ctprint("Chance - Slightly affects all actions"), 0, WINDOW_HEIGHT - 20, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Agility - damage at long range"), 0, WINDOW_HEIGHT - 40, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Speed - Initiative"), 0, WINDOW_HEIGHT - 80, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Psyche - Mental/psychic power"), 0, WINDOW_HEIGHT - 100, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Strength - Physical attack power "), 0, WINDOW_HEIGHT - 120, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Endurance - Points of actions per turn "), 0, WINDOW_HEIGHT - 140, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("Vitality - Total life "), 0, WINDOW_HEIGHT - 160, 20, rl.WHITE)
+	}
+	else {
+		rl.DrawText(fmt.ctprint("Dr. Zog - A Revenge Story"), WINDOW_WIDTH / 2 - 500, 20, 75, rl.WHITE)
+
+		if game_state.all_clone_created && !game_state.all_clone_created_ready {
+			game_state.ready_button.draw(&game_state.ready_button)
+		}
+		else {
+			game_state.cloning_button.draw(&game_state.cloning_button)
+		}
+		offset_clone_x := 0
+		for &c in game_state.clones {
+			if c == nil {
+				return
+			}
+
+			rl.DrawTextureEx(c.current_sprite, {f32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16)), f32(WINDOW_HEIGHT / 2)}, 0, 5, c.color)
+			rl.DrawText(fmt.ctprint(c.name), i32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16) + 32), WINDOW_HEIGHT / 2 + 175, 30, rl.WHITE)
+			offset_clone_x += 1
+		}
+	}
+}
