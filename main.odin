@@ -202,6 +202,20 @@ entity_destroy :: proc(entity: ^Entity) {
 	entity^ = {} // it's really that simple
 }
 
+entity_take_damage :: proc(entity : ^Entity, amount : int) {
+	entity.current_life -= amount
+	if entity.current_life <= -5 {
+		entity.exploded = true
+	}
+	append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(amount)), position = {entity.position.x + 16, -entity.position.y - 20}, color = rl.RED})
+	entity.hit_state = 1
+	if entity.current_life <= 0 {
+		if entity.kind == .enemy {
+			entity.current_sprite = bee_dead_sprite
+		}
+	}
+}
+
 default_draw_based_on_entity_data :: proc(entity: ^Entity) {
 	col := entity.color
 	if entity.hit_state == 1 {
@@ -537,14 +551,7 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 	if rand < attacking_entity.entity_stats.chance {
 		mult = 2
 	}
-	damaged_entity.current_life -= attacking_entity.current_damage * mult
-	append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.entity_stats.strength)), position = {damaged_entity.position.x + 16, -damaged_entity.position.y - 20}, color = rl.RED})
-	damaged_entity.hit_state = 1
-	if damaged_entity.current_life <= 0 {
-		if damaged_entity.kind == .enemy {
-			damaged_entity.current_sprite = bee_dead_sprite
-		}
-	}
+	entity_take_damage(damaged_entity, attacking_entity.current_damage * mult)
 	game_state.attack_button.disabled = true
 	attacking_entity.current_endurance -= 2
 	attacking_entity.attack_done = true
@@ -589,14 +596,7 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 			if rand < attacking_entity.entity_stats.chance {
 				mult = 2
 			}
-			damaged_cell.entity.current_life -= attacking_entity.class_stats.ability[index].value * mult
-			damaged_cell.entity.hit_state = 1
-			append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.class_stats.ability[index].value)), position = {damaged_cell.entity.position.x + 16, -damaged_cell.entity.position.y - 20}, color = rl.RED})
-			if damaged_cell.entity.current_life <= 0 {
-				if damaged_cell.entity.kind == .enemy {
-					damaged_cell.entity.current_sprite = bee_dead_sprite
-				}
-			}
+			entity_take_damage(damaged_cell.entity, attacking_entity.class_stats.ability[index].value * mult)
 			for t in attacking_entity.class_stats.ability[index].add_tags {
 				append(&damaged_cell.entity.tags, t)
 			}
