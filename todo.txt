@@ -10,6 +10,6 @@ todo :
 - explosion when life < -5
 - blockers on map
 - bush
-- procedural levels
+- items
 
 https://pixelfrog-assets.itch.io/tiny-swords

@@ -4,6 +4,9 @@ import rl "vendor:raylib"
 import "core:math"
 import "core:slice"
 import "core:fmt"
+import "core:os"
+import "core:strings"
+import "core:strconv"
 
 Button_Type :: enum {
 	once,
@@ -555,4 +558,83 @@ movement_cells_already_checked :: proc(cell : Cell) -> bool {
 		}
 	}
 	return false
+}
+
+read_map :: proc(map_name : string) -> [dynamic]string {
+	return_lines : [dynamic]string
+	if map_data, ok := os.read_entire_file(map_name, context.temp_allocator); ok {
+		it := string(map_data)
+		for line in strings.split_lines_iterator(&it) {
+			if strings.contains(line, "//") {
+
+			}
+			else {
+				append(&return_lines, line)
+			}
+			// process line
+		}
+    } else {
+        log_error("Failed to read map_data")
+    }
+
+    return return_lines
+}
+
+read_level :: proc(map_info : [dynamic]string) -> Level {
+	to_return : Level
+
+	line : int = 0
+	for y in 0..<10 {
+		for x in 0..<10 {
+			n, ok := strconv.parse_int(strings.cut(map_info[line],x, 1))
+			to_return.cells[x][y] = n
+		}
+		line += 1
+	}
+
+	it := 0
+
+	for str in strings.split_iterator(&map_info[line], "-") {
+		if it == 0 {
+			n, ok := strconv.parse_int(str)
+			to_return.block_min = n
+		}
+		else {
+			n, ok := strconv.parse_int(str)
+			to_return.block_max = n
+		}
+		it += 1
+	}
+
+	line += 1
+
+	it = 0
+	for str in strings.split_iterator(&map_info[line], "-") {
+		if it == 0 {
+			n, ok := strconv.parse_int(str)
+			to_return.bush_min = n
+		}
+		else {
+			n, ok := strconv.parse_int(str)
+			to_return.bush_max = n
+		}
+		it += 1
+	}
+
+	line += 1
+
+	it = 0
+	for str in strings.split_iterator(&map_info[line], "-") {
+		if it == 0 {
+			n, ok := strconv.parse_int(str)
+			to_return.item_min = n
+		}
+		else {
+			n, ok := strconv.parse_int(str)
+			to_return.item_max = n
+		}
+		it += 1
+	}
+
+	return to_return
 }

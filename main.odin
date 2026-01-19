@@ -4,6 +4,7 @@ import "."
 import "core:log"
 import "core:slice"
 import "core:math"
+import "core:math/rand"
 import "core:fmt"
 import rl "vendor:raylib"
 import "core:strings"
@@ -31,10 +32,15 @@ main :: proc() {
 
 	hover_cell_sprite = rl.LoadTexture("Hover_Cell.png")
 
+	lines := read_map("LVL0.txt")
+
+	game_state.level = read_level(lines)
+
     for y in 0..<ARENA_HEIGHT{
 		for x in 0..<ARENA_WIDTH{
 			game_state.arena[y * ARENA_WIDTH + x].x = x
 			game_state.arena[y * ARENA_WIDTH + x].y = y
+			game_state.arena[y * ARENA_WIDTH + x].type_loaded = game_state.level.cells[x][y]
 		}
 	}
 
@@ -1179,7 +1185,10 @@ draw_battle :: proc() {
 	for y in 0..<ARENA_HEIGHT{
 		for x in 0..<ARENA_WIDTH{
 			col := rl.WHITE
-			if game_state.arena[y * ARENA_WIDTH + x].cell_active {
+			if game_state.arena[y * ARENA_WIDTH + x].blocked {
+				col = rl.BLACK
+			}
+			else if game_state.arena[y * ARENA_WIDTH + x].cell_active {
 				col = rl.PURPLE
 			}
 			else if x == game_state.order[game_state.order_index].cell.x && y == game_state.order[game_state.order_index].cell.y {
@@ -1351,10 +1360,37 @@ check_mouse_hover_cell :: proc() {
 }
 
 on_battle_enter :: proc() {
-	place_entity(game_state.clones[0], 0, 0)
-    place_entity(game_state.clones[1], 1, 0)
-    place_entity(game_state.clones[2], 2, 0)
-    place_entity(game_state.clones[3], 3, 0)
+	player_spawned : [dynamic]^Cell
+	enemy_spawned : [dynamic]^Cell
+	other_spawned : [dynamic]^Cell
+
+	for y in 0..<ARENA_HEIGHT{
+		for x in 0..<ARENA_WIDTH{
+			if game_state.arena[y * ARENA_WIDTH + x].type_loaded == 1 {
+				append(&player_spawned, &game_state.arena[y * ARENA_WIDTH + x])
+			}
+			else if game_state.arena[y * ARENA_WIDTH + x].type_loaded == 2 {
+				append(&enemy_spawned, &game_state.arena[y * ARENA_WIDTH + x])
+			}
+			else {
+				append(&other_spawned, &game_state.arena[y * ARENA_WIDTH + x])
+			}
+		}
+	} 
+
+	rand.shuffle(player_spawned[:])
+	rand.shuffle(enemy_spawned[:])
+	rand.shuffle(other_spawned[:])
+
+	block := int(rl.GetRandomValue(i32(game_state.level.block_min), i32(game_state.level.block_max)))
+
+	for b in 0..<block {
+		other_spawned[b].blocked = true
+	}
+
+	for c in 0..<4 {
+		place_entity(game_state.clones[c], player_spawned[c].x, player_spawned[c].y)
+	}
 
     for &c in game_state.clones {
     	c.current_endurance = c.entity_stats.endurance
@@ -1363,7 +1399,7 @@ on_battle_enter :: proc() {
 
     clear(&game_state.enemies)
 
-    for e in 0..<1 {
+    for e in 0..<3 {
     	enemy := entity_create(.enemy)
 	    enemy.entity_stats = fly_stats
 	    if e == 0 {
@@ -1377,7 +1413,7 @@ on_battle_enter :: proc() {
 	    }
 	    init_entity(enemy)
 	    append(&game_state.enemies, enemy)
-	    place_entity(enemy, 9 - e, 9)
+	    place_entity(enemy, enemy_spawned[e].x, enemy_spawned[e].y)
 	    enemy.target = game_state.clones[0]
     }
 

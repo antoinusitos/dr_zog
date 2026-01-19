@@ -150,6 +150,8 @@ Cell :: struct {
 	tag_to_add : [dynamic]string,
 	tags : [dynamic]string,
 	elements : [dynamic]Element_Active,
+	type_loaded : int,
+	blocked : bool,
 }
 
 Compare_Cell :: proc(lhs : Cell, rhs : Cell) -> bool {
@@ -273,6 +275,8 @@ Game_State :: struct {
 	end_event_button : Button,
 
 	event_clone : ^Entity,
+
+	level : Level,
 }
 
 Entity :: struct {
@@ -383,4 +387,14 @@ Damage_Text :: struct {
 	text : string,
 	timer : f32,
 	color : rl.Color
+}
+
+Level :: struct {
+	cells : [10][10]int,
+	block_min : int,
+	block_max : int,
+	bush_min : int,
+	bush_max : int,
+	item_min : int,
+	item_max : int,
 }
