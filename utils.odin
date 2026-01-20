@@ -328,7 +328,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 
 	if cell_to_check.cell.x > 0 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x - 1]
-		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil {
+		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil && !cell.blocked {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -361,7 +361,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	}
 	if cell_to_check.cell.x < ARENA_WIDTH - 1 {
 		cell := game_state.arena[cell_to_check.cell.y * ARENA_WIDTH + cell_to_check.cell.x + 1]
-		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil {
+		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil && !cell.blocked {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -394,7 +394,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	}
 	if cell_to_check.cell.y > 0 {
 		cell := game_state.arena[(cell_to_check.cell.y - 1) * ARENA_WIDTH + cell_to_check.cell.x]
-		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil {
+		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil && !cell.blocked {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
@@ -432,7 +432,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	}
 	if cell_to_check.cell.y < ARENA_HEIGHT - 1 {
 		cell := game_state.arena[(cell_to_check.cell.y + 1) * ARENA_WIDTH + cell_to_check.cell.x]
-		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil {
+		if (from.id == -1 || !Compare_Cell(cell, from.cell)) && cell.entity == nil && !cell.blocked {
 			dist := distance({f32(cell.x), f32(cell.y)}, {f32(to_x), f32(to_y)})
 			check := to_check_has(cell)
 			check2 := checked_has(cell)

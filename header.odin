@@ -135,6 +135,7 @@ Element_Active :: struct {
 	element : Element,
 	turn : int,
 	tag : string,
+	element_to_spawn : Entity_Kind
 }
 
 Element_Sprite :: struct {
@@ -147,11 +148,19 @@ Cell :: struct {
 	y : int,
 	cell_active : bool,
 	entity : ^Entity,
+	entity_bottom : ^Entity,
+	entity_top : ^Entity,
 	tag_to_add : [dynamic]string,
 	tags : [dynamic]string,
 	elements : [dynamic]Element_Active,
 	type_loaded : int,
 	blocked : bool,
+}
+
+Cell_Height :: enum {
+	bottom,
+	mid,
+	top,
 }
 
 Compare_Cell :: proc(lhs : Cell, rhs : Cell) -> bool {
@@ -347,6 +356,8 @@ Entity :: struct {
 	hit_state : int,
 	hit_timer : f32,
 
+	offset_sprite : rl.Vector2,
+
 	update : proc(^Entity),
 	draw: proc(^Entity),
 }
@@ -380,6 +391,8 @@ Entity_Kind :: enum {
 	nil,
 	player,
 	enemy,
+	element_fire,
+	blood,
 }
 
 Damage_Text :: struct {

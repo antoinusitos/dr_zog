@@ -32,6 +32,8 @@ main :: proc() {
 
 	hover_cell_sprite = rl.LoadTexture("Hover_Cell.png")
 
+	blood_sprite = rl.LoadTexture("Blood.png")
+
 	lines := read_map("LVL0.txt")
 
 	game_state.level = read_level(lines)
@@ -90,10 +92,10 @@ main :: proc() {
 		game_state.all_clone_created_ready = true
 		game_state.order_index = 0
 
-		place_entity(game_state.clones[0], 0, 0)
-	    place_entity(game_state.clones[1], 1, 0)
-	    place_entity(game_state.clones[2], 2, 0)
-	    place_entity(game_state.clones[3], 3, 0)
+		place_entity(game_state.clones[0], 0, 0, .mid)
+	    place_entity(game_state.clones[1], 1, 0, .mid)
+	    place_entity(game_state.clones[2], 2, 0, .mid)
+	    place_entity(game_state.clones[3], 3, 0, .mid)
 
 	    for e in 0..<3 {
 	    	enemy := entity_create(.enemy)
@@ -109,7 +111,7 @@ main :: proc() {
 		    }
 		    init_entity(enemy)
 		    append(&game_state.enemies, enemy)
-		    place_entity(enemy, 9 - e, 9)
+		    place_entity(enemy, 9 - e, 9, .mid)
 		    enemy.target = game_state.clones[0]
 	    }
 
@@ -161,6 +163,8 @@ fire_sprite : rl.Texture2D
 
 hover_cell_sprite : rl.Texture2D
 
+blood_sprite : rl.Texture2D
+
 pulled_movement : bool
 pulled_attack : bool
 pulled_ability : bool
@@ -193,6 +197,8 @@ entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 		case .nil: break
 		case .player: setup_player(new_entity)
 		case .enemy: setup_enemy(new_entity)
+		case .element_fire: setup_element_fire(new_entity)
+		case .blood: setup_blood(new_entity)
 	}
 
 	return new_entity
@@ -211,7 +217,12 @@ entity_take_damage :: proc(entity : ^Entity, amount : int) {
 	entity.hit_state = 1
 	if entity.current_life <= 0 {
 		if entity.kind == .enemy {
-			entity.current_sprite = bee_dead_sprite
+			if entity.current_life <= -5 {
+				entity.current_sprite = blood_sprite
+			}
+			else {
+				entity.current_sprite = bee_dead_sprite
+			}
 		}
 	}
 }
@@ -254,6 +265,7 @@ setup_player :: proc(entity: ^Entity) {
 	entity.kind = .player
 	entity.sprite_size = 32
 	entity.color = rl.WHITE
+	entity.offset_sprite = 0
 	entity.mutation_ability = &mutations[(int(rl.GetRandomValue(0, len(mutations) - 1)))]
 
 	entity.update = proc(entity: ^Entity) {
@@ -270,6 +282,7 @@ setup_enemy :: proc(entity: ^Entity) {
 	entity.kind = .enemy
 	entity.sprite_size = 32
 	entity.color = rl.WHITE
+	entity.offset_sprite = 0
 	entity.class = .none
 	entity.current_life = 2
 	entity.sprite_index = int(rl.GetRandomValue(0, i32(len(entity.sprite) - 1)))
@@ -287,6 +300,34 @@ setup_enemy :: proc(entity: ^Entity) {
 				entity.current_sprite = entity.sprite[entity.sprite_index]
 			}
 		}
+	}
+	entity.draw = proc(entity: ^Entity) {
+		default_draw_based_on_entity_data(entity)
+	}
+}
+
+setup_element_fire :: proc(entity: ^Entity) {
+	entity.sprite = {fire_sprite}
+	entity.current_sprite = entity.sprite[0]
+	entity.kind = .element_fire
+	entity.sprite_size = 32
+	entity.offset_sprite = {8, - 16}
+	entity.color = rl.WHITE
+	entity.update = proc(entity: ^Entity) {
+	}
+	entity.draw = proc(entity: ^Entity) {
+		default_draw_based_on_entity_data(entity)
+	}
+}
+
+setup_blood :: proc(entity: ^Entity) {
+	entity.sprite = {blood_sprite}
+	entity.current_sprite = entity.sprite[0]
+	entity.kind = .blood
+	entity.sprite_size = 32
+	entity.offset_sprite = {0 , -12}
+	entity.color = rl.WHITE
+	entity.update = proc(entity: ^Entity) {
 	}
 	entity.draw = proc(entity: ^Entity) {
 		default_draw_based_on_entity_data(entity)
@@ -424,21 +465,42 @@ resolve_stats  :: proc(entity: ^Entity) {
 	entity.current_damage = entity.entity_stats.strength
 }
 
-place_entity :: proc(entity: ^Entity, x : int, y : int) {
+place_entity :: proc(entity: ^Entity, x : int, y : int, height : Cell_Height) {
 	if entity.cell != nil {
-		entity.cell.entity = nil
+		if entity.cell.entity_bottom == entity {
+			entity.cell.entity_bottom = nil
+		}
+		else if entity.cell.entity == entity {
+			entity.cell.entity = nil
+		}
+		else if entity.cell.entity_top == entity {
+			entity.cell.entity_top = nil
+		}
 	}
-	game_state.arena[y * ARENA_WIDTH + x].entity = entity
-	game_state.arena[y * ARENA_WIDTH + x].entity.position = {f32(OFFSET_X + x * SPRITE_SIZE), f32(-OFFSET_Y - y * SPRITE_SIZE)}
+
+	switch height {
+		case .bottom:
+			game_state.arena[y * ARENA_WIDTH + x].entity_bottom = entity
+		case .mid:
+			game_state.arena[y * ARENA_WIDTH + x].entity = entity
+		case .top:
+			game_state.arena[y * ARENA_WIDTH + x].entity_top = entity
+	}
+
+	entity.position = {f32(OFFSET_X + x * SPRITE_SIZE + int(entity.offset_sprite.x)), f32(-OFFSET_Y - y * SPRITE_SIZE+ int(entity.offset_sprite.y))}
 	entity.cell = &game_state.arena[y * ARENA_WIDTH + x]
-	for t in entity.cell.tag_to_add {
-		append(&entity.tags, t)
-	}
-	for e in entity.cell.elements {
-		if !entity_has_tag(entity, e.tag) {
-			if e.element != .none {
-				append(&entity.tags, e.tag)
-				append(&entity.elements, e)
+
+
+	if entity.kind == .player || entity.kind == .enemy {
+		for t in entity.cell.tag_to_add {
+			append(&entity.tags, t)
+		}
+		for e in entity.cell.elements {
+			if !entity_has_tag(entity, e.tag) {
+				if e.element != .none {
+					append(&entity.tags, e.tag)
+					append(&entity.elements, e)
+				}
 			}
 		}
 	}
@@ -466,6 +528,8 @@ end_turn :: proc() {
 				if e.turn <= 0 {
 					ordered_remove(&game_state.arena[y * ARENA_WIDTH + x].elements, index)
 					cell_remove_tag(&game_state.arena[y * ARENA_WIDTH + x], e.tag)
+					entity_destroy(game_state.arena[y * ARENA_WIDTH + x].entity_top)
+					game_state.arena[y * ARENA_WIDTH + x].entity_top = nil
 				}
 				else {
 					index += 1
@@ -585,6 +649,9 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 				if attacking_entity.class_stats.ability[index].element_to_add.element != .none {
 					append(&damaged_cell.tags, attacking_entity.class_stats.ability[index].element_to_add.tag)
 					append(&damaged_cell.elements, attacking_entity.class_stats.ability[index].element_to_add)
+					element := entity_create(attacking_entity.class_stats.ability[index].element_to_add.element_to_spawn)
+					place_entity(element, damaged_cell.x, damaged_cell.y, .top)
+					damaged_cell.entity_top = element
 				}
 				game_state.ability_1 = false
 				reset_active_cells()
@@ -603,6 +670,8 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 			if attacking_entity.class_stats.ability[index].element_to_add.element != .none {
 				append(&damaged_cell.entity.tags, attacking_entity.class_stats.ability[index].element_to_add.tag)
 				append(&damaged_cell.entity.elements, attacking_entity.class_stats.ability[index].element_to_add)
+				element := entity_create(attacking_entity.class_stats.ability[index].element_to_add.element_to_spawn)
+				damaged_cell.entity_top = element
 			}
 			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
 			if attacking_entity.current_endurance <= 0 {
@@ -613,7 +682,7 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 		case .movement:
 		{
 			if ability_has_tag(attacking_entity.class_stats.ability[index], "move_instant") {
-				place_entity(attacking_entity, damaged_cell.x, damaged_cell.y)
+				place_entity(attacking_entity, damaged_cell.x, damaged_cell.y, .top)
 			}
 			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
 			game_state.ability_1 = false
@@ -680,7 +749,7 @@ update_battle :: proc() {
 			animated = 1
 			game_state.end_turn_button.disabled = true
 			if entity.time_to_point >= 0.25 {
-				place_entity(&entity, entity.path[entity.path_index].cell.x, entity.path[entity.path_index].cell.y)
+				place_entity(&entity, entity.path[entity.path_index].cell.x, entity.path[entity.path_index].cell.y, .mid)
 				entity.time_to_point = 0
 				entity.path_index -= 1
 				if entity.path_index < 0 {
@@ -718,6 +787,7 @@ update_battle :: proc() {
 	}
 
 	if game_state.game_finished {
+		game_state.end_combat_button.active = true
 		game_state.end_combat_button.update(&game_state.end_combat_button)
 		return
 	}
@@ -738,6 +808,7 @@ update_battle :: proc() {
 		}
 	}
 
+	game_state.end_turn_button.active = true
 	game_state.end_turn_button.update(&game_state.end_turn_button)
 
 	if game_state.order[game_state.order_index].kind != .player {
@@ -795,8 +866,11 @@ update_battle :: proc() {
 		}
 	}
 	else {
+		game_state.move_button.active = true
 		game_state.move_button.update(&game_state.move_button)
+		game_state.attack_button.active = true
 		game_state.attack_button.update(&game_state.attack_button)
+		game_state.ability_button.active = true
 		game_state.ability_button.update(&game_state.ability_button)
 		//game_state.ability_2_button.update(&game_state.ability_2_button)
 	}
@@ -1130,17 +1204,6 @@ init_combat_ui :: proc() {
 			entity_destroy(e)
 		}
 		clear(&game_state.enemies)
-
-		/*game_state.all_clone_created_ready = true
-		game_state.all_clone_created = true
-
-		for &e in game_state.enemies {
-			entity_destroy(e)
-		}
-		clear(&game_state.enemies)
-		game_state.order_index = 0
-		game_state.gold += 10
-		init_main_menu()*/
 	}
 
 	game_state.end_turn_button = Button{
@@ -1200,19 +1263,16 @@ draw_battle :: proc() {
 
 	check_mouse_hover_cell()
 
-	for y in 0..<ARENA_HEIGHT{
-		for x in 0..<ARENA_WIDTH{
-			for &e in game_state.arena[y * ARENA_WIDTH + x].elements {
-				for &temp_e in element_sprites {
-					if temp_e.element == e.element {
-						rl.DrawTextureV(temp_e.sprite, {f32(OFFSET_X + x * SPRITE_SIZE) + 8, f32(OFFSET_Y + y * SPRITE_SIZE) + 8}, rl.WHITE)
-						break
-					}
-				}
+	for y in 0..<ARENA_HEIGHT {
+		for x in 0..<ARENA_WIDTH {
+			if game_state.arena[y * ARENA_WIDTH + x].entity_bottom != nil {
+				game_state.arena[y * ARENA_WIDTH + x].entity_bottom.draw(game_state.arena[y * ARENA_WIDTH + x].entity_bottom)
 			}
-
 			if game_state.arena[y * ARENA_WIDTH + x].entity != nil {
 				game_state.arena[y * ARENA_WIDTH + x].entity.draw(game_state.arena[y * ARENA_WIDTH + x].entity)
+			}
+			if game_state.arena[y * ARENA_WIDTH + x].entity_top != nil {
+				game_state.arena[y * ARENA_WIDTH + x].entity_top.draw(game_state.arena[y * ARENA_WIDTH + x].entity_top)
 			}
 		}
 	}
@@ -1389,7 +1449,7 @@ on_battle_enter :: proc() {
 	}
 
 	for c in 0..<4 {
-		place_entity(game_state.clones[c], player_spawned[c].x, player_spawned[c].y)
+		place_entity(game_state.clones[c], player_spawned[c].x, player_spawned[c].y, .mid)
 	}
 
     for &c in game_state.clones {
@@ -1413,7 +1473,7 @@ on_battle_enter :: proc() {
 	    }
 	    init_entity(enemy)
 	    append(&game_state.enemies, enemy)
-	    place_entity(enemy, enemy_spawned[e].x, enemy_spawned[e].y)
+	    place_entity(enemy, enemy_spawned[e].x, enemy_spawned[e].y, .mid)
 	    enemy.target = game_state.clones[0]
     }
 

@@ -1,4 +1,6 @@
 doing :
+- blockers on map
+- bush
 
 todo :
 
@@ -7,9 +9,6 @@ todo :
 - shop
 - leveling
 - passive abilities (when hit : gain +1 str, etc.)
-- explosion when life < -5
-- blockers on map
-- bush
 - items
 
 https://pixelfrog-assets.itch.io/tiny-swords

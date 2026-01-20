@@ -270,7 +270,7 @@ element_sprites := []Element_Sprite {
 	{element = .fire}
 }
 
-fire_element := Element_Active {tag = "fire", turn = 4, element = .fire}
+fire_element := Element_Active {tag = "fire", turn = 4, element = .fire, element_to_spawn = .element_fire}
 
 names := [12]string {
 	"Oliver",
