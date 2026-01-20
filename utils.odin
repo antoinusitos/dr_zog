@@ -517,28 +517,28 @@ get_movement_cells :: proc(x_start : int, y_start : int, max : int, can_go_throu
 		}
 
 		if current.cell.x > 0 && !movement_cells_already_checked(game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1]) {
-			if (!can_go_through && game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1].entity == nil) || can_go_through {
+			if !game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1].blocked && ( (!can_go_through && game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1].entity == nil) || can_go_through ) {
 				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x - 1]}
 				append(&movement_cells_to_check, added_cell)
 			}
 		}
 
 		if current.cell.x < ARENA_WIDTH - 1 && !movement_cells_already_checked(game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1]) {
-			if (!can_go_through && game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1].entity == nil) || can_go_through {
+			if !game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1].blocked && ( (!can_go_through && game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1].entity == nil) || can_go_through ) {
 				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[current.cell.y * ARENA_WIDTH + current.cell.x + 1]}
 				append(&movement_cells_to_check, added_cell)
 			}
 		}
 
 		if current.cell.y > 0 && !movement_cells_already_checked(game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x]) {
-			if (!can_go_through && game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x].entity == nil) || can_go_through {
+			if !game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x].blocked && ( (!can_go_through && game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x].entity == nil) || can_go_through ) {
 				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[(current.cell.y - 1) * ARENA_WIDTH + current.cell.x]}
 				append(&movement_cells_to_check, added_cell)
 			}
 		}
 
 		if current.cell.y < ARENA_HEIGHT - 1 && !movement_cells_already_checked(game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x]) {
-			if (!can_go_through && game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x].entity == nil) || can_go_through {
+			if !game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x].blocked && ( (!can_go_through && game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x].entity == nil) || can_go_through ) {
 				added_cell := Movement_Cell {range = current.range + 1, cell = game_state.arena[(current.cell.y + 1) * ARENA_WIDTH + current.cell.x]}
 				append(&movement_cells_to_check, added_cell)
 			}

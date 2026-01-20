@@ -1,6 +1,6 @@
 doing :
-- blockers on map
-- bush
+- show pathfind with arrow
+- items
 
 todo :
 
@@ -9,6 +9,6 @@ todo :
 - shop
 - leveling
 - passive abilities (when hit : gain +1 str, etc.)
-- items
+- turn number (with rewards)
 
 https://pixelfrog-assets.itch.io/tiny-swords

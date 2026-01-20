@@ -270,7 +270,13 @@ element_sprites := []Element_Sprite {
 	{element = .fire}
 }
 
-fire_element := Element_Active {tag = "fire", turn = 4, element = .fire, element_to_spawn = .element_fire}
+status_sprites := []Status_Sprite {
+	{ status = .burning, sprite = fire_icon_sprite},
+	{ status = .hidden, sprite = hidden_icon_sprite},
+}
+
+fire_element := Element_Active {tag = "fire", turn = 4, element = .fire, element_to_spawn = .element_fire, status_given = .burning}
+hidden_element := Element_Active {tag = "bush", turn = 99, element = .none, element_to_spawn = nil, status_given = .hidden, stat_to_change = .evade, stat_to_change_value = 1}
 
 names := [12]string {
 	"Oliver",

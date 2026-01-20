@@ -131,11 +131,25 @@ Element :: enum {
 	fire
 }
 
+Status :: enum {
+	none,
+	burning,
+	hidden,
+}
+
+Status_Sprite :: struct {
+	status : Status,
+	sprite : rl.Texture2D
+}
+
 Element_Active :: struct {
 	element : Element,
 	turn : int,
 	tag : string,
-	element_to_spawn : Entity_Kind
+	element_to_spawn : Entity_Kind,
+	status_given : Status,
+	stat_to_change : Entity_Stats_Type,
+	stat_to_change_value : int,
 }
 
 Element_Sprite :: struct {
@@ -151,6 +165,7 @@ Cell :: struct {
 	entity_bottom : ^Entity,
 	entity_top : ^Entity,
 	tag_to_add : [dynamic]string,
+	tag_to_remove : [dynamic]string,
 	tags : [dynamic]string,
 	elements : [dynamic]Element_Active,
 	type_loaded : int,
@@ -214,7 +229,8 @@ Entity_Stats_Type :: enum {
 	psyche,
 	speed,
 	agility,
-	chance
+	chance,
+	evade
 }
 
 Game_Step :: enum {
@@ -313,6 +329,7 @@ Entity :: struct {
 	current_damage : int,
 	action_per_turn : int, // 1-3
 	current_stress : int,
+	current_evade : int,
 	movement_done : bool,
 	attack_done : bool,
 	class : Class,
@@ -393,6 +410,7 @@ Entity_Kind :: enum {
 	enemy,
 	element_fire,
 	blood,
+	bush,
 }
 
 Damage_Text :: struct {

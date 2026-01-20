@@ -29,10 +29,14 @@ main :: proc() {
 	old_player_sprite = rl.LoadTexture("Old_Player.png")
 
 	fire_sprite = rl.LoadTexture("Fire.png")
+	fire_icon_sprite = rl.LoadTexture("Fire_Icon.png")
 
 	hover_cell_sprite = rl.LoadTexture("Hover_Cell.png")
 
 	blood_sprite = rl.LoadTexture("Blood.png")
+	blocker_sprite = rl.LoadTexture("Blocker.png")
+	bush_sprite = rl.LoadTexture("Bush.png")
+	hidden_icon_sprite = rl.LoadTexture("Hidden_Icon.png")
 
 	lines := read_map("LVL0.txt")
 
@@ -160,10 +164,14 @@ player_sprite : rl.Texture2D
 old_player_sprite : rl.Texture2D
 
 fire_sprite : rl.Texture2D
+fire_icon_sprite : rl.Texture2D
 
 hover_cell_sprite : rl.Texture2D
 
 blood_sprite : rl.Texture2D
+blocker_sprite : rl.Texture2D
+bush_sprite : rl.Texture2D
+hidden_icon_sprite : rl.Texture2D
 
 pulled_movement : bool
 pulled_attack : bool
@@ -199,6 +207,7 @@ entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 		case .enemy: setup_enemy(new_entity)
 		case .element_fire: setup_element_fire(new_entity)
 		case .blood: setup_blood(new_entity)
+		case .bush: setup_bush(new_entity)
 	}
 
 	return new_entity
@@ -249,13 +258,17 @@ default_draw_based_on_entity_data :: proc(entity: ^Entity) {
 
 	rl.DrawTextureV(entity.current_sprite, {entity.position.x, -entity.position.y - 10}, col)
 
+	index := 0
 	for e in entity.elements {
-		for &temp_e in element_sprites {
-			if temp_e.element == e.element {
-				rl.DrawTextureV(temp_e.sprite, {entity.position.x, -entity.position.y - 10 - 10}, rl.WHITE)
-				break
+		if e.status_given != .none {
+			for &temp_e in status_sprites {
+				if temp_e.status == e.status_given {
+					rl.DrawTextureV(temp_e.sprite, {entity.position.x, -entity.position.y - 10 + f32(index * -5)}, rl.WHITE)
+					break
+				}
 			}
 		}
+		index += 1
 	}
 }
  
@@ -311,7 +324,7 @@ setup_element_fire :: proc(entity: ^Entity) {
 	entity.current_sprite = entity.sprite[0]
 	entity.kind = .element_fire
 	entity.sprite_size = 32
-	entity.offset_sprite = {8, - 16}
+	entity.offset_sprite = {0, -10}
 	entity.color = rl.WHITE
 	entity.update = proc(entity: ^Entity) {
 	}
@@ -325,7 +338,21 @@ setup_blood :: proc(entity: ^Entity) {
 	entity.current_sprite = entity.sprite[0]
 	entity.kind = .blood
 	entity.sprite_size = 32
-	entity.offset_sprite = {0 , -12}
+	entity.offset_sprite = {0 , -10}
+	entity.color = rl.WHITE
+	entity.update = proc(entity: ^Entity) {
+	}
+	entity.draw = proc(entity: ^Entity) {
+		default_draw_based_on_entity_data(entity)
+	}
+}
+
+setup_bush :: proc(entity: ^Entity) {
+	entity.sprite = {bush_sprite}
+	entity.current_sprite = entity.sprite[0]
+	entity.kind = .bush
+	entity.sprite_size = 32
+	entity.offset_sprite = {0 , -10}
 	entity.color = rl.WHITE
 	entity.update = proc(entity: ^Entity) {
 	}
@@ -371,6 +398,8 @@ init_entity :: proc(entity: ^Entity) {
 		entity.current_sprite = entity.sprite[0]
 	}
 
+	entity.current_evade = 1
+
 	if entity.mutation_ability != nil {
 		entity.entity_stats.agility += entity.mutation_ability.stats.agility
 		entity.entity_stats.chance += entity.mutation_ability.stats.chance
@@ -396,7 +425,16 @@ init_elements :: proc() {
 	for &e in element_sprites {
 		#partial switch e.element {
 			case .fire:
-				e.sprite = fire_sprite
+				e.sprite = fire_icon_sprite
+		}
+	}
+
+	for &e in status_sprites {
+		#partial switch e.status {
+			case .burning:
+				e.sprite = fire_icon_sprite
+			case .hidden:
+				e.sprite = hidden_icon_sprite
 		}
 	}
 }
@@ -497,10 +535,31 @@ place_entity :: proc(entity: ^Entity, x : int, y : int, height : Cell_Height) {
 		}
 		for e in entity.cell.elements {
 			if !entity_has_tag(entity, e.tag) {
-				if e.element != .none {
-					append(&entity.tags, e.tag)
-					append(&entity.elements, e)
+				append(&entity.tags, e.tag)
+				append(&entity.elements, e)
+				if e.stat_to_change != .none {
+					#partial switch e.stat_to_change {
+						case .evade :
+							entity.current_evade += e.stat_to_change_value
+					}
 				}
+			}
+		}
+
+		for t in entity.cell.tag_to_remove {
+			index := 0
+			for &e in entity.elements {
+				if e.tag == t {
+					if e.stat_to_change != .none {
+						#partial switch e.stat_to_change {
+							case .evade :
+								entity.current_evade -= e.stat_to_change_value
+						}
+					}
+					ordered_remove(&entity.tags, index)
+					ordered_remove(&entity.elements, index)
+				}
+				index += 1
 			}
 		}
 	}
@@ -615,7 +674,17 @@ attack :: proc(damaged_entity : ^Entity, attacking_entity : ^Entity) {
 	if rand < attacking_entity.entity_stats.chance {
 		mult = 2
 	}
-	entity_take_damage(damaged_entity, attacking_entity.current_damage * mult)
+
+	touch := f32(100 / damaged_entity.current_evade)
+	rand_touch := f32(rl.GetRandomValue(0, 100))
+
+	if rand_touch <= touch {
+		entity_take_damage(damaged_entity, attacking_entity.current_damage * mult)
+	}
+	else {
+		append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint("miss")), position = {damaged_entity.position.x + 16, -damaged_entity.position.y - 20}, color = rl.GREEN})
+	}
+
 	game_state.attack_button.disabled = true
 	attacking_entity.current_endurance -= 2
 	attacking_entity.attack_done = true
@@ -1248,16 +1317,17 @@ draw_battle :: proc() {
 	for y in 0..<ARENA_HEIGHT{
 		for x in 0..<ARENA_WIDTH{
 			col := rl.WHITE
-			if game_state.arena[y * ARENA_WIDTH + x].blocked {
-				col = rl.BLACK
-			}
-			else if game_state.arena[y * ARENA_WIDTH + x].cell_active {
+			if game_state.arena[y * ARENA_WIDTH + x].cell_active {
 				col = rl.PURPLE
 			}
 			else if x == game_state.order[game_state.order_index].cell.x && y == game_state.order[game_state.order_index].cell.y {
 				col = rl.GREEN
 			}
 			rl.DrawTextureV(floor_sprite, {f32(OFFSET_X + x * SPRITE_SIZE), f32(OFFSET_Y + y * SPRITE_SIZE)}, col)
+
+			if game_state.arena[y * ARENA_WIDTH + x].blocked {
+				rl.DrawTextureV(blocker_sprite, {f32(OFFSET_X + x * SPRITE_SIZE), f32(OFFSET_Y + y * SPRITE_SIZE)}, col)
+			}
 		}
 	}
 
@@ -1339,15 +1409,17 @@ draw_battle :: proc() {
 		rl.DrawText(fmt.ctprint("mutation", game_state.info_entity.mutation), 1300, 200, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("class", game_state.info_entity.class), 1300, 220, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("cell", game_state.info_entity.cell.x, " : ", game_state.info_entity.cell.y), 1300, 240, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("evade", game_state.info_entity.current_evade), 1300, 260, 20, rl.WHITE)
 		index := 0
 		for t in game_state.info_entity.tags {
-			rl.DrawText(fmt.ctprint("tag :", t,), 1300, i32(260 + index), 20, rl.WHITE)
+			rl.DrawText(fmt.ctprint("tag :", t,), 1300, i32(280 + index), 20, rl.WHITE)
 			index += 20
 		}
 	}
 
 	x_offset := 0
 	index = 0
+	rl.DrawText(fmt.ctprint(game_state.turn_number), i32(1470), 5, 30, rl.WHITE)
 	for &e in game_state.order {
 		rl.DrawTexturePro(e.current_sprite, rl.Rectangle{0, 0, 32, 32}, rl.Rectangle{f32(1500 + x_offset), 5, 32, 32}, {0, 0}, 0, e.color)
 		if index == game_state.order_index {
@@ -1446,6 +1518,20 @@ on_battle_enter :: proc() {
 
 	for b in 0..<block {
 		other_spawned[b].blocked = true
+		ordered_remove(&other_spawned, b)
+	}
+
+	bush := int(rl.GetRandomValue(i32(game_state.level.bush_min), i32(game_state.level.bush_max)))
+
+	for b in 0..<bush {
+		bush_entity := entity_create(.bush)
+		place_entity(bush_entity, other_spawned[b].x, other_spawned[b].y, .top)
+		append(&other_spawned[b].elements, hidden_element)
+		ordered_remove(&other_spawned, b)
+	}
+
+	for &b in other_spawned {
+		append(&b.tag_to_remove, "bush")
 	}
 
 	for c in 0..<4 {
@@ -1481,7 +1567,9 @@ on_battle_enter :: proc() {
 
     for &e in game_state.entities {
     	if !e.allocated do continue
-    	append(&game_state.order, &e)
+    	if e.kind == .player || e.kind == .enemy {
+	    	append(&game_state.order, &e)
+    	}
     }
 
     game_state.order_index = 0
