@@ -1516,6 +1516,10 @@ check_mouse_hover_cell :: proc() {
 	rl.DrawTextureV(hover_cell_sprite, {f32(OFFSET_X + x * SPRITE_SIZE), f32(OFFSET_Y + y * SPRITE_SIZE)}, rl.RED)
 }
 
+collect_item :: proc(item : ^Entity) {
+
+}
+
 on_battle_enter :: proc() {
 	player_spawned : [dynamic]^Cell
 	enemy_spawned : [dynamic]^Cell
@@ -1553,6 +1557,14 @@ on_battle_enter :: proc() {
 		place_entity(bush_entity, other_spawned[b].x, other_spawned[b].y, .top)
 		append(&other_spawned[b].elements, hidden_element)
 		ordered_remove(&other_spawned, b)
+	}
+
+    item := int(rl.GetRandomValue(i32(game_state.level.item_min), i32(game_state.level.item_max)))
+
+	for i in 0..<item {
+		item_entity := entity_create(.item)
+		place_entity(item_entity, other_spawned[i].x, other_spawned[i].y, .mid)
+		ordered_remove(&other_spawned, i)
 	}
 
 	for &b in other_spawned {
