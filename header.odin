@@ -208,6 +208,7 @@ Entity_Age :: enum {
 	teen,
 	adult,
 	senior,
+    retired,
 }
 
 Entity_Stats :: struct {
