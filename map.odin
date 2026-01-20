@@ -45,6 +45,9 @@ init_map :: proc() {
 				game_state.map_buttons[index].on_click = proc(button : ^Button) {
 					on_home_back()
 					game_state.game_step = .cloning
+                    for &e in game_state.entities {
+                        e.entity_stats.age += 1
+                    }
 				}
 			}
 			case .battle: {
@@ -113,7 +116,7 @@ update_map :: proc() {
 
 draw_map :: proc() {
 	rl.DrawText(fmt.ctprint("World Map"), WINDOW_WIDTH / 2 - 100, 20, 50, rl.WHITE)
-
+//todo : draw clones info here
 	index := 0
 	for &e in game_state.map_buttons {
 		e.draw(&e)
