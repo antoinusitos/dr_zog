@@ -379,6 +379,8 @@ Entity :: struct {
 
 	offset_sprite : rl.Vector2,
 
+    item_type : Item_Type,
+
 	update : proc(^Entity),
 	draw: proc(^Entity),
 }
@@ -415,6 +417,12 @@ Entity_Kind :: enum {
 	element_fire,
 	blood,
 	bush,
+    item,
+}
+
+Item_Type :: enum {
+    none,
+    coin,
 }
 
 Damage_Text :: struct {
