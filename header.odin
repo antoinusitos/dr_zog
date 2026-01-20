@@ -267,6 +267,9 @@ Game_State :: struct {
 	gold : int,
 	turn_number : int,
 
+	shown_path : [dynamic]Check_Cell,
+	shown_path_index : int,
+
 	damage_texts : [dynamic]Damage_Text,
 
 	blocked : bool,

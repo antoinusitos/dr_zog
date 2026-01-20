@@ -218,6 +218,10 @@ entity_destroy :: proc(entity: ^Entity) {
 }
 
 entity_take_damage :: proc(entity : ^Entity, amount : int) {
+	if entity.exploded {
+		return
+	}
+
 	entity.current_life -= amount
 	if entity.current_life <= -5 {
 		entity.exploded = true
@@ -973,6 +977,14 @@ update_battle :: proc() {
 		for &move in movement {
 			game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
 		}
+
+		mouse_pos := rl.GetMousePosition() + camera.target * camera.zoom
+		mouse_x := int(math.ceil_f32(mouse_pos.x / (SPRITE_SIZE * camera.zoom))) - 4
+		mouse_y := int(math.ceil_f32(mouse_pos.y / (SPRITE_SIZE * camera.zoom))) - 4
+
+		clear(&game_state.shown_path)
+		game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
+		append(&game_state.shown_path, Check_Cell{cell = game_state.order[game_state.order_index].cell^})
 	}
 	else if game_state.want_to_attack {
 		x := game_state.order[game_state.order_index].cell.x
@@ -1085,6 +1097,7 @@ init_combat_ui :: proc() {
 		}
 		end_attack()
 		game_state.want_to_move = true
+		clear(&game_state.shown_path)
 	}
 	game_state.move_button.on_hover = proc(button : ^Button) {
 		if game_state.order[game_state.order_index].kind != .player {
@@ -1369,6 +1382,18 @@ draw_battle :: proc() {
 		// call the update function
 		entity.draw(&entity)
 	}*/
+
+	if game_state.want_to_move && len(game_state.shown_path) > 1 {
+		game_state.shown_path_index = 0
+		for p in 0..<len(game_state.shown_path) - 2 {
+			rl.DrawLineEx(
+				{f32(OFFSET_X + 16 + game_state.shown_path[p].cell.x * 32), f32(OFFSET_Y + 16 + game_state.shown_path[p].cell.y * 32)},
+				{f32(OFFSET_X + 16 + game_state.shown_path[p + 1].cell.x * 32), f32(OFFSET_Y + 16 + game_state.shown_path[p + 1].cell.y * 32)},
+				10.0,
+				rl.BLACK
+				)
+		}
+	}
 
 	rl.EndMode2D()
 

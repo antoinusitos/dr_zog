@@ -1,5 +1,4 @@
 doing :
-- show pathfind with arrow
 - items
 
 todo :
@@ -10,5 +9,6 @@ todo :
 - leveling
 - passive abilities (when hit : gain +1 str, etc.)
 - turn number (with rewards)
+- show endurance on abilities buttons
 
 https://pixelfrog-assets.itch.io/tiny-swords
