@@ -549,14 +549,6 @@ place_entity :: proc(entity: ^Entity, x : int, y : int, height : Cell_Height) {
 			game_state.arena[y * ARENA_WIDTH + x].entity_top = entity
 	}
 
-	if game_state.arena[y * ARENA_WIDTH + x].entity_bottom != nil && entity.kind == .player {
-		if game_state.arena[y * ARENA_WIDTH + x].entity_bottom.kind == .item {
-			collect_item(game_state.arena[y * ARENA_WIDTH + x].entity_bottom)
-			entity_destroy(game_state.arena[y * ARENA_WIDTH + x].entity_bottom)
-			game_state.arena[y * ARENA_WIDTH + x].entity_bottom = nil
-		}
-	}
-
 	entity.position = {f32(OFFSET_X + x * SPRITE_SIZE + int(entity.offset_sprite.x)), f32(-OFFSET_Y - y * SPRITE_SIZE+ int(entity.offset_sprite.y))}
 	entity.cell = &game_state.arena[y * ARENA_WIDTH + x]
 
@@ -851,6 +843,7 @@ update_battle :: proc() {
 			game_state.end_turn_button.disabled = true
 			if entity.time_to_point >= 0.25 {
 				place_entity(&entity, entity.path[entity.path_index].cell.x, entity.path[entity.path_index].cell.y, .mid)
+				entity.last_position = entity.position
 				entity.time_to_point = 0
 				entity.path_index -= 1
 				if entity.path_index < 0 {
@@ -859,10 +852,24 @@ update_battle :: proc() {
 					game_state.blocked = false
 					entity.moving = false
 					entity.movement_done = true
+					if entity.kind == .player && entity.cell.entity_bottom != nil {
+						if entity.cell.entity_bottom.kind == .item {
+							collect_item(entity.cell.entity_bottom)
+							entity_destroy(entity.cell.entity_bottom)
+							entity.cell.entity_bottom = nil
+						}
+					}
 				}
 			}
 			else {
 				entity.time_to_point += rl.GetFrameTime()
+				target_pos : rl.Vector2 = {
+					f32(OFFSET_X + entity.path[entity.path_index].cell.x * SPRITE_SIZE + int(entity.offset_sprite.x)), 
+					f32(-OFFSET_Y - entity.path[entity.path_index].cell.y * SPRITE_SIZE+ int(entity.offset_sprite.y))
+				}
+				new_x := math.lerp(entity.last_position.x, target_pos.x, entity.time_to_point / 0.25)
+				new_y := math.lerp(entity.last_position.y, target_pos.y, entity.time_to_point / 0.25)
+				entity.position = {new_x, new_y}
 			}
 		}
 		else if entity.attacking {
@@ -954,6 +961,7 @@ update_battle :: proc() {
 				game_state.order[game_state.order_index].path = find_path(x, y, cell.x, cell.y)
 				game_state.order[game_state.order_index].path_index = len(game_state.order[game_state.order_index].path) - 1
 				game_state.order[game_state.order_index].time_to_point = 0.25
+				game_state.order[game_state.order_index].last_position = game_state.order[game_state.order_index].position
 				game_state.order[game_state.order_index].moving = true
 				game_state.blocked = true
 			}
@@ -996,6 +1004,11 @@ update_battle :: proc() {
 
 	check_inspected()
 
+	if !game_state.want_to_move {
+		game_state.shown_path_x = -1
+		game_state.shown_path_y = -1
+	}
+
 	if game_state.want_to_move {
 		x := game_state.order[game_state.order_index].cell.x
 		y := game_state.order[game_state.order_index].cell.y
@@ -1010,9 +1023,14 @@ update_battle :: proc() {
 		mouse_x := int(math.ceil_f32(mouse_pos.x / (SPRITE_SIZE * camera.zoom))) - 4
 		mouse_y := int(math.ceil_f32(mouse_pos.y / (SPRITE_SIZE * camera.zoom))) - 4
 
-		clear(&game_state.shown_path)
-		game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
-		append(&game_state.shown_path, Check_Cell{cell = game_state.order[game_state.order_index].cell^})
+		if game_state.shown_path_x != mouse_x || game_state.shown_path_y != mouse_y {
+			game_state.shown_path_x = mouse_x
+			game_state.shown_path_y = mouse_y
+			clear(&game_state.shown_path)
+			game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
+			log_error(game_state.shown_path)
+			append(&game_state.shown_path, Check_Cell{cell = game_state.order[game_state.order_index].cell^})
+		}
 	}
 	else if game_state.want_to_attack {
 		x := game_state.order[game_state.order_index].cell.x

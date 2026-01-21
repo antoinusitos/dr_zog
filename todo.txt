@@ -1,5 +1,6 @@
 doing :
-- better movement (lerp)
+- show endurance on abilities buttons
+- show clones info on the map
 
 todo :
 
@@ -8,8 +9,7 @@ todo :
 - shop
 - leveling
 - passive abilities (when hit : gain +1 str, etc.)
-- turn number (with rewards)
-- show endurance on abilities buttons
+- turn number (with rewards at the end)
 - olding when run ends
 - scraping clones
 

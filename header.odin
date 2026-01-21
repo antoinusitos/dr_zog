@@ -270,6 +270,8 @@ Game_State :: struct {
 
 	shown_path : [dynamic]Check_Cell,
 	shown_path_index : int,
+	shown_path_x : int,
+	shown_path_y : int,
 
 	damage_texts : [dynamic]Damage_Text,
 
@@ -320,6 +322,7 @@ Entity :: struct {
 	sprite_index : int,
 	sprite_time : f32,
 	position : rl.Vector2,
+	last_position : rl.Vector2,
 	sprite_size: f32,
 	color : rl.Color,
 
