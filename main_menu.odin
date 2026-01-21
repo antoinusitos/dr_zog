@@ -342,12 +342,12 @@ draw_main_menu :: proc() {
 		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_stats.description), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
 		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
 
-		rl.DrawText(fmt.ctprint("ability:", game_state.clones[game_state.order_index].base_attack.name), 0, 300, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("base attack:", game_state.clones[game_state.order_index].base_attack.name), 0, 300, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].base_attack.description, ")"), 0, 320, 20, rl.WHITE)
 
-		if game_state.clones[game_state.order_index].class != .none {
-			rl.DrawText(fmt.ctprint("ability:", game_state.clones[game_state.order_index].class_stats.ability[0].name), 0, 380, 20, rl.WHITE)
-			rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].class_stats.ability[0].description, ")"), 0, 400, 20, rl.WHITE)
+		if game_state.clones[game_state.order_index].abilities[0] != nil {
+			rl.DrawText(fmt.ctprint("ability:", game_state.clones[game_state.order_index].abilities[0].name), 0, 380, 20, rl.WHITE)
+			rl.DrawText(fmt.ctprint("(", game_state.clones[game_state.order_index].abilities[0].description, ")"), 0, 400, 20, rl.WHITE)
 		}
 
 		if game_state.clones[game_state.order_index].mutation_ability.ability_type != .none {

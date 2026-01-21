@@ -175,6 +175,7 @@ process_choice :: proc(index : int) {
 analyse_tags :: proc(tag : string) {
 	tags := strings.split_after(tag, "-")
 	
+	log_error(tags)
 	for &t in tags {
 		s, ok := strings.remove(t, "-", 1)
 		t = s

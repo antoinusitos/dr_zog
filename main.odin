@@ -60,6 +60,8 @@ main :: proc() {
 
 	init_event_ui()
 
+	init_leveling_ui()
+
 	init_elements()
 
 	init_main_menu()
@@ -474,6 +476,8 @@ remove_class :: proc (entity : ^Entity) {
 			entity.entity_stats.vitality -= c.stats.vitality
 			entity.entity_stats.psyche -= c.stats.psyche
 			entity.entity_stats.speed -= c.stats.speed
+
+			entity.abilities[0] = nil
 		}
 	}
 
@@ -491,6 +495,8 @@ apply_class :: proc (entity : ^Entity) {
 			entity.entity_stats.vitality += c.stats.vitality
 			entity.entity_stats.psyche += c.stats.psyche
 			entity.entity_stats.speed += c.stats.speed
+
+			entity.abilities[0] = c.ability[rl.GetRandomValue(0, i32(len(c.ability) - 1))]
 		}
 	}
 
@@ -731,18 +737,22 @@ check_all_dead :: proc() {
 }
 
 ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
-	#partial switch attacking_entity.class_stats.ability[index].ability_type {
+	if len(attacking_entity.abilities) <= index || attacking_entity.abilities[index] == nil {
+		return
+	}
+	
+	#partial switch attacking_entity.abilities[index].ability_type {
 		case .damage:
 		{
 			if damaged_cell.entity == nil {
-				attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+				attacking_entity.current_endurance -= attacking_entity.abilities[index].cost
 				if attacking_entity.current_endurance <= 0 {
 					game_state.ability_button.disabled = true
 				}
-				if attacking_entity.class_stats.ability[index].element_to_add.element != .none {
-					append(&damaged_cell.tags, attacking_entity.class_stats.ability[index].element_to_add.tag)
-					append(&damaged_cell.elements, attacking_entity.class_stats.ability[index].element_to_add)
-					element := entity_create(attacking_entity.class_stats.ability[index].element_to_add.element_to_spawn)
+				if attacking_entity.abilities[index].element_to_add.element != .none {
+					append(&damaged_cell.tags, attacking_entity.abilities[index].element_to_add.tag)
+					append(&damaged_cell.elements, attacking_entity.abilities[index].element_to_add)
+					element := entity_create(attacking_entity.abilities[index].element_to_add.element_to_spawn)
 					place_entity(element, damaged_cell.x, damaged_cell.y, .top)
 					damaged_cell.entity_top = element
 				}
@@ -756,17 +766,17 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 			if rand < attacking_entity.entity_stats.chance {
 				mult = 2
 			}
-			entity_take_damage(damaged_cell.entity, attacking_entity.class_stats.ability[index].value * mult)
-			for t in attacking_entity.class_stats.ability[index].add_tags {
+			entity_take_damage(damaged_cell.entity, attacking_entity.abilities[index].value * mult)
+			for t in attacking_entity.abilities[index].add_tags {
 				append(&damaged_cell.entity.tags, t)
 			}
-			if attacking_entity.class_stats.ability[index].element_to_add.element != .none {
-				append(&damaged_cell.entity.tags, attacking_entity.class_stats.ability[index].element_to_add.tag)
-				append(&damaged_cell.entity.elements, attacking_entity.class_stats.ability[index].element_to_add)
-				element := entity_create(attacking_entity.class_stats.ability[index].element_to_add.element_to_spawn)
+			if attacking_entity.abilities[index].element_to_add.element != .none {
+				append(&damaged_cell.entity.tags, attacking_entity.abilities[index].element_to_add.tag)
+				append(&damaged_cell.entity.elements, attacking_entity.abilities[index].element_to_add)
+				element := entity_create(attacking_entity.abilities[index].element_to_add.element_to_spawn)
 				damaged_cell.entity_top = element
 			}
-			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+			attacking_entity.current_endurance -= attacking_entity.abilities[index].cost
 			if attacking_entity.current_endurance <= 0 {
 				game_state.ability_button.disabled = true
 			}
@@ -774,10 +784,10 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 		}
 		case .movement:
 		{
-			if ability_has_tag(attacking_entity.class_stats.ability[index], "move_instant") {
+			if ability_has_tag(attacking_entity.abilities[index], "move_instant") {
 				place_entity(attacking_entity, damaged_cell.x, damaged_cell.y, .top)
 			}
-			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+			attacking_entity.current_endurance -= attacking_entity.abilities[index].cost
 			game_state.ability_1 = false
 			reset_active_cells()
 			if attacking_entity.current_endurance <= 0 {
@@ -787,7 +797,7 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 		case .heal:
 		{
 			if damaged_cell.entity == nil {
-				attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+				attacking_entity.current_endurance -= attacking_entity.abilities[index].cost
 				if attacking_entity.current_endurance <= 0 {
 					game_state.ability_button.disabled = true
 				}
@@ -795,12 +805,12 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 				reset_active_cells()
 				return
 			}
-			append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.class_stats.ability[index].value)), position = {damaged_cell.entity.position.x + 16, -damaged_cell.entity.position.y - 20}, color = rl.GREEN})
-			damaged_cell.entity.current_life += attacking_entity.class_stats.ability[index].value
-			for t in attacking_entity.class_stats.ability[index].add_tags {
+			append(&game_state.damage_texts, Damage_Text{text = string(fmt.ctprint(attacking_entity.abilities[index].value)), position = {damaged_cell.entity.position.x + 16, -damaged_cell.entity.position.y - 20}, color = rl.GREEN})
+			damaged_cell.entity.current_life += attacking_entity.abilities[index].value
+			for t in attacking_entity.abilities[index].add_tags {
 				append(&damaged_cell.entity.tags, t)
 			}
-			attacking_entity.current_endurance -= attacking_entity.class_stats.ability[index].cost
+			attacking_entity.current_endurance -= attacking_entity.abilities[index].cost
 			if attacking_entity.current_endurance <= 0 {
 				game_state.ability_button.disabled = true
 			}
@@ -821,6 +831,8 @@ update :: proc() {
 			update_battle()
 		case .event:
 			update_event()
+		case .leveling:
+			update_leveling()
 	}
 }
 
@@ -1322,7 +1334,7 @@ init_combat_ui :: proc() {
 	}
 	setup_one_button(&game_state.end_combat_button)
 	game_state.end_combat_button.on_click = proc(button : ^Button) {
-		game_state.game_step = .mapping
+		game_state.game_step = .leveling
 
 		game_state.game_finished = false
 
@@ -1365,6 +1377,8 @@ draw :: proc() {
 			draw_battle()
 		case .event:
 			draw_event()
+		case .leveling:
+			draw_leveling()
 	}
 
 	rl.EndDrawing()	

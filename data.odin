@@ -3,11 +3,11 @@ package game
 import rl "vendor:raylib"
 
 class_stats := [5]Class_stats {
-	{class = .tank, stats = {vitality = 2, psyche = -1, agility = -1}, attack_size = 1, ability = {&push_ability, nil}},
-	{class = .warrior, stats = {strength = 2, chance = -1, psyche = -1}, attack_size = 1, ability = {&patator_ability, nil}},
-	{class = .healer, stats = {speed = 2, strength = -1, agility = -1}, attack_size = 1, ability = {&heal_ability, nil}},
+	{class = .tank, stats = {vitality = 2, psyche = -1, agility = -1}, attack_size = 1, ability = {&push_ability, &push_ability_2}},
+	{class = .warrior, stats = {strength = 2, chance = -1, psyche = -1}, attack_size = 1, ability = {&patator_ability}},
+	{class = .healer, stats = {speed = 2, strength = -1, agility = -1}, attack_size = 1, ability = {&heal_ability}},
 	{class = .sniper, stats = {agility = 2, vitality = -1, psyche = -1}, attack_size = 3},
-	{class = .spirit, stats = {psyche = 2, strength = -1, vitality = -1}, attack_size = 2, ability = {&fire_flamme_ability, nil}},
+	{class = .spirit, stats = {psyche = 2, strength = -1, vitality = -1}, attack_size = 2, ability = {&fire_flamme_ability}},
 }
 
 mutation_stats := [8]Mutation_stats {
@@ -164,6 +164,18 @@ push_ability := Class_ability {
 	cost = 2,
 	name = "push",
 	id = "Push_Ability",
+	description = "Push any one in the direction ! (stat : speed)",
+	base_stat = .speed,
+	stat_calculation = 1,
+}
+
+push_ability_2 := Class_ability {
+	ability_type = .movement,
+	range = 1, // range
+	value = 2, // push length
+	cost = 2,
+	name = "push2",
+	id = "push_ability_2",
 	description = "Push any one in the direction ! (stat : speed)",
 	base_stat = .speed,
 	stat_calculation = 1,

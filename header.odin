@@ -16,7 +16,7 @@ Class_stats :: struct {
 	class : Class,
 	stats : Entity_Stats,
 	attack_size : int,
-	ability : [2]^Class_ability,
+	ability : []^Class_ability,
 }
 
 Ability_type :: enum {
@@ -240,6 +240,7 @@ Game_Step :: enum {
 	battle,
 	event,
 	shop,
+	leveling,
 }
 
 Game_State :: struct {
@@ -328,6 +329,8 @@ Entity :: struct {
 
 	//stats
 	entity_stats : Entity_Stats,
+
+	abilities : [2]^Class_ability,
 
 	//details
 	current_level : int,
