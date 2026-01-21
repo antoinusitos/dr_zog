@@ -984,14 +984,6 @@ update_battle :: proc() {
 		//game_state.ability_2_button.update(&game_state.ability_2_button)
 	}
 
-	if rl.IsKeyPressed(.SPACE) {
-		end_turn()
-	}
-
-	if rl.IsKeyPressed(.F) {
-		log_error(game_state.order[game_state.order_index].class_stats.ability)
-	}
-
 	if rl.IsKeyPressed(.G) {
 		for i in 0..<4 {
 			game_state.clones[i].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
@@ -1023,13 +1015,19 @@ update_battle :: proc() {
 		mouse_x := int(math.ceil_f32(mouse_pos.x / (SPRITE_SIZE * camera.zoom))) - 4
 		mouse_y := int(math.ceil_f32(mouse_pos.y / (SPRITE_SIZE * camera.zoom))) - 4
 
-		if game_state.shown_path_x != mouse_x || game_state.shown_path_y != mouse_y {
+		if mouse_y * ARENA_WIDTH + mouse_x < 100 && mouse_y * ARENA_WIDTH + mouse_x >= 0 && game_state.arena[mouse_y * ARENA_WIDTH + mouse_x].cell_active {
+			if game_state.shown_path_x != mouse_x || game_state.shown_path_y != mouse_y {
+				game_state.shown_path_x = mouse_x
+				game_state.shown_path_y = mouse_y
+				clear(&game_state.shown_path)
+				game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
+				append(&game_state.shown_path, Check_Cell{cell = game_state.order[game_state.order_index].cell^})
+			}
+		}
+		else {
 			game_state.shown_path_x = mouse_x
 			game_state.shown_path_y = mouse_y
 			clear(&game_state.shown_path)
-			game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
-			log_error(game_state.shown_path)
-			append(&game_state.shown_path, Check_Cell{cell = game_state.order[game_state.order_index].cell^})
 		}
 	}
 	else if game_state.want_to_attack {
@@ -1328,6 +1326,8 @@ init_combat_ui :: proc() {
 
 		game_state.game_finished = false
 
+		game_state.gold += 10
+
 		for &e in game_state.enemies {
 			entity_destroy(e)
 		}
@@ -1590,6 +1590,43 @@ on_battle_enter :: proc() {
 
 	rand.shuffle(player_spawned[:])
 	rand.shuffle(enemy_spawned[:])
+
+    clear(&game_state.enemies)
+
+    enemies := int(rl.GetRandomValue(i32(game_state.level.enemies_min), i32(game_state.level.enemies_max)))
+
+    for e in 0..<enemies {
+    	enemy := entity_create(.enemy)
+	    enemy.entity_stats = fly_stats
+	    if e == 0 {
+	    	 enemy.name = "mother fucker"
+	    }
+	    else if e == 1 {
+	    	enemy.name = "dummy"
+	    }
+	    else {
+	    	enemy.name = "ass"
+	    }
+	    init_entity(enemy)
+	    append(&game_state.enemies, enemy)
+	    place_entity(enemy, enemy_spawned[e].x, enemy_spawned[e].y, .mid)
+	    enemy.target = game_state.clones[0]
+	    ordered_remove(&enemy_spawned, e)
+    }
+
+	for c in 0..<4 {
+		place_entity(game_state.clones[c], player_spawned[c].x, player_spawned[c].y, .mid)
+		ordered_remove(&player_spawned, c)
+	}
+
+	for e in enemy_spawned {
+		append(&other_spawned, e)
+	}
+
+	for p in player_spawned {
+		append(&other_spawned, p)
+	}
+
 	rand.shuffle(other_spawned[:])
 
 	block := int(rl.GetRandomValue(i32(game_state.level.block_min), i32(game_state.level.block_max)))
@@ -1620,33 +1657,9 @@ on_battle_enter :: proc() {
 		append(&b.tag_to_remove, "bush")
 	}
 
-	for c in 0..<4 {
-		place_entity(game_state.clones[c], player_spawned[c].x, player_spawned[c].y, .mid)
-	}
-
     for &c in game_state.clones {
     	c.current_endurance = c.entity_stats.endurance
 		c.current_damage = c.entity_stats.strength
-    }
-
-    clear(&game_state.enemies)
-
-    for e in 0..<3 {
-    	enemy := entity_create(.enemy)
-	    enemy.entity_stats = fly_stats
-	    if e == 0 {
-	    	 enemy.name = "mother fucker"
-	    }
-	    else if e == 1 {
-	    	enemy.name = "dummy"
-	    }
-	    else {
-	    	enemy.name = "ass"
-	    }
-	    init_entity(enemy)
-	    append(&game_state.enemies, enemy)
-	    place_entity(enemy, enemy_spawned[e].x, enemy_spawned[e].y, .mid)
-	    enemy.target = game_state.clones[0]
     }
 
     clear(&game_state.order)

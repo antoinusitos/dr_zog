@@ -1,6 +1,5 @@
 doing :
 - show endurance on abilities buttons
-- show clones info on the map
 
 todo :
 
@@ -12,7 +11,7 @@ todo :
 - turn number (with rewards at the end)
 - olding when run ends
 - scraping clones
-
+- more abilities buttons
 
 https://pixelfrog-assets.itch.io/tiny-swords
 

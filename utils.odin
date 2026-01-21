@@ -636,5 +636,20 @@ read_level :: proc(map_info : [dynamic]string) -> Level {
 		it += 1
 	}
 
+	line += 1
+
+	it = 0
+	for str in strings.split_iterator(&map_info[line], "-") {
+		if it == 0 {
+			n, ok := strconv.parse_int(str)
+			to_return.enemies_min = n
+		}
+		else {
+			n, ok := strconv.parse_int(str)
+			to_return.enemies_max = n
+		}
+		it += 1
+	}
+
 	return to_return
 }

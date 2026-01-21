@@ -1,6 +1,6 @@
-// 0 - empty, 1 - spawn player, 2 - spawn enemy, 3 - blocker, 4 - bush, 5 - item
-1111000022
-1100000022
+// 0 - empty, 1 - spawn player, 2 - spawn enemy, 3 - blocker, 4 - bush, 5 - item, (block, bush, item, enemies)
+0111000022
+1110000022
 1100000022
 0000000022
 0000000022
@@ -9,6 +9,7 @@
 0000000022
 2222222222
 2222222222
-2-5
-1-5
-1-5
+3-5
+3-5
+1-3
+3-4

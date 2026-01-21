@@ -443,4 +443,6 @@ Level :: struct {
 	bush_max : int,
 	item_min : int,
 	item_max : int,
+	enemies_min : int,
+	enemies_max : int,
 }

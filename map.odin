@@ -112,8 +112,18 @@ update_map :: proc() {
 
 draw_map :: proc() {
 	rl.DrawText(fmt.ctprint("World Map"), WINDOW_WIDTH / 2 - 100, 20, 50, rl.WHITE)
-//todo : draw clones info here
+
 	index := 0
+	offset := 80
+	for c in game_state.clones {
+		rl.DrawText(fmt.ctprint(c.name, "(", c.class, ")"), 0, i32(index * offset), 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("HP:", c.current_life), 0, i32(index * offset + 20), 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("LVL:", c.current_level), 0, i32(index * offset + 40), 20, rl.WHITE)
+		index += 1
+	}
+
+	rl.DrawText(fmt.ctprint("Gold:", game_state.gold), WINDOW_WIDTH - 150, 0, 20, rl.WHITE)
+
 	for &e in game_state.map_buttons {
 		e.draw(&e)
 	}
