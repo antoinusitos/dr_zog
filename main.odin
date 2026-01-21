@@ -38,6 +38,8 @@ main :: proc() {
 	bush_sprite = rl.LoadTexture("Bush.png")
 	hidden_icon_sprite = rl.LoadTexture("Hidden_Icon.png")
 
+	coin_sprite = rl.LoadTexture("Coin.png")
+
 	lines := read_map("LVL0.txt")
 
 	game_state.level = read_level(lines)
@@ -173,6 +175,8 @@ blocker_sprite : rl.Texture2D
 bush_sprite : rl.Texture2D
 hidden_icon_sprite : rl.Texture2D
 
+coin_sprite : rl.Texture2D
+
 pulled_movement : bool
 pulled_attack : bool
 pulled_ability : bool
@@ -208,6 +212,7 @@ entity_create :: proc(kind: Entity_Kind) -> ^Entity {
 		case .element_fire: setup_element_fire(new_entity)
 		case .blood: setup_blood(new_entity)
 		case .bush: setup_bush(new_entity)
+		case .item: setup_item(new_entity)
 	}
 
 	return new_entity
@@ -365,6 +370,21 @@ setup_bush :: proc(entity: ^Entity) {
 	}
 }
 
+setup_item :: proc(entity: ^Entity) {
+	entity.sprite = {coin_sprite}
+	entity.current_sprite = entity.sprite[0]
+	entity.kind = .item
+	entity.item_type = .coin
+	entity.sprite_size = 32
+	entity.offset_sprite = {0 , -10}
+	entity.color = rl.WHITE
+	entity.update = proc(entity: ^Entity) {
+	}
+	entity.draw = proc(entity: ^Entity) {
+		default_draw_based_on_entity_data(entity)
+	}
+}
+
 init_entity :: proc(entity: ^Entity) {
 	if entity.kind == .player {
 
@@ -387,7 +407,7 @@ init_entity :: proc(entity: ^Entity) {
 		entity.entity_stats.vitality += age.vitality
 		entity.entity_stats.psyche += age.psyche
 		entity.entity_stats.speed += age.speed
-		switch entity.entity_stats.entity_age {
+		#partial switch entity.entity_stats.entity_age {
 			case .baby:
 				entity.sprite = {baby_player_sprite}
 			case .kid:
@@ -527,6 +547,14 @@ place_entity :: proc(entity: ^Entity, x : int, y : int, height : Cell_Height) {
 			game_state.arena[y * ARENA_WIDTH + x].entity = entity
 		case .top:
 			game_state.arena[y * ARENA_WIDTH + x].entity_top = entity
+	}
+
+	if game_state.arena[y * ARENA_WIDTH + x].entity_bottom != nil && entity.kind == .player {
+		if game_state.arena[y * ARENA_WIDTH + x].entity_bottom.kind == .item {
+			collect_item(game_state.arena[y * ARENA_WIDTH + x].entity_bottom)
+			entity_destroy(game_state.arena[y * ARENA_WIDTH + x].entity_bottom)
+			game_state.arena[y * ARENA_WIDTH + x].entity_bottom = nil
+		}
 	}
 
 	entity.position = {f32(OFFSET_X + x * SPRITE_SIZE + int(entity.offset_sprite.x)), f32(-OFFSET_Y - y * SPRITE_SIZE+ int(entity.offset_sprite.y))}
@@ -1517,7 +1545,10 @@ check_mouse_hover_cell :: proc() {
 }
 
 collect_item :: proc(item : ^Entity) {
-
+	#partial switch item.item_type {
+		case .coin:
+		game_state.gold += 3
+	}
 }
 
 on_battle_enter :: proc() {
@@ -1563,7 +1594,7 @@ on_battle_enter :: proc() {
 
 	for i in 0..<item {
 		item_entity := entity_create(.item)
-		place_entity(item_entity, other_spawned[i].x, other_spawned[i].y, .mid)
+		place_entity(item_entity, other_spawned[i].x, other_spawned[i].y, .bottom)
 		ordered_remove(&other_spawned, i)
 	}
 

@@ -44,10 +44,6 @@ init_map :: proc() {
 			case .home: {
 				game_state.map_buttons[index].on_click = proc(button : ^Button) {
 					on_home_back()
-					game_state.game_step = .cloning
-                    for &e in game_state.entities {
-                        e.entity_stats.age += 1
-                    }
 				}
 			}
 			case .battle: {
@@ -133,5 +129,19 @@ on_home_enter :: proc() {
 }
 
 on_home_back :: proc() {
-
+	game_state.game_step = .cloning
+    for &e in game_state.entities {
+    	#partial switch e.entity_stats.entity_age {
+    		case .baby:
+    			e.entity_stats.entity_age = .kid
+			case .kid:
+    			e.entity_stats.entity_age = .teen
+    		case .teen:
+    			e.entity_stats.entity_age = .adult
+    		case .adult:
+    			e.entity_stats.entity_age = .senior
+    		case .senior:
+    			e.entity_stats.entity_age = .retired
+    	}
+    }
 }

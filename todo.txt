@@ -1,5 +1,5 @@
 doing :
-- items
+- better movement (lerp)
 
 todo :
 
@@ -10,5 +10,12 @@ todo :
 - passive abilities (when hit : gain +1 str, etc.)
 - turn number (with rewards)
 - show endurance on abilities buttons
+- olding when run ends
+- scraping clones
+
 
 https://pixelfrog-assets.itch.io/tiny-swords
+
+
+bug :
+- crash sometimes when drawing path to move

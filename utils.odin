@@ -254,10 +254,10 @@ find_path :: proc(from_x : int, from_y : int, to_x : int, to_y : int) -> [dynami
 
 		if len(to_check) <= 0 || (to_check[0].cell.x == to_x && to_check[0].cell.y == to_y) {
 			if len(to_check) > 0 && to_check[0].cell.x == to_x && to_check[0].cell.y == to_y {
-				log_error("found objective cell")
+				//log_error("found objective cell")
 			}
 			else {
-				log_error("found1 no node to check")
+				//log_error("found1 no node to check")
 			}
 			break
 		}
@@ -333,14 +333,14 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
 			if check != nil {
-				log_error("nope0")
+				//log_error("nope0")
 				/*if cell_to_check.dist + dist < check.dist {
 					check.from_cell = cell_to_check
 					check.dist = cell_to_check.dist + dist
 				}*/
 			}
 			else if check2 != nil {
-				log_error("nope1")
+				//log_error("nope1")
 				/*if cell_to_check.dist + dist < check2.dist {
 					check2.from_cell = cell_to_check
 					check2.dist = cell_to_check.dist + dist
@@ -366,14 +366,14 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
 			if check != nil {
-				log_error("nope0")
+				//log_error("nope0")
 				/*if cell_to_check.dist + dist < check.dist {
 					check.from_cell = cell_to_check
 					check.dist = cell_to_check.dist + dist
 				}*/
 			}
 			else if check2 != nil {
-				log_error("nope1")
+				//log_error("nope1")
 				/*if cell_to_check.dist + dist < check2.dist {
 					check2.from_cell = cell_to_check
 					check2.dist = cell_to_check.dist + dist
@@ -399,7 +399,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
 			if check != nil {
-				log_error("nope0")
+				//log_error("nope0")
 				/*log_error("top cell1")
 				if cell_to_check.dist + dist < check.dist {
 					check.from_cell = cell_to_check
@@ -407,7 +407,7 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 				}*/
 			}
 			else if check2 != nil {
-				log_error("nope1")
+				//log_error("nope1")
 				/*log_error("top cell2")
 				if cell_to_check.dist + dist < check2.dist {
 					log_error("replace")
@@ -437,14 +437,14 @@ test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 			check := to_check_has(cell)
 			check2 := checked_has(cell)
 			if check != nil {
-				log_error("nope0")
+				//log_error("nope0")
 				/*if cell_to_check.dist + dist < check.dist {
 					check.from_cell = cell_to_check
 					check.dist = cell_to_check.dist + dist
 				}*/
 			}
 			else if check2 != nil {
-				log_error("nope1")
+				//log_error("nope1")
 				/*if cell_to_check.dist + dist < check2.dist {
 					check2.from_cell = cell_to_check
 					check2.dist = cell_to_check.dist + dist
