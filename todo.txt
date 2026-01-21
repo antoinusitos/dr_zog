@@ -1,17 +1,14 @@
 doing :
-- show endurance on abilities buttons
+- leveling
+- more abilities buttons
+- olding clones when run ends
 
 todo :
-
-- map
 - 3d view
 - shop
-- leveling
 - passive abilities (when hit : gain +1 str, etc.)
 - turn number (with rewards at the end)
-- olding when run ends
 - scraping clones
-- more abilities buttons
 
 https://pixelfrog-assets.itch.io/tiny-swords
 

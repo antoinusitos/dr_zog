@@ -1240,7 +1240,7 @@ init_combat_ui :: proc() {
 		fill_percent = 0,
 		fill_max = 1.0,
 		text_size = 20,
-		text_offset = {7, 15}
+		text_offset = {7, 10}
 	}
 	setup_one_button(&game_state.ability_button)
 	game_state.ability_button.on_click = proc(button : ^Button) {
@@ -1520,13 +1520,13 @@ draw_battle :: proc() {
 			if a != nil {
 				ability_text := fmt.ctprint()
 				if a.ability_type == .damage {
-					ability_text = fmt.ctprint(a.name, "\n(dmg:", a.value, " | rng:", a.range, ")", sep = "")
+					ability_text = fmt.ctprint(a.name, "\n(dmg:", a.value, " | rng:", a.range, ")\n(cost:", a.cost, ")", sep = "")
 				}
 				else if a.ability_type == .movement {
-					ability_text = fmt.ctprint(a.name, "\n(rng:", a.range, ")", sep = "")
+					ability_text = fmt.ctprint(a.name, "\n(rng:", a.range, ")\n(cost:", a.cost, ")", sep = "")
 				}
 				else if a.ability_type == .heal {
-					ability_text = fmt.ctprint(a.name, "\n(heal:", a.value, " | rng:", a.range, ")", sep = "")
+					ability_text = fmt.ctprint(a.name, "\n(heal:", a.value, " | rng:", a.range, ")\n(cost:", a.cost, ")", sep = "")
 				}
 				game_state.ability_button.text = string(ability_text)
 				game_state.ability_button.x = f32(320 + offset_ability)
