@@ -297,6 +297,12 @@ draw_main_menu :: proc() {
 
 		offset_class_x := 0
 		index := 0
+
+		game_state.class_1_button.active = false
+		game_state.class_2_button.active = false
+		game_state.class_3_button.active = false
+		game_state.class_4_button.active = false
+
 		for c in game_state.possible_class {
 			button : ^Button
 			if index == 0 {
@@ -315,6 +321,7 @@ draw_main_menu :: proc() {
 			button.text = string(fmt.ctprint(c))
 			button.class = c
 			button.index = index
+			button.active = true
 			button.on_click = proc(button : ^Button) {
 				if game_state.clones[game_state.order_index].class != .none {
 					append(&game_state.possible_class, game_state.clones[game_state.order_index].class)

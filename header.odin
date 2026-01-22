@@ -306,6 +306,11 @@ Game_State :: struct {
 	outcome_4_button : Button,
 	end_event_button : Button,
 
+	leveling_1_button : Button,
+	leveling_2_button : Button,
+	leveling_3_button : Button,
+	leveling_4_button : Button,
+
 	event_clone : ^Entity,
 
 	level : Level,

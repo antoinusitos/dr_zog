@@ -15,3 +15,4 @@ https://pixelfrog-assets.itch.io/tiny-swords
 
 bug :
 - crash sometimes when drawing path to move
+- crash random when moving

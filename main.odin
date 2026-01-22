@@ -68,72 +68,6 @@ main :: proc() {
 
 	init_map()
 
-	if quick_test {
-		for i in 0..<4 {
-			index := 0
-			for &c in game_state.clones {
-				if c == nil {
-					c = entity_create(.player)
-				    if index == 0 {
-				    	c.color = rl.BLUE
-				    }
-				    else if index == 1 {
-				    	c.color = rl.RED
-				    }
-				    else if index == 2 {
-				    	c.color = rl.GREEN
-				    }
-				    else if index == 3 {
-				    	c.color = rl.YELLOW
-				    }
-				    c.name = names[rl.GetRandomValue(0, len(names) - 1)]
-				    init_entity(c)
-
-				    game_state.clones[index].class = game_state.possible_class[index]
-				    //game_state.clones[index].class = game_state.possible_class[2]
-					apply_class(game_state.clones[index])
-				}
-				index += 1
-			}
-		}
-		game_state.all_clone_created = true
-		game_state.all_clone_created_ready = true
-		game_state.order_index = 0
-
-		place_entity(game_state.clones[0], 0, 0, .mid)
-	    place_entity(game_state.clones[1], 1, 0, .mid)
-	    place_entity(game_state.clones[2], 2, 0, .mid)
-	    place_entity(game_state.clones[3], 3, 0, .mid)
-
-	    for e in 0..<3 {
-	    	enemy := entity_create(.enemy)
-		    enemy.entity_stats = fly_stats
-		    if e == 0 {
-		    	 enemy.name = "mother fucker"
-		    }
-		    else if e == 1 {
-		    	enemy.name = "dummy"
-		    }
-		    else {
-		    	enemy.name = "ass"
-		    }
-		    init_entity(enemy)
-		    append(&game_state.enemies, enemy)
-		    place_entity(enemy, 9 - e, 9, .mid)
-		    enemy.target = game_state.clones[0]
-	    }
-
-	    for &e in game_state.entities {
-	    	if !e.allocated do continue
-	    	append(&game_state.order, &e)
-	    }
-
-	    game_state.order_index = 0
-	    game_state.turn_number = 1
-		slice.sort_by(game_state.order[:], entity_order)
-		game_state.game_step = .battle
-	}
-
     time_step : f32 = 1.0 / 60
     sub_steps : i32 = 4
 
@@ -645,6 +579,7 @@ end_turn :: proc() {
 	game_state.move_button.disabled = false
 	game_state.attack_button.disabled = false
 	game_state.ability_button.disabled = false
+	//game_state.ability_2_button.disabled = false
 	game_state.applyed_dots = false
 
 	game_state.order[game_state.order_index].movement_done = false
@@ -991,7 +926,6 @@ update_battle :: proc() {
 		game_state.move_button.update(&game_state.move_button)
 		game_state.attack_button.active = true
 		game_state.attack_button.update(&game_state.attack_button)
-		game_state.ability_button.active = true
 		game_state.ability_button.update(&game_state.ability_button)
 		//game_state.ability_2_button.update(&game_state.ability_2_button)
 	}
@@ -1027,7 +961,9 @@ update_battle :: proc() {
 		mouse_x := int(math.ceil_f32(mouse_pos.x / (SPRITE_SIZE * camera.zoom))) - 4
 		mouse_y := int(math.ceil_f32(mouse_pos.y / (SPRITE_SIZE * camera.zoom))) - 4
 
+		log_error("want to show")
 		if mouse_y * ARENA_WIDTH + mouse_x < 100 && mouse_y * ARENA_WIDTH + mouse_x >= 0 && game_state.arena[mouse_y * ARENA_WIDTH + mouse_x].cell_active {
+			log_error("show")
 			if game_state.shown_path_x != mouse_x || game_state.shown_path_y != mouse_y {
 				game_state.shown_path_x = mouse_x
 				game_state.shown_path_y = mouse_y
@@ -1267,7 +1203,7 @@ init_combat_ui :: proc() {
 			return
 		}
 
-		a := game_state.order[game_state.order_index].class_stats.ability[0]
+		a := game_state.order[game_state.order_index].abilities[0]
 		if a != nil && !pulled_ability {
 			pulled_ability = true
 			#partial switch a.ability_type {
@@ -1317,6 +1253,84 @@ init_combat_ui :: proc() {
 		pulled_ability = false
 	}
 
+	/*game_state.ability_2_button = Button{
+		x = 160,
+		y = 1005,
+		width = 150,
+		height = 75,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Ability",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {7, 10}
+	}
+	setup_one_button(&game_state.ability_2_button)
+	game_state.ability_2_button.on_click = proc(button : ^Button) {
+		if button.disabled {
+			return
+		}
+
+		game_state.ability_1 = true
+	}
+	game_state.ability_2_button.on_hover = proc(button : ^Button) {
+		if game_state.order[game_state.order_index].kind != .player {
+			return
+		}
+
+		a := game_state.order[game_state.order_index].abilities[1]
+		if a != nil && !pulled_ability {
+			pulled_ability = true
+			#partial switch a.ability_type {
+				case .damage :
+				{
+					reset_active_cells()
+					x := game_state.order[game_state.order_index].cell.x
+					y := game_state.order[game_state.order_index].cell.y
+					attack_size := a.range
+					movement := get_movement_cells(x, y, attack_size, true, false)
+
+					for &move in movement {
+						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+					}
+				}
+				case .movement :
+				{
+					reset_active_cells()
+					x := game_state.order[game_state.order_index].cell.x
+					y := game_state.order[game_state.order_index].cell.y
+					attack_size := a.range
+					movement := get_movement_cells(x, y, attack_size, false, false)
+
+					for &move in movement {
+						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+					}
+				}
+				case .heal :
+				{
+					reset_active_cells()
+					x := game_state.order[game_state.order_index].cell.x
+					y := game_state.order[game_state.order_index].cell.y
+					attack_size := a.range
+					movement := get_movement_cells(x, y, attack_size, true, true)
+
+					for &move in movement {
+						game_state.arena[move.y * ARENA_WIDTH + move.x].cell_active = true
+					}
+				}
+			}
+		}
+	}
+	game_state.ability_2_button.on_exit = proc(button : ^Button) {
+		if pulled_ability {
+			reset_active_cells()
+		}
+		pulled_ability = false
+	}*/
+
 	game_state.end_combat_button = Button{
 		x = WINDOW_WIDTH / 2 - 25,
 		y = WINDOW_HEIGHT / 2 + 100,
@@ -1335,6 +1349,8 @@ init_combat_ui :: proc() {
 	setup_one_button(&game_state.end_combat_button)
 	game_state.end_combat_button.on_click = proc(button : ^Button) {
 		game_state.game_step = .leveling
+		
+		init_leveling()
 
 		game_state.game_finished = false
 
@@ -1530,8 +1546,18 @@ draw_battle :: proc() {
 		game_state.attack_button.draw(&game_state.attack_button)
 
 		offset_ability := 0
-		for a in game_state.order[game_state.order_index].class_stats.ability {
+		ability_index := 0
+
+		game_state.ability_button.active = false
+		//game_state.ability_2_button.active = false
+
+		for a in game_state.order[game_state.order_index].abilities {
 			if a != nil {
+				button := &game_state.ability_button
+				//if ability_index == 1 {
+				//	button = &game_state.ability_2_button
+				//}
+				button.active = true
 				ability_text := fmt.ctprint()
 				if a.ability_type == .damage {
 					ability_text = fmt.ctprint(a.name, "\n(dmg:", a.value, " | rng:", a.range, ")\n(cost:", a.cost, ")", sep = "")
@@ -1542,13 +1568,14 @@ draw_battle :: proc() {
 				else if a.ability_type == .heal {
 					ability_text = fmt.ctprint(a.name, "\n(heal:", a.value, " | rng:", a.range, ")\n(cost:", a.cost, ")", sep = "")
 				}
-				game_state.ability_button.text = string(ability_text)
-				game_state.ability_button.x = f32(320 + offset_ability)
+				button.text = string(ability_text)
+				button.x = f32(320 + offset_ability)
 				if a.cost > game_state.order[game_state.order_index].current_endurance {
-					game_state.ability_button.disabled = true
+					button.disabled = true
 				}
-				game_state.ability_button.draw(&game_state.ability_button)
+				button.draw(button)
 				offset_ability += 160
+				ability_index += 1
 			}
 		}
 	}
@@ -1608,6 +1635,8 @@ on_battle_enter :: proc() {
     clear(&game_state.enemies)
 
     enemies := int(rl.GetRandomValue(i32(game_state.level.enemies_min), i32(game_state.level.enemies_max)))
+
+    enemies = 1
 
     for e in 0..<enemies {
     	enemy := entity_create(.enemy)
@@ -1674,6 +1703,8 @@ on_battle_enter :: proc() {
     for &c in game_state.clones {
     	c.current_endurance = c.entity_stats.endurance
 		c.current_damage = c.entity_stats.strength
+		c.movement_done = false
+		c.attack_done = false
     }
 
     clear(&game_state.order)
@@ -1684,6 +1715,11 @@ on_battle_enter :: proc() {
 	    	append(&game_state.order, &e)
     	}
     }
+
+    game_state.move_button.disabled = false
+    game_state.attack_button.disabled = false
+    game_state.ability_button.disabled = false
+	game_state.applyed_dots = false
 
     game_state.order_index = 0
     game_state.turn_number = 1

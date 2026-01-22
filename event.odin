@@ -9,7 +9,7 @@ outcome : Event_Outcome
 event_state : Event_state = .choice
 
 init_event_ui :: proc() {
-		game_state.outcome_1_button = Button{
+	game_state.outcome_1_button = Button{
 		x = WINDOW_WIDTH / 2,
 		y = 0,
 		width = 150,
@@ -175,7 +175,6 @@ process_choice :: proc(index : int) {
 analyse_tags :: proc(tag : string) {
 	tags := strings.split_after(tag, "-")
 	
-	log_error(tags)
 	for &t in tags {
 		s, ok := strings.remove(t, "-", 1)
 		t = s
