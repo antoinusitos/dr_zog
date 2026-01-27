@@ -961,15 +961,22 @@ update_battle :: proc() {
 		mouse_x := int(math.ceil_f32(mouse_pos.x / (SPRITE_SIZE * camera.zoom))) - 4
 		mouse_y := int(math.ceil_f32(mouse_pos.y / (SPRITE_SIZE * camera.zoom))) - 4
 
-		log_error("want to show")
+		//log_error("want to show")
 		if mouse_y * ARENA_WIDTH + mouse_x < 100 && mouse_y * ARENA_WIDTH + mouse_x >= 0 && game_state.arena[mouse_y * ARENA_WIDTH + mouse_x].cell_active {
-			log_error("show")
+			//log_error("show")
 			if game_state.shown_path_x != mouse_x || game_state.shown_path_y != mouse_y {
 				game_state.shown_path_x = mouse_x
 				game_state.shown_path_y = mouse_y
 				clear(&game_state.shown_path)
-				game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
-				append(&game_state.shown_path, Check_Cell{cell = game_state.order[game_state.order_index].cell^})
+				//log_error("cleared")
+				//game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
+				//log_error("find_path")
+				//log_error("cell:", game_state.order[game_state.order_index].cell)
+				//log_error("path:", game_state.shown_path)
+				c := Check_Cell{cell = game_state.order[game_state.order_index].cell^, id = -1, dist = 0, from_id = 0}
+				//log_error("c:", c)
+				append(&game_state.shown_path, c)
+				//log_error("append")
 			}
 		}
 		else {
@@ -1461,7 +1468,10 @@ draw_battle :: proc() {
 
 	if game_state.want_to_move && len(game_state.shown_path) > 1 {
 		game_state.shown_path_index = 0
-		for p in 0..<len(game_state.shown_path) - 2 {
+		//log_error(game_state.shown_path)
+		for p in 0..<len(game_state.shown_path) - 1 {
+			//log_error("from:", game_state.shown_path[p].cell)
+			//log_error("to:", game_state.shown_path[p + 1].cell)
 			rl.DrawLineEx(
 				{f32(OFFSET_X + 16 + game_state.shown_path[p].cell.x * 32), f32(OFFSET_Y + 16 + game_state.shown_path[p].cell.y * 32)},
 				{f32(OFFSET_X + 16 + game_state.shown_path[p + 1].cell.x * 32), f32(OFFSET_Y + 16 + game_state.shown_path[p + 1].cell.y * 32)},
