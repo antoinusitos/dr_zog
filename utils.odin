@@ -296,6 +296,7 @@ get_cell_check :: proc(from_id : int) -> Check_Cell{
 }
 
 to_check_has :: proc(cell : Cell) -> ^Check_Cell {
+    log_error("to check has")
 	for &c in to_check {
 		if Compare_Cell(c.cell, cell) {
 			return &c
@@ -306,6 +307,7 @@ to_check_has :: proc(cell : Cell) -> ^Check_Cell {
 }
 
 checked_has :: proc(cell : Cell) -> ^Check_Cell {
+    log_error("checked has")
 	for &c in checked {
 		if Compare_Cell(c.cell, cell) {
 			return &c
@@ -317,6 +319,8 @@ checked_has :: proc(cell : Cell) -> ^Check_Cell {
 
 test_cell :: proc(cell_to_check : ^Check_Cell, to_x : int, to_y : int) -> bool {
 	append(&checked, cell_to_check^)
+
+    log_error("test cell")
 
 	if cell_to_check.cell.x == to_x && cell_to_check.cell.y == to_y {
 		return true
