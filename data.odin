@@ -271,11 +271,11 @@ bad_body_ability := Class_ability {
 }
 
 all_stats : [5]Entity_Stats = {
-	Entity_Stats { entity_age = .baby, vitality = 1 },
-	Entity_Stats { entity_age = .kid, chance = 1 },
-	Entity_Stats { entity_age = .teen, speed = 1 },
-	Entity_Stats { entity_age = .adult, strength = 1 },
-	Entity_Stats { entity_age = .senior, psyche = 1 },
+	Entity_Stats { entity_age = .stage1, vitality = 1 },
+	Entity_Stats { entity_age = .stage2, chance = 1 },
+	Entity_Stats { entity_age = .stage3, speed = 1 },
+	Entity_Stats { entity_age = .stage4, strength = 1 },
+	Entity_Stats { entity_age = .stage5, psyche = 1 },
 }
 
 element_sprites := []Element_Sprite {

@@ -142,15 +142,15 @@ on_home_back :: proc() {
 	game_state.game_step = .cloning
     for &e in game_state.entities {
     	#partial switch e.entity_stats.entity_age {
-    		case .baby:
-    			e.entity_stats.entity_age = .kid
-			case .kid:
-    			e.entity_stats.entity_age = .teen
-    		case .teen:
-    			e.entity_stats.entity_age = .adult
-    		case .adult:
-    			e.entity_stats.entity_age = .senior
-    		case .senior:
+    		case .stage1:
+    			e.entity_stats.entity_age = .stage2
+			case .stage2:
+    			e.entity_stats.entity_age = .stage3
+    		case .stage3:
+    			e.entity_stats.entity_age = .stage4
+    		case .stage4:
+    			e.entity_stats.entity_age = .stage5
+    		case .stage5:
     			e.entity_stats.entity_age = .retired
     	}
     }

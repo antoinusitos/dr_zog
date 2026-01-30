@@ -9,6 +9,8 @@ todo :
 - passive abilities (when hit : gain +1 str, etc.)
 - turn number (with rewards at the end)
 - scraping clones
+- add ryan, random guy and another character for cloning
+- add defeat
 
 https://pixelfrog-assets.itch.io/tiny-swords
 

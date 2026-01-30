@@ -170,6 +170,9 @@ Cell :: struct {
 	elements : [dynamic]Element_Active,
 	type_loaded : int,
 	blocked : bool,
+	path_from_x : int,
+	path_from_y : int,
+	path_dist : f32,
 }
 
 Cell_Height :: enum {
@@ -203,11 +206,11 @@ cell_remove_tag :: proc(cell : ^Cell, tag : string) {
 }
 
 Entity_Age :: enum {
-	baby,
-	kid,
-	teen,
-	adult,
-	senior,
+	stage1,
+	stage2,
+	stage3,
+	stage4,
+	stage5,
     retired,
 }
 
@@ -232,6 +235,49 @@ Entity_Stats_Type :: enum {
 	agility,
 	chance,
 	evade
+}
+
+Character :: struct {
+	name : string,
+	stat_min : Entity_Stats,
+	stat_max : Entity_Stats,
+}
+
+characters := [2]Character {
+	{name = "Ryan", stat_min = {
+		vitality = 5,
+		endurance = 5,
+		strength = 5,
+		psyche = 5,
+		speed = 5,
+		agility = 5,
+		chance = 5,
+	}, stat_max = {
+		vitality = 5,
+		endurance = 5,
+		strength = 5,
+		psyche = 5,
+		speed = 5,
+		agility = 5,
+		chance = 5,
+	}},
+	{name = "Mr. Nobody", stat_min = {
+		vitality = 3,
+		endurance = 3,
+		strength = 3,
+		psyche = 3,
+		speed = 3,
+		agility = 3,
+		chance = 3,
+	}, stat_max = {
+		vitality = 7,
+		endurance = 7,
+		strength = 7,
+		psyche = 7,
+		speed = 7,
+		agility = 7,
+		chance = 7,
+	}},
 }
 
 Game_Step :: enum {
@@ -269,7 +315,7 @@ Game_State :: struct {
 	gold : int,
 	turn_number : int,
 
-	shown_path : [dynamic]Check_Cell,
+	shown_path : [dynamic]int,
 	shown_path_index : int,
 	shown_path_x : int,
 	shown_path_y : int,
@@ -376,7 +422,7 @@ Entity :: struct {
 	artefact : Object,
 
 	cell : ^Cell,
-	path : [dynamic]Check_Cell,
+	path : [dynamic]int,
 	path_index : int,
 	time_to_point : f32,
 	time_to_attack : f32,

@@ -44,6 +44,8 @@ main :: proc() {
 
 	game_state.level = read_level(lines)
 
+	game_state.shown_path = make([dynamic]int, context.allocator)
+
     for y in 0..<ARENA_HEIGHT{
 		for x in 0..<ARENA_WIDTH{
 			game_state.arena[y * ARENA_WIDTH + x].x = x
@@ -344,15 +346,15 @@ init_entity :: proc(entity: ^Entity) {
 		entity.entity_stats.psyche += age.psyche
 		entity.entity_stats.speed += age.speed
 		#partial switch entity.entity_stats.entity_age {
-			case .baby:
+			case .stage1:
 				entity.sprite = {baby_player_sprite}
-			case .kid:
+			case .stage2:
 				entity.sprite = {child_player_sprite}
-			case .teen:
+			case .stage3:
 				entity.sprite = {teen_player_sprite}
-			case .adult:
+			case .stage4:
 				entity.sprite = {player_sprite}
-			case .senior:
+			case .stage5:
 				entity.sprite = {old_player_sprite}
 		}
 		entity.current_sprite = entity.sprite[0]
@@ -769,6 +771,7 @@ update :: proc() {
 		case .leveling:
 			update_leveling()
 	}
+	free_all(context.temp_allocator)
 }
 
 update_battle :: proc() {
@@ -789,7 +792,7 @@ update_battle :: proc() {
 			animated = 1
 			game_state.end_turn_button.disabled = true
 			if entity.time_to_point >= 0.25 {
-				place_entity(&entity, entity.path[entity.path_index].cell.x, entity.path[entity.path_index].cell.y, .mid)
+				place_entity(&entity, game_state.arena[entity.path[entity.path_index]].x, game_state.arena[entity.path[entity.path_index]].y, .mid)
 				entity.last_position = entity.position
 				entity.time_to_point = 0
 				entity.path_index -= 1
@@ -811,8 +814,8 @@ update_battle :: proc() {
 			else {
 				entity.time_to_point += rl.GetFrameTime()
 				target_pos : rl.Vector2 = {
-					f32(OFFSET_X + entity.path[entity.path_index].cell.x * SPRITE_SIZE + int(entity.offset_sprite.x)), 
-					f32(-OFFSET_Y - entity.path[entity.path_index].cell.y * SPRITE_SIZE+ int(entity.offset_sprite.y))
+					f32(OFFSET_X + game_state.arena[entity.path[entity.path_index]].x * SPRITE_SIZE + int(entity.offset_sprite.x)), 
+					f32(-OFFSET_Y - game_state.arena[entity.path[entity.path_index]].y * SPRITE_SIZE+ int(entity.offset_sprite.y))
 				}
 				new_x := math.lerp(entity.last_position.x, target_pos.x, entity.time_to_point / 0.25)
 				new_y := math.lerp(entity.last_position.y, target_pos.y, entity.time_to_point / 0.25)
@@ -961,22 +964,13 @@ update_battle :: proc() {
 		mouse_x := int(math.ceil_f32(mouse_pos.x / (SPRITE_SIZE * camera.zoom))) - 4
 		mouse_y := int(math.ceil_f32(mouse_pos.y / (SPRITE_SIZE * camera.zoom))) - 4
 
-		//log_error("want to show")
 		if mouse_y * ARENA_WIDTH + mouse_x < 100 && mouse_y * ARENA_WIDTH + mouse_x >= 0 && game_state.arena[mouse_y * ARENA_WIDTH + mouse_x].cell_active {
-			//log_error("show")
 			if game_state.shown_path_x != mouse_x || game_state.shown_path_y != mouse_y {
 				game_state.shown_path_x = mouse_x
 				game_state.shown_path_y = mouse_y
 				clear(&game_state.shown_path)
-				//log_error("cleared")
-				//game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
-				//log_error("find_path")
-				//log_error("cell:", game_state.order[game_state.order_index].cell)
-				//log_error("path:", game_state.shown_path)
-				c := Check_Cell{cell = game_state.order[game_state.order_index].cell^, id = -1, dist = 0, from_id = 0}
-				//log_error("c:", c)
-				append(&game_state.shown_path, c)
-				//log_error("append")
+				game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
+				append(&game_state.shown_path, game_state.order[game_state.order_index].cell.y * ARENA_WIDTH + game_state.order[game_state.order_index].cell.x)
 			}
 		}
 		else {
@@ -1408,6 +1402,7 @@ draw :: proc() {
 }
 
 draw_battle :: proc() {
+
 	rl.BeginMode2D(camera)
 
 	for y in 0..<ARENA_HEIGHT{
@@ -1466,18 +1461,20 @@ draw_battle :: proc() {
 		entity.draw(&entity)
 	}*/
 
-	if game_state.want_to_move && len(game_state.shown_path) > 1 {
-		game_state.shown_path_index = 0
-		//log_error(game_state.shown_path)
-		for p in 0..<len(game_state.shown_path) - 1 {
-			//log_error("from:", game_state.shown_path[p].cell)
-			//log_error("to:", game_state.shown_path[p + 1].cell)
-			rl.DrawLineEx(
-				{f32(OFFSET_X + 16 + game_state.shown_path[p].cell.x * 32), f32(OFFSET_Y + 16 + game_state.shown_path[p].cell.y * 32)},
-				{f32(OFFSET_X + 16 + game_state.shown_path[p + 1].cell.x * 32), f32(OFFSET_Y + 16 + game_state.shown_path[p + 1].cell.y * 32)},
-				10.0,
-				rl.BLACK
-				)
+	if game_state.want_to_move {
+		if len(game_state.shown_path) > 1 {
+			game_state.shown_path_index = 0
+			//log_error(game_state.shown_path)
+			for p in 0..<len(game_state.shown_path) - 1 {
+				//log_error("from:", game_state.shown_path[p].cell)
+				//log_error("to:", game_state.shown_path[p + 1].cell)
+				rl.DrawLineEx(
+					{f32(OFFSET_X + 16 + game_state.arena[game_state.shown_path[p]].x * 32), f32(OFFSET_Y + 16 + game_state.arena[game_state.shown_path[p]].y * 32)},
+					{f32(OFFSET_X + 16 + game_state.arena[game_state.shown_path[p + 1]].x * 32), f32(OFFSET_Y + 16 + game_state.arena[game_state.shown_path[p + 1]].y * 32)},
+					10.0,
+					rl.BLACK
+					)
+			}
 		}
 	}
 
