@@ -315,10 +315,11 @@ Game_State :: struct {
 	gold : int,
 	turn_number : int,
 
-	shown_path : [dynamic]int,
+	shown_path : [100]int,
 	shown_path_index : int,
 	shown_path_x : int,
 	shown_path_y : int,
+    shown_path_number : int,
 
 	damage_texts : [dynamic]Damage_Text,
 
