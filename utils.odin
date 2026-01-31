@@ -240,6 +240,7 @@ find_path :: proc(from_x : int, from_y : int, to_x : int, to_y : int) -> [dynami
 	clear(&to_return)
 	clear(&to_check)
 	clear(&checked)
+    game_state.shown_path_number = 0
 
 	current_cell := game_state.arena[from_y * ARENA_WIDTH + from_x]
 
@@ -272,9 +273,13 @@ find_path :: proc(from_x : int, from_y : int, to_x : int, to_y : int) -> [dynami
 		cell := to_check[0]
 		if game_state.arena[to_check[0]].x == to_x && game_state.arena[to_check[0]].y == to_y {
 			append(&to_return, cell)
+            game_state.shown_path[game_state.shown_path_number] = cell
+            game_state.shown_path_number += 1
 			for (game_state.arena[cell].x != from_x || game_state.arena[cell].y != from_y) {
 				cell = game_state.arena[cell].path_from_y * ARENA_WIDTH + game_state.arena[cell].path_from_x
 				append(&to_return, cell)
+                game_state.shown_path[game_state.shown_path_number] = cell
+                game_state.shown_path_number += 1
 			}
 		}
 	}
