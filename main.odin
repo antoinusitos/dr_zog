@@ -970,7 +970,9 @@ update_battle :: proc() {
 				game_state.shown_path_y = mouse_y
 				clear(&game_state.shown_path)
 				game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
-				append(&game_state.shown_path, game_state.order[game_state.order_index].cell.y * ARENA_WIDTH + game_state.order[game_state.order_index].cell.x)
+                game_state.shown_path[game_state.shown_path_number] = game_state.order[game_state.order_index].cell.y * ARENA_WIDTH + game_state.order[game_state.order_index].cell.x
+                game_state.shown_path_number += 1
+				//append(&game_state.shown_path, game_state.order[game_state.order_index].cell.y * ARENA_WIDTH + game_state.order[game_state.order_index].cell.x)
 			}
 		}
 		else {
