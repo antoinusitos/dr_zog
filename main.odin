@@ -60,8 +60,6 @@ main :: proc() {
 
 	init_event_ui()
 
-	init_leveling_ui()
-
 	init_elements()
 
 	init_main_menu()
@@ -769,7 +767,6 @@ update :: proc() {
 		case .leveling:
 			update_leveling()
 	}
-	free_all(context.temp_allocator)
 }
 
 update_battle :: proc() {
@@ -1355,6 +1352,8 @@ init_combat_ui :: proc() {
 		
 		init_leveling()
 
+		init_leveling_ui()
+
 		game_state.game_finished = false
 
 		game_state.gold += 10
@@ -1520,9 +1519,10 @@ draw_battle :: proc() {
 		rl.DrawText(fmt.ctprint("class", game_state.info_entity.class), 1300, 220, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("cell", game_state.info_entity.cell.x, " : ", game_state.info_entity.cell.y), 1300, 240, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("evade", game_state.info_entity.current_evade), 1300, 260, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("lvl", game_state.info_entity.current_level), 1300, 280, 20, rl.WHITE)
 		index := 0
 		for t in game_state.info_entity.tags {
-			rl.DrawText(fmt.ctprint("tag :", t,), 1300, i32(280 + index), 20, rl.WHITE)
+			rl.DrawText(fmt.ctprint("tag :", t,), 1300, i32(300 + index), 20, rl.WHITE)
 			index += 20
 		}
 	}

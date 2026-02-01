@@ -14,7 +14,7 @@ init_leveling_ui :: proc() {
 		hover_color = rl.YELLOW,
 		clicked_color = rl.GREEN,
 		disabled_color = rl.GRAY,
-		text = "leveling 1",
+		text = game_state.leveling_abilities[0].name,
 		fill_percent = 0,
 		fill_max = 1.0,
 		text_size = 20,
@@ -26,7 +26,7 @@ init_leveling_ui :: proc() {
 		game_state.game_step = .mapping
 		for &a in game_state.event_clone.abilities {
 			if a == nil {
-				a = game_state.event_clone.class_stats.ability[0]
+				a = &game_state.leveling_abilities[0]
 				break
 			}
 		}
@@ -41,7 +41,7 @@ init_leveling_ui :: proc() {
 		hover_color = rl.YELLOW,
 		clicked_color = rl.GREEN,
 		disabled_color = rl.GRAY,
-		text = "leveling 2",
+		text = game_state.leveling_abilities[1].name,
 		fill_percent = 0,
 		fill_max = 1.0,
 		text_size = 20,
@@ -53,7 +53,7 @@ init_leveling_ui :: proc() {
 		game_state.game_step = .mapping
 		for &a in game_state.event_clone.abilities {
 			if a == nil {
-				a = game_state.event_clone.class_stats.ability[0]
+				a = &game_state.leveling_abilities[1]
 				break
 			}
 		}
@@ -68,7 +68,7 @@ init_leveling_ui :: proc() {
 		hover_color = rl.YELLOW,
 		clicked_color = rl.GREEN,
 		disabled_color = rl.GRAY,
-		text = "leveling 3",
+		text = game_state.leveling_abilities[2].name,
 		fill_percent = 0,
 		fill_max = 1.0,
 		text_size = 20,
@@ -80,7 +80,7 @@ init_leveling_ui :: proc() {
 		game_state.game_step = .mapping
 		for &a in game_state.event_clone.abilities {
 			if a == nil {
-				a = game_state.event_clone.class_stats.ability[0]
+				a = &game_state.leveling_abilities[2]
 				break
 			}
 		}
@@ -95,7 +95,7 @@ init_leveling_ui :: proc() {
 		hover_color = rl.YELLOW,
 		clicked_color = rl.GREEN,
 		disabled_color = rl.GRAY,
-		text = "leveling 4",
+		text = game_state.leveling_abilities[3].name,
 		fill_percent = 0,
 		fill_max = 1.0,
 		text_size = 20,
@@ -107,7 +107,7 @@ init_leveling_ui :: proc() {
 		game_state.game_step = .mapping
 		for &a in game_state.event_clone.abilities {
 			if a == nil {
-				a = game_state.event_clone.class_stats.ability[0]
+				a = &game_state.leveling_abilities[3]
 				break
 			}
 		}
@@ -135,6 +135,13 @@ init_leveling :: proc() {
 	game_state.event_clone = clones[0]
 
 	game_state.event_clone.current_level += 1
+
+	game_state.leveling_abilities = {
+		passive_add_vitality,
+		passive_add_chance,
+		game_state.event_clone.class_stats.ability[0]^,
+		game_state.event_clone.class_stats.ability[0]^
+	}
 }
 
 update_leveling :: proc() {

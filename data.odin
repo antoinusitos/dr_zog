@@ -10,6 +10,11 @@ class_stats := [5]Class_stats {
 	{class = .spirit, stats = {psyche = 2, strength = -1, vitality = -1}, attack_size = 2, ability = {&fire_flamme_ability}},
 }
 
+passive_abilities := [2]Class_ability {
+	passive_add_vitality,
+	passive_add_chance
+}
+
 mutation_stats := [8]Mutation_stats {
 	{mutation = .cortex, stats = {psyche = 1, chance = 1}, good = true, description = "Big Brain (+1 psyche, +1 chance)"},
 	{mutation = .reflex, stats = {agility = 1}, good = true, description = "Strong Reflex (+1 agility)"},
@@ -197,6 +202,27 @@ fire_flamme_ability := Class_ability {
 }
 
 // PASSIVE ABILITIES
+passive_add_vitality := Class_ability {
+	ability_type = .passive,
+	value = 1,
+	name = "Add 1 Vitality",
+	id = "passive_add_vitality",
+	description = "Passive (+1 vitality)",
+	stats = {vitality = 1}
+}
+
+passive_add_chance := Class_ability {
+	ability_type = .passive,
+	value = 1,
+	name = "Add 1 Chance",
+	id = "passive_add_chance",
+	description = "Passive (+1 chance)",
+	stats = {chance = 1}
+}
+
+
+
+// MUTATIONS
 
 cortex_ability := Class_ability {
 	ability_type = .passive,

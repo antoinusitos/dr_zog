@@ -357,6 +357,7 @@ Game_State :: struct {
 	leveling_2_button : Button,
 	leveling_3_button : Button,
 	leveling_4_button : Button,
+	leveling_abilities : [4]Class_ability,
 
 	event_clone : ^Entity,
 
