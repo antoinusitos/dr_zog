@@ -1,1 +1,1 @@
-odin build -debug
+odin build . -debug

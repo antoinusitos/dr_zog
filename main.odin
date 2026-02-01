@@ -44,8 +44,6 @@ main :: proc() {
 
 	game_state.level = read_level(lines)
 
-	game_state.shown_path = make([dynamic]int, context.allocator)
-
     for y in 0..<ARENA_HEIGHT{
 		for x in 0..<ARENA_WIDTH{
 			game_state.arena[y * ARENA_WIDTH + x].x = x
@@ -968,8 +966,8 @@ update_battle :: proc() {
 			if game_state.shown_path_x != mouse_x || game_state.shown_path_y != mouse_y {
 				game_state.shown_path_x = mouse_x
 				game_state.shown_path_y = mouse_y
-				clear(&game_state.shown_path)
-				game_state.shown_path = find_path(x, y, mouse_x, mouse_y)
+				//clear(&game_state.shown_path)
+				find_path(x, y, mouse_x, mouse_y)
                 game_state.shown_path[game_state.shown_path_number] = game_state.order[game_state.order_index].cell.y * ARENA_WIDTH + game_state.order[game_state.order_index].cell.x
                 game_state.shown_path_number += 1
 				//append(&game_state.shown_path, game_state.order[game_state.order_index].cell.y * ARENA_WIDTH + game_state.order[game_state.order_index].cell.x)
@@ -978,7 +976,8 @@ update_battle :: proc() {
 		else {
 			game_state.shown_path_x = mouse_x
 			game_state.shown_path_y = mouse_y
-			clear(&game_state.shown_path)
+			game_state.shown_path_number = 0
+			//clear(&game_state.shown_path)
 		}
 	}
 	else if game_state.want_to_attack {
@@ -1092,7 +1091,8 @@ init_combat_ui :: proc() {
 		}
 		end_attack()
 		game_state.want_to_move = true
-		clear(&game_state.shown_path)
+		game_state.shown_path_number = 0
+		//clear(&game_state.shown_path)
 	}
 	game_state.move_button.on_hover = proc(button : ^Button) {
 		if game_state.order[game_state.order_index].kind != .player {
@@ -1467,7 +1467,7 @@ draw_battle :: proc() {
 		if len(game_state.shown_path) > 1 {
 			game_state.shown_path_index = 0
 			//log_error(game_state.shown_path)
-			for p in 0..<len(game_state.shown_path) - 1 {
+			for p in 0..<game_state.shown_path_number - 1 {
 				//log_error("from:", game_state.shown_path[p].cell)
 				//log_error("to:", game_state.shown_path[p + 1].cell)
 				rl.DrawLineEx(
