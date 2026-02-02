@@ -322,13 +322,13 @@ setup_item :: proc(entity: ^Entity) {
 init_entity :: proc(entity: ^Entity) {
 	if entity.kind == .player {
 
-		entity.entity_stats.agility = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.chance = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.strength = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.endurance = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.vitality = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.psyche = int(5 + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.speed = int(5 + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.agility = int(int( rl.GetRandomValue(entity.character.stat_min.agility, entity.character.stat_max.agility)) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.chance = int(int( rl.GetRandomValue(entity.character.stat_min.chance, entity.character.stat_max.chance)) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.strength = int(int( rl.GetRandomValue(entity.character.stat_min.strength, entity.character.stat_max.strength)) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.endurance = int(int( rl.GetRandomValue(entity.character.stat_min.endurance, entity.character.stat_max.endurance)) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.vitality = int(int( rl.GetRandomValue(entity.character.stat_min.viality, entity.character.stat_max.vitality))+ rl.GetRandomValue(-2, 2))
+		entity.entity_stats.psyche = int(int( rl.GetRandomValue(entity.character.stat_min.psyche, entity.character.stat_max.psyche)) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.speed = int(int( rl.GetRandomValue(entity.character.stat_min.speed, entity.character.stat_max.speed)) + rl.GetRandomValue(-2, 2))
 
 		age := all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
 
