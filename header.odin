@@ -403,6 +403,7 @@ Entity :: struct {
 	class_stats : Class_stats,
 	base_attack : Class_ability,
 
+    character : Character,
 	tags : [dynamic]string,
 	elements : [dynamic]Element_Active,
 
