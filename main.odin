@@ -321,7 +321,7 @@ setup_item :: proc(entity: ^Entity) {
 
 init_entity :: proc(entity: ^Entity) {
 	if entity.kind == .player {
-
+        entity.charzcter = character_ryan
 		entity.entity_stats.agility = int(int( rl.GetRandomValue(entity.character.stat_min.agility, entity.character.stat_max.agility)) + rl.GetRandomValue(-2, 2))
 		entity.entity_stats.chance = int(int( rl.GetRandomValue(entity.character.stat_min.chance, entity.character.stat_max.chance)) + rl.GetRandomValue(-2, 2))
 		entity.entity_stats.strength = int(int( rl.GetRandomValue(entity.character.stat_min.strength, entity.character.stat_max.strength)) + rl.GetRandomValue(-2, 2))
