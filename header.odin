@@ -243,43 +243,6 @@ Character :: struct {
 	stat_max : Entity_Stats,
 }
 
-characters := [2]Character {
-	{name = "Ryan", stat_min = {
-		vitality = 5,
-		endurance = 5,
-		strength = 5,
-		psyche = 5,
-		speed = 5,
-		agility = 5,
-		chance = 5,
-	}, stat_max = {
-		vitality = 5,
-		endurance = 5,
-		strength = 5,
-		psyche = 5,
-		speed = 5,
-		agility = 5,
-		chance = 5,
-	}},
-	{name = "Mr. Nobody", stat_min = {
-		vitality = 3,
-		endurance = 3,
-		strength = 3,
-		psyche = 3,
-		speed = 3,
-		agility = 3,
-		chance = 3,
-	}, stat_max = {
-		vitality = 7,
-		endurance = 7,
-		strength = 7,
-		psyche = 7,
-		speed = 7,
-		agility = 7,
-		chance = 7,
-	}},
-}
-
 Game_Step :: enum {
 	cloning,
 	mapping,
