@@ -45,7 +45,12 @@ objects := [2]Object {
 
 characters := [2]Character {
     character_ryan,
-	{name = "Mr. Nobody", stat_min = {
+	character_nobody,
+}
+
+character_nobody := Character {
+	name = "Mr. Nobody", 
+	stat_min = {
 		vitality = 3,
 		endurance = 3,
 		strength = 3,
@@ -53,7 +58,8 @@ characters := [2]Character {
 		speed = 3,
 		agility = 3,
 		chance = 3,
-	}, stat_max = {
+	}, 
+	stat_max = {
 		vitality = 7,
 		endurance = 7,
 		strength = 7,
@@ -61,11 +67,11 @@ characters := [2]Character {
 		speed = 7,
 		agility = 7,
 		chance = 7,
-	}},
-}
+	}}
 
-character_ryan := Character{
-    name = "Ryan", stat_min = {
+character_ryan := Character {
+	name = "Ryan", 
+	stat_min = {
 		vitality = 5,
 		endurance = 5,
 		strength = 5,
@@ -73,7 +79,8 @@ character_ryan := Character{
 		speed = 5,
 		agility = 5,
 		chance = 5,
-	}, stat_max = {
+	}, 
+	stat_max = {
 		vitality = 5,
 		endurance = 5,
 		strength = 5,
@@ -81,7 +88,7 @@ character_ryan := Character{
 		speed = 5,
 		agility = 5,
 		chance = 5,
-	}},
+	}}
 // EVENTS
 
 // IDEAS

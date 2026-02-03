@@ -321,14 +321,14 @@ setup_item :: proc(entity: ^Entity) {
 
 init_entity :: proc(entity: ^Entity) {
 	if entity.kind == .player {
-        entity.charzcter = character_ryan
-		entity.entity_stats.agility = int(int( rl.GetRandomValue(entity.character.stat_min.agility, entity.character.stat_max.agility)) + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.chance = int(int( rl.GetRandomValue(entity.character.stat_min.chance, entity.character.stat_max.chance)) + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.strength = int(int( rl.GetRandomValue(entity.character.stat_min.strength, entity.character.stat_max.strength)) + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.endurance = int(int( rl.GetRandomValue(entity.character.stat_min.endurance, entity.character.stat_max.endurance)) + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.vitality = int(int( rl.GetRandomValue(entity.character.stat_min.viality, entity.character.stat_max.vitality))+ rl.GetRandomValue(-2, 2))
-		entity.entity_stats.psyche = int(int( rl.GetRandomValue(entity.character.stat_min.psyche, entity.character.stat_max.psyche)) + rl.GetRandomValue(-2, 2))
-		entity.entity_stats.speed = int(int( rl.GetRandomValue(entity.character.stat_min.speed, entity.character.stat_max.speed)) + rl.GetRandomValue(-2, 2))
+        entity.character = character_ryan
+		entity.entity_stats.agility = int(i32( rl.GetRandomValue(i32(entity.character.stat_min.agility), i32(entity.character.stat_max.agility))) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.chance = int(i32( rl.GetRandomValue(i32(entity.character.stat_min.chance), i32(entity.character.stat_max.chance))) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.strength = int(i32( rl.GetRandomValue(i32(entity.character.stat_min.strength), i32(entity.character.stat_max.strength))) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.endurance = int(i32( rl.GetRandomValue(i32(entity.character.stat_min.endurance), i32(entity.character.stat_max.endurance))) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.vitality = int(i32( rl.GetRandomValue(i32(entity.character.stat_min.vitality), i32(entity.character.stat_max.vitality)))+ rl.GetRandomValue(-2, 2))
+		entity.entity_stats.psyche = int(i32( rl.GetRandomValue(i32(entity.character.stat_min.psyche), i32(entity.character.stat_max.psyche))) + rl.GetRandomValue(-2, 2))
+		entity.entity_stats.speed = int(i32( rl.GetRandomValue(i32(entity.character.stat_min.speed), i32(entity.character.stat_max.speed))) + rl.GetRandomValue(-2, 2))
 
 		age := all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
 
