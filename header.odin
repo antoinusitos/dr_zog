@@ -244,7 +244,9 @@ Character :: struct {
 }
 
 Game_Step :: enum {
-	cloning,
+	main_menu,
+	home,
+	//cloning,
 	mapping,
 	battle,
 	event,
@@ -290,6 +292,13 @@ Game_State :: struct {
 	applyed_dots : bool,
 	entity_animated : int,
 
+	want_to_quit : bool,
+
+	//main menu
+	play_button : Button,
+	quit_button : Button,
+
+	//home
 	cloning_button : Button,
 	ready_button : Button,
 	next_clone_button : Button,
@@ -300,6 +309,7 @@ Game_State :: struct {
 	class_3_button : Button,
 	class_4_button : Button,
 
+	//combat
 	move_button : Button,
 	attack_button : Button,
 	ability_button : Button,
@@ -307,6 +317,7 @@ Game_State :: struct {
 	end_combat_button : Button,
 	end_turn_button : Button,
 
+	//map
 	map_elements : [dynamic]Map_Point,
 	map_buttons : [dynamic]Button,
 	current_map_point : int,
@@ -316,6 +327,7 @@ Game_State :: struct {
 	outcome_4_button : Button,
 	end_event_button : Button,
 
+	//leveling
 	leveling_1_button : Button,
 	leveling_2_button : Button,
 	leveling_3_button : Button,

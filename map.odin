@@ -74,6 +74,7 @@ init_map :: proc() {
 }
 
 update_map :: proc() {
+	log_error("update map")
 	//index := 0
 	index := 0
 	for &e in game_state.map_elements {
@@ -111,6 +112,7 @@ update_map :: proc() {
 }
 
 draw_map :: proc() {
+	log_error("draw map")
 	rl.DrawText(fmt.ctprint("World Map"), WINDOW_WIDTH / 2 - 100, 20, 50, rl.WHITE)
 
 	index := 0
@@ -139,7 +141,7 @@ on_home_enter :: proc() {
 }
 
 on_home_back :: proc() {
-	game_state.game_step = .cloning
+	game_state.game_step = .home
     for &e in game_state.entities {
     	#partial switch e.entity_stats.entity_age {
     		case .stage1:
