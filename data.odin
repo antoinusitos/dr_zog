@@ -100,7 +100,7 @@ events := [1]Event {
 
 chest_event := Event {
 	id = "event_test", 
-	description = "You found a chest in the street, what do you do ?", 
+	description = "%clone found a chest in the street, what do you do ?", 
 	choice = 
 	{
 		open_chest

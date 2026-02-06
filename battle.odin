@@ -935,6 +935,7 @@ on_battle_enter :: proc() {
     game_state.move_button.disabled = false
     game_state.attack_button.disabled = false
     game_state.ability_button.disabled = false
+    game_state.ability_2_button.disabled = false
 	game_state.applyed_dots = false
 
     game_state.order_index = 0
@@ -1070,6 +1071,8 @@ end_turn :: proc() {
 	game_state.ability_button.disabled = false
 	game_state.ability_2_button.disabled = false
 	game_state.applyed_dots = false
+	game_state.ability_1 = false
+	game_state.ability_2 = false
 
 	game_state.order[game_state.order_index].movement_done = false
 	game_state.order[game_state.order_index].attack_done = false
@@ -1172,6 +1175,7 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 				attacking_entity.current_endurance -= attacking_entity.abilities[index].cost
 				if attacking_entity.current_endurance <= 0 {
 					game_state.ability_button.disabled = true
+					game_state.ability_2_button.disabled = true
 				}
 				if attacking_entity.abilities[index].element_to_add.element != .none {
 					append(&damaged_cell.tags, attacking_entity.abilities[index].element_to_add.tag)
@@ -1204,6 +1208,7 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 			attacking_entity.current_endurance -= attacking_entity.abilities[index].cost
 			if attacking_entity.current_endurance <= 0 {
 				game_state.ability_button.disabled = true
+				game_state.ability_2_button.disabled = true
 			}
 			check_all_dead()
 		}
@@ -1217,6 +1222,7 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 			reset_active_cells()
 			if attacking_entity.current_endurance <= 0 {
 				game_state.ability_button.disabled = true
+				game_state.ability_2_button.disabled = true
 			}
 		}
 		case .heal:
@@ -1225,6 +1231,7 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 				attacking_entity.current_endurance -= attacking_entity.abilities[index].cost
 				if attacking_entity.current_endurance <= 0 {
 					game_state.ability_button.disabled = true
+					game_state.ability_2_button.disabled = true
 				}
 				game_state.ability_1 = false
 				reset_active_cells()
@@ -1238,6 +1245,7 @@ ability :: proc(damaged_cell : ^Cell, attacking_entity : ^Entity, index : int) {
 			attacking_entity.current_endurance -= attacking_entity.abilities[index].cost
 			if attacking_entity.current_endurance <= 0 {
 				game_state.ability_button.disabled = true
+				game_state.ability_2_button.disabled = true
 			}
 			check_all_dead()
 		}
