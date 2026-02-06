@@ -74,7 +74,6 @@ init_map :: proc() {
 }
 
 update_map :: proc() {
-	log_error("update map")
 	//index := 0
 	index := 0
 	for &e in game_state.map_elements {
@@ -112,7 +111,6 @@ update_map :: proc() {
 }
 
 draw_map :: proc() {
-	log_error("draw map")
 	rl.DrawText(fmt.ctprint("World Map"), WINDOW_WIDTH / 2 - 100, 20, 50, rl.WHITE)
 
 	index := 0

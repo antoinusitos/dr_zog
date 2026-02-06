@@ -240,7 +240,6 @@ init_home :: proc() {
 
 update_home :: proc() {
 	if game_state.all_clone_created_ready {
-		log_error("update 0")
 		if len(game_state.possible_class) == 0 {
 			game_state.start_battle_button.update(&game_state.start_battle_button)
 		}
@@ -260,7 +259,6 @@ update_home :: proc() {
 		game_state.class_2_button.update(&game_state.class_2_button)
 		game_state.class_3_button.update(&game_state.class_3_button)
 		game_state.class_4_button.update(&game_state.class_4_button)
-		log_error("update 1")
 	}
 	else {
 		if game_state.all_clone_created && !game_state.all_clone_created_ready {
@@ -274,15 +272,12 @@ update_home :: proc() {
 
 draw_home :: proc() {
 	if game_state.all_clone_created_ready {
-		log_error("draw 0")
 		rl.DrawText(fmt.ctprint("Gold : ", game_state.gold, sep = ""), WINDOW_WIDTH - 100, 10, 20, rl.WHITE)
 
-		log_error("draw 1")
 		if len(game_state.possible_class) == 0 {
 			game_state.start_battle_button.draw(&game_state.start_battle_button)
 		}
 
-		log_error("draw 2")
 		game_state.next_clone_button.draw(&game_state.next_clone_button)
 
 		/*if rl.GuiButton(rl.Rectangle{0, 350, 150, 50}, "Recycle Clone") {
@@ -296,7 +291,6 @@ draw_home :: proc() {
 
 		rl.DrawText(fmt.ctprint("Assign a class to each clone"), WINDOW_WIDTH / 2 - 150, 20, 20, rl.WHITE)
 
-		log_error("draw 3")
 		offset_class_x := 0
 		index := 0
 
@@ -305,9 +299,7 @@ draw_home :: proc() {
 		game_state.class_3_button.active = false
 		game_state.class_4_button.active = false
 
-		log_error("draw 4")
 		for c in game_state.possible_class {
-			log_error("draw 4-1 index class", index, c)
 			button : ^Button
 			if index == 0 {
 				button = &game_state.class_1_button
@@ -321,13 +313,11 @@ draw_home :: proc() {
 			else if index == 3 {
 				button = &game_state.class_4_button
 			}
-			log_error("draw 4-2")
 			button.x = f32(400 + offset_class_x)
 			button.text = string(fmt.ctprint(c))
 			button.class = c
 			button.index = index
 			button.active = true
-			log_error("draw 4-3")
 			button.on_click = proc(button : ^Button) {
 				if game_state.clones[game_state.order_index].class != .none {
 					append(&game_state.possible_class, game_state.clones[game_state.order_index].class)
@@ -337,14 +327,10 @@ draw_home :: proc() {
 				apply_class(game_state.clones[game_state.order_index])
 				ordered_remove(&game_state.possible_class, button.index)
 			}
-			log_error("draw 4-4")
 			button.draw(button)
-			log_error("draw 4-5")
 			index += 1
 			offset_class_x += 160
 		}
-
-		log_error("draw 5")
 
 		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].name), 0, 0, 20, game_state.clones[game_state.order_index].color)
 		rl.DrawText(fmt.ctprint("HP:", game_state.clones[game_state.order_index].current_life), 0, 20, 20, rl.WHITE)
@@ -382,7 +368,6 @@ draw_home :: proc() {
 		rl.DrawText(fmt.ctprint("Endurance - Points of actions per turn "), 0, WINDOW_HEIGHT - 140, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("Vitality - Total life "), 0, WINDOW_HEIGHT - 160, 20, rl.WHITE)
 	
-		log_error("draw 1")
 	}
 	else {
 		rl.DrawText(fmt.ctprint("Home"), WINDOW_WIDTH / 2 - 100, 20, 75, rl.WHITE)

@@ -162,7 +162,7 @@ update_battle :: proc() {
 		game_state.attack_button.active = true
 		game_state.attack_button.update(&game_state.attack_button)
 		game_state.ability_button.update(&game_state.ability_button)
-		//game_state.ability_2_button.update(&game_state.ability_2_button)
+		game_state.ability_2_button.update(&game_state.ability_2_button)
 	}
 
 	if rl.IsKeyPressed(.G) {
@@ -490,7 +490,7 @@ init_battle_ui :: proc() {
 		pulled_ability = false
 	}
 
-	/*game_state.ability_2_button = Button{
+	game_state.ability_2_button = Button{
 		x = 160,
 		y = 1005,
 		width = 150,
@@ -511,7 +511,7 @@ init_battle_ui :: proc() {
 			return
 		}
 
-		game_state.ability_1 = true
+		game_state.ability_2 = true
 	}
 	game_state.ability_2_button.on_hover = proc(button : ^Button) {
 		if game_state.order[game_state.order_index].kind != .player {
@@ -566,7 +566,7 @@ init_battle_ui :: proc() {
 			reset_active_cells()
 		}
 		pulled_ability = false
-	}*/
+	}
 
 	game_state.end_combat_button = Button{
 		x = WINDOW_WIDTH / 2 - 25,
@@ -786,14 +786,14 @@ draw_battle_ui :: proc() {
 		ability_index := 0
 
 		game_state.ability_button.active = false
-		//game_state.ability_2_button.active = false
+		game_state.ability_2_button.active = false
 
 		for a in game_state.order[game_state.order_index].abilities {
 			if a != nil {
 				button := &game_state.ability_button
-				//if ability_index == 1 {
-				//	button = &game_state.ability_2_button
-				//}
+				if ability_index == 1 {
+					button = &game_state.ability_2_button
+				}
 				button.active = true
 				ability_text := fmt.ctprint()
 				if a.ability_type == .damage {
@@ -1068,7 +1068,7 @@ end_turn :: proc() {
 	game_state.move_button.disabled = false
 	game_state.attack_button.disabled = false
 	game_state.ability_button.disabled = false
-	//game_state.ability_2_button.disabled = false
+	game_state.ability_2_button.disabled = false
 	game_state.applyed_dots = false
 
 	game_state.order[game_state.order_index].movement_done = false

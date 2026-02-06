@@ -38,6 +38,10 @@ main :: proc() {
 
 	init_main_menu_ui()
 
+	init_event_ui()
+
+	init_leveling_ui()
+
 	init_home()
 
 	init_home_ui()

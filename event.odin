@@ -213,7 +213,7 @@ update_event :: proc() {
 draw_event :: proc() {
 	if event_state == .choice {
 		text := fmt.ctprint(events[0].description)
-		size := rl.MeasureTextEx(rl.GetFontDefault(), text, 40, 0) 
+		size := rl.MeasureTextEx(rl.GetFontDefault(), text, 40, 0)
 		rl.DrawText(text, i32(WINDOW_WIDTH / 2 - size.x / 2), WINDOW_HEIGHT / 2 - 100, 40, rl.WHITE)
 		game_state.outcome_1_button.draw(&game_state.outcome_1_button)
 		game_state.outcome_2_button.draw(&game_state.outcome_2_button)
