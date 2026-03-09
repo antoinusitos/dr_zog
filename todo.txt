@@ -1,7 +1,7 @@
 doing :
-- leveling
 - more abilities buttons
 - olding clones when run ends
+- rework home
 
 todo :
 - 3d view
@@ -11,6 +11,7 @@ todo :
 - scraping clones
 - add ryan, random guy and another character for cloning
 - add defeat
+- Show enemies attack range
 
 https://pixelfrog-assets.itch.io/tiny-swords
 

@@ -222,6 +222,98 @@ setup_filling_button :: proc(button : ^Button) {
 	}
 }
 
+Reactive_Image :: struct {
+	x : f32,
+	y : f32,
+	start_x : f32,
+	start_y : f32,
+	width : f32,
+	height : f32,
+	background_color : rl.Color,
+	hover_color : rl.Color,
+	disabled_color : rl.Color,
+	is_hover : bool,
+	is_clicked : bool,
+	disabled : bool,
+	active : bool, // don't update or draw
+
+	index : int,
+
+	update : proc(^Reactive_Image),
+	draw : proc(^Reactive_Image),
+	on_click : proc(button : ^Reactive_Image),
+	on_release : proc(^Reactive_Image),
+	on_hover : proc(^Reactive_Image),
+	on_exit : proc(^Reactive_Image),
+}
+
+setup_reactive_image :: proc(reactive_image : ^Reactive_Image) {
+	reactive_image.update = proc(reactive_image : ^Reactive_Image) {
+		if !reactive_image.active {
+			return
+		}
+
+		if reactive_image.disabled {
+			reactive_image.is_clicked = false
+			return
+		}
+
+		mouse_pos := rl.GetMousePosition()
+
+		if mouse_pos.x >= reactive_image.x && mouse_pos.x <= reactive_image.x + reactive_image.width &&
+			mouse_pos.y >= reactive_image.y && mouse_pos.y <= reactive_image.y + reactive_image.height {
+				reactive_image.is_hover = true
+				reactive_image.on_hover(reactive_image)
+
+				if rl.IsMouseButtonPressed(.LEFT) {
+					reactive_image.is_clicked = true
+					reactive_image.on_click(reactive_image)
+				}
+				else if rl.IsMouseButtonReleased(.LEFT) {
+					reactive_image.is_clicked = false
+					reactive_image.on_release(reactive_image)
+				}
+		}
+		else {
+			if rl.IsMouseButtonReleased(.LEFT) {
+				if reactive_image.is_clicked {
+					reactive_image.on_release(reactive_image)
+				}
+				reactive_image.is_clicked = false
+			}
+
+			if reactive_image.is_hover {
+				reactive_image.on_exit(reactive_image)
+			}
+			reactive_image.is_hover = false
+		}
+	}
+	reactive_image.draw = proc(reactive_image : ^Reactive_Image) {
+		if !reactive_image.active {
+			return
+		}
+
+		if reactive_image.disabled {
+			rl.DrawRectangleRec(rl.Rectangle{reactive_image.x, reactive_image.y, reactive_image.width, reactive_image.height}, reactive_image.disabled_color)
+			return
+		}
+		rl.DrawRectangleRec(rl.Rectangle{reactive_image.x, reactive_image.y, reactive_image.width, reactive_image.height}, reactive_image.is_hover ? reactive_image.hover_color : reactive_image.background_color)
+	}
+
+	reactive_image.on_click = proc(reactive_image : ^Reactive_Image) {
+
+	}
+	reactive_image.on_release = proc(reactive_image : ^Reactive_Image) {
+		
+	}
+	reactive_image.on_hover = proc(reactive_image : ^Reactive_Image) {
+		
+	}
+	reactive_image.on_exit = proc(reactive_image : ^Reactive_Image) {
+		
+	}
+}
+
 Check_Cell :: struct {
 	id : int,
 	//from_cell : ^Check_Cell,

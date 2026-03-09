@@ -241,12 +241,13 @@ Character :: struct {
 	name : string,
 	stat_min : Entity_Stats,
 	stat_max : Entity_Stats,
+	description : string,
 }
 
 Game_Step :: enum {
 	main_menu,
 	home,
-	//cloning,
+	cloning,
 	mapping,
 	battle,
 	event,
@@ -300,6 +301,16 @@ Game_State :: struct {
 
 	//home
 	cloning_button : Button,
+	next_clone_home_button : Button,
+
+	//cloning
+	back_home_button : Button,
+	ryan_image : Reactive_Image,
+	cloning_image : Reactive_Image,
+	current_image : ^Reactive_Image,
+	cloning_hover_index : int,
+
+	//preparing
 	ready_button : Button,
 	next_clone_button : Button,
 	start_battle_button : Button,

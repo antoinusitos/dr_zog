@@ -46,6 +46,10 @@ main :: proc() {
 
 	init_home_ui()
 
+	init_cloning()
+
+	init_cloning_ui()
+
 	init_map()
 
 	init_map_ui()
@@ -90,6 +94,8 @@ update :: proc() {
 			update_main_menu()
 		case .home :
 			update_home()
+		case .cloning:
+			update_cloning()
 		case .mapping:
 			update_map()
 		case .battle:
@@ -109,6 +115,8 @@ draw :: proc() {
 			draw_main_menu()
 		case .home:
 			draw_home()
+		case .cloning:
+			draw_cloning()
 		case .mapping:
 			draw_map()
 		case .battle:
