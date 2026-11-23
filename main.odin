@@ -58,6 +58,10 @@ main :: proc() {
 
 	init_battle_ui()
 
+	init_preparing()
+
+	init_preparing_ui()
+
 	//init and init ui for events and leveling when needed only
 
 	game_state.game_step = .main_menu
@@ -104,6 +108,8 @@ update :: proc() {
 			update_event()
 		case .leveling:
 			update_leveling()
+		case .preparing:
+			update_preparing()
 	}
 }
 
@@ -125,6 +131,8 @@ draw :: proc() {
 			draw_event()
 		case .leveling:
 			draw_leveling()
+		case .preparing:
+			draw_preparing()
 	}
 
 	rl.EndDrawing()	

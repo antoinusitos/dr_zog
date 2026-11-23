@@ -28,7 +28,52 @@ init_home_ui :: proc() {
 		}
 	}
 
-	game_state.cloning_button = Button{
+	game_state.prev_clone_home_button = Button{
+		x = 0,
+		y = 350,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Prev Clone",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {20, 15},
+		active = true
+	}
+	setup_one_button(&game_state.prev_clone_home_button)
+	game_state.prev_clone_home_button.on_click = proc(button : ^Button) {
+		game_state.order_index -= 1
+		if game_state.order_index < 0 {
+			game_state.order_index = 3
+		}
+	}
+
+	game_state.battle_home_button = Button{
+		x = 0,
+		y = 450,
+		width = 150,
+		height = 50,
+		background_color = rl.RED,
+		hover_color = rl.YELLOW,
+		clicked_color = rl.GREEN,
+		disabled_color = rl.GRAY,
+		text = "Battle",
+		fill_percent = 0,
+		fill_max = 1.0,
+		text_size = 20,
+		text_offset = {20, 15},
+		active = true
+	}
+	setup_one_button(&game_state.battle_home_button)
+	game_state.battle_home_button.on_click = proc(button : ^Button) {
+		game_state.game_step = .preparing
+	}
+
+	game_state.cloning_home_button = Button{
 		x = WINDOW_WIDTH - 150,
 		y = 250,
 		width = 150,
@@ -44,8 +89,8 @@ init_home_ui :: proc() {
 		text_offset = {20, 15},
 		active = true
 	}
-	setup_one_button(&game_state.cloning_button)
-	game_state.cloning_button.on_click = proc(button : ^Button) {
+	setup_one_button(&game_state.cloning_home_button)
+	game_state.cloning_home_button.on_click = proc(button : ^Button) {
 		game_state.game_step = .cloning
 	}
 }
@@ -56,7 +101,9 @@ init_home :: proc() {
 
 update_home :: proc() {
 	game_state.next_clone_home_button.update(&game_state.next_clone_home_button)
-	game_state.cloning_button.update(&game_state.cloning_button)
+	game_state.prev_clone_home_button.update(&game_state.prev_clone_home_button)
+	game_state.battle_home_button.update(&game_state.battle_home_button)
+	game_state.cloning_home_button.update(&game_state.cloning_home_button)
 }
 
 draw_home :: proc() {
@@ -65,7 +112,9 @@ draw_home :: proc() {
 	rl.DrawText(fmt.ctprint("Gold : ", game_state.gold, sep = ""), WINDOW_WIDTH - 100, 10, 20, rl.WHITE)
 
 	game_state.next_clone_home_button.draw(&game_state.next_clone_home_button)
-	game_state.cloning_button.draw(&game_state.cloning_button)
+	game_state.prev_clone_home_button.draw(&game_state.prev_clone_home_button)
+	game_state.battle_home_button.draw(&game_state.battle_home_button)
+	game_state.cloning_home_button.draw(&game_state.cloning_home_button)
 
 	offset_clone_x := 0
 	for &c in game_state.clones {
@@ -76,6 +125,21 @@ draw_home :: proc() {
 		rl.DrawTextureEx(c.current_sprite, {f32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16)), f32(WINDOW_HEIGHT / 2)}, 0, 5, c.color)
 		rl.DrawText(fmt.ctprint(c.name), i32(WINDOW_WIDTH / 4 * offset_clone_x + (WINDOW_WIDTH / 16) + 32), WINDOW_HEIGHT / 2 + 175, 30, rl.WHITE)
 		offset_clone_x += 1
+	}
+
+	if game_state.clones[game_state.order_index] != nil {
+		rl.DrawText(fmt.ctprint(game_state.clones[game_state.order_index].name), 0, 0, 20, game_state.clones[game_state.order_index].color)
+		rl.DrawText(fmt.ctprint("HP:", game_state.clones[game_state.order_index].current_life), 0, 20, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("VIT:", game_state.clones[game_state.order_index].entity_stats.vitality), 0, 40, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("STR:", game_state.clones[game_state.order_index].entity_stats.strength), 0, 60, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("SPEED:", game_state.clones[game_state.order_index].entity_stats.speed), 0, 80, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("PSY:", game_state.clones[game_state.order_index].entity_stats.psyche), 0, 100, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("CHANCE:", game_state.clones[game_state.order_index].entity_stats.chance), 0, 120, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("END:", game_state.clones[game_state.order_index].current_endurance), 0, 140, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("AGI:", game_state.clones[game_state.order_index].entity_stats.agility), 0, 160, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("age:", game_state.clones[game_state.order_index].entity_stats.entity_age), 0, 180, 20, rl.WHITE)
+		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_stats.description), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
+		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
 	}
 }
 

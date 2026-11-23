@@ -105,6 +105,7 @@ init_event_ui :: proc() {
 
 init_event :: proc() {
 	index := 0
+	event_state = .choice
 
 	game_state.event_clone = game_state.clones[int(rl.GetRandomValue(0, len(game_state.clones) - 1))]
 
@@ -212,7 +213,8 @@ update_event :: proc() {
 
 draw_event :: proc() {
 	if event_state == .choice {
-		text := fmt.ctprint(events[0].description)
+		s, ok := strings.replace(events[0].description, "%clone", game_state.event_clone.name, 1) 
+		text := fmt.ctprint(s)
 		size := rl.MeasureTextEx(rl.GetFontDefault(), text, 40, 0)
 		rl.DrawText(text, i32(WINDOW_WIDTH / 2 - size.x / 2), WINDOW_HEIGHT / 2 - 100, 40, rl.WHITE)
 		game_state.outcome_1_button.draw(&game_state.outcome_1_button)

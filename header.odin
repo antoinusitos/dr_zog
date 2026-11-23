@@ -253,6 +253,7 @@ Game_Step :: enum {
 	event,
 	shop,
 	leveling,
+	preparing,
 }
 
 Game_State :: struct {
@@ -274,8 +275,6 @@ Game_State :: struct {
 	order_index : int,
 	ai_turn_time : f32,
 	game_step : Game_Step,
-	all_clone_created : bool,
-	all_clone_created_ready : bool,
 	possible_class : [dynamic]Class,
 	game_finished : bool,
 	gold : int,
@@ -300,13 +299,19 @@ Game_State :: struct {
 	quit_button : Button,
 
 	//home
-	cloning_button : Button,
+	cloning_home_button : Button,
 	next_clone_home_button : Button,
+	prev_clone_home_button : Button,
+	battle_home_button : Button,
 
 	//cloning
 	back_home_button : Button,
 	ryan_image : Reactive_Image,
-	cloning_image : Reactive_Image,
+	nobody_image : Reactive_Image,
+	cloning_image_0 : Reactive_Image,
+	cloning_image_1 : Reactive_Image,
+	cloning_image_2 : Reactive_Image,
+	cloning_image_3 : Reactive_Image,
 	current_image : ^Reactive_Image,
 	cloning_hover_index : int,
 

@@ -568,7 +568,8 @@ movement_cells_already_checked :: proc(cell : Cell) -> bool {
 
 read_map :: proc(map_name : string) -> [dynamic]string {
 	return_lines : [dynamic]string
-	if map_data, ok := os.read_entire_file(map_name, context.temp_allocator); ok {
+	map_data, ok := os.read_entire_file(map_name, context.temp_allocator)
+	if ok == os.General_Error.None {
 		it := string(map_data)
 		for line in strings.split_lines_iterator(&it) {
 			if strings.contains(line, "//") {
