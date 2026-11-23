@@ -98,7 +98,7 @@ init_cloning_ui :: proc() {
 		if game_state.current_image != nil {
 			game_state.clones[0] = entity_create(.player)
 			game_state.cloning_image_0.active = false
-			game_state.clones[0].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+			game_state.clones[0].entity_stats = Entity_Stats{agility = 1, chance = 1, endurance = 1, psyche = 1, speed = 1, strength = 1, vitality = 1, entity_retired = false}
 	    	game_state.clones[0].color = rl.BLUE
 		    game_state.clones[0].name = names[rl.GetRandomValue(0, len(names) - 1)]
 		    init_entity(game_state.clones[0])
@@ -120,7 +120,7 @@ init_cloning_ui :: proc() {
 		if game_state.current_image != nil {
 			game_state.cloning_image_1.active = false
 			game_state.clones[1] = entity_create(.player)
-			game_state.clones[1].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+			game_state.clones[1].entity_stats = Entity_Stats{agility = 1, chance = 1, endurance = 1, psyche = 1, speed = 1, strength = 1, vitality = 1, entity_retired = false}
     		game_state.clones[1].color = rl.RED
 		    game_state.clones[1].name = names[rl.GetRandomValue(0, len(names) - 1)]
 		    init_entity(game_state.clones[1])
@@ -142,7 +142,7 @@ init_cloning_ui :: proc() {
 		if game_state.current_image != nil {
 			game_state.cloning_image_2.active = false
 			game_state.clones[2] = entity_create(.player)
-			game_state.clones[2].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+			game_state.clones[2].entity_stats = Entity_Stats{agility = 1, chance = 1, endurance = 1, psyche = 1, speed = 1, strength = 1, vitality = 1, entity_retired = false}
     		game_state.clones[2].color = rl.GREEN
 		    game_state.clones[2].name = names[rl.GetRandomValue(0, len(names) - 1)]
 		    init_entity(game_state.clones[2])
@@ -164,7 +164,7 @@ init_cloning_ui :: proc() {
 		if game_state.current_image != nil {
 			game_state.cloning_image_3.active = false
 			game_state.clones[3] = entity_create(.player)
-			game_state.clones[3].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+			game_state.clones[3].entity_stats = Entity_Stats{agility = 1, chance = 1, endurance = 1, psyche = 1, speed = 1, strength = 1, vitality = 1, entity_retired = false}
     		game_state.clones[3].color = rl.YELLOW
 		    game_state.clones[3].name = names[rl.GetRandomValue(0, len(names) - 1)]
 		    init_entity(game_state.clones[3])

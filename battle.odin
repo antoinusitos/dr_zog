@@ -167,7 +167,7 @@ update_battle :: proc() {
 
 	if rl.IsKeyPressed(.G) {
 		for i in 0..<4 {
-			game_state.clones[i].entity_stats = all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+			game_state.clones[i].entity_stats = Entity_Stats{agility = 1, chance = 1, endurance = 1, psyche = 1, speed = 1, strength = 1, vitality = 1, entity_retired = false}
 		    game_state.clones[i].name = names[rl.GetRandomValue(0, len(names) - 1)]
 		    game_state.clones[i].class = Class(int(rl.GetRandomValue(1, len(Class) - 1)))
 			game_state.clones[i].mutation = Mutation(int(rl.GetRandomValue(0, len(Mutation) - 1)))
@@ -733,9 +733,6 @@ draw_battle_ui :: proc() {
 	if game_state.info_entity != nil {
 		rl.DrawText(fmt.ctprint(game_state.info_entity.kind), 1300, 0, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("HP:", game_state.info_entity.current_life), 1300, 20, 20, rl.WHITE)
-		if game_state.info_entity.kind == .player {
-			rl.DrawText(fmt.ctprint(game_state.info_entity.entity_stats.entity_age), 1300, 40, 20, rl.WHITE)
-		}
 		rl.DrawText(fmt.ctprint("SPEED:", game_state.info_entity.entity_stats.speed), 1300, 60, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("PSY:", game_state.info_entity.entity_stats.psyche), 1300, 80, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("VIT:", game_state.info_entity.entity_stats.vitality), 1300, 100, 20, rl.WHITE)

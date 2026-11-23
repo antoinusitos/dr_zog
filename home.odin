@@ -137,7 +137,6 @@ draw_home :: proc() {
 		rl.DrawText(fmt.ctprint("CHANCE:", game_state.clones[game_state.order_index].entity_stats.chance), 0, 120, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("END:", game_state.clones[game_state.order_index].current_endurance), 0, 140, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("AGI:", game_state.clones[game_state.order_index].entity_stats.agility), 0, 160, 20, rl.WHITE)
-		rl.DrawText(fmt.ctprint("age:", game_state.clones[game_state.order_index].entity_stats.entity_age), 0, 180, 20, rl.WHITE)
 		rl.DrawText(fmt.ctprint("mutation:", game_state.clones[game_state.order_index].mutation_stats.description), 0, 200, 20, game_state.clones[game_state.order_index].mutation == .none ? rl.WHITE : game_state.clones[game_state.order_index].mutation_stats.good ? rl.GREEN : rl.RED)
 		rl.DrawText(fmt.ctprint("class:", game_state.clones[game_state.order_index].class), 0, 220, 20, rl.WHITE)
 	}
@@ -154,29 +153,9 @@ init_entity :: proc(entity: ^Entity) {
 		entity.entity_stats.psyche = int(i32( rl.GetRandomValue(i32(entity.character.stat_min.psyche), i32(entity.character.stat_max.psyche))) + rl.GetRandomValue(-2, 2))
 		entity.entity_stats.speed = int(i32( rl.GetRandomValue(i32(entity.character.stat_min.speed), i32(entity.character.stat_max.speed))) + rl.GetRandomValue(-2, 2))
 
-		age := all_stats[rl.GetRandomValue(0, len(all_stats) - 1)]
+		entity.entity_stats.entity_retired = false
 
-		entity.entity_stats.entity_age = age.entity_age
-
-		entity.entity_stats.agility += age.agility
-		entity.entity_stats.chance += age.chance
-		entity.entity_stats.strength += age.strength
-		entity.entity_stats.endurance += age.endurance
-		entity.entity_stats.vitality += age.vitality
-		entity.entity_stats.psyche += age.psyche
-		entity.entity_stats.speed += age.speed
-		#partial switch entity.entity_stats.entity_age {
-			case .stage1:
-				entity.sprite = {baby_player_sprite}
-			case .stage2:
-				entity.sprite = {child_player_sprite}
-			case .stage3:
-				entity.sprite = {teen_player_sprite}
-			case .stage4:
-				entity.sprite = {player_sprite}
-			case .stage5:
-				entity.sprite = {old_player_sprite}
-		}
+		entity.sprite = {player_sprite}
 		entity.current_sprite = entity.sprite[0]
 	}
 

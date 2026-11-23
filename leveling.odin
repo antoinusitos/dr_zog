@@ -170,7 +170,6 @@ draw_leveling :: proc() {
 	rl.DrawText(fmt.ctprint("CHANCE:", game_state.event_clone.entity_stats.chance), 0, 120, 20, rl.WHITE)
 	rl.DrawText(fmt.ctprint("END:", game_state.event_clone.current_endurance), 0, 140, 20, rl.WHITE)
 	rl.DrawText(fmt.ctprint("AGI:", game_state.event_clone.entity_stats.agility), 0, 160, 20, rl.WHITE)
-	rl.DrawText(fmt.ctprint("age:", game_state.event_clone.entity_stats.entity_age), 0, 180, 20, rl.WHITE)
 	rl.DrawText(fmt.ctprint("mutation:", game_state.event_clone.mutation_stats.description), 0, 200, 20, game_state.event_clone.mutation == .none ? rl.WHITE : game_state.event_clone.mutation_stats.good ? rl.GREEN : rl.RED)
 	rl.DrawText(fmt.ctprint("class:", game_state.event_clone.class), 0, 220, 20, rl.WHITE)
 }

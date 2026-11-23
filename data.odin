@@ -342,14 +342,6 @@ bad_body_ability := Class_ability {
 	stats = {vitality = -1}
 }
 
-all_stats : [5]Entity_Stats = {
-	Entity_Stats { entity_age = .stage1, vitality = 1 },
-	Entity_Stats { entity_age = .stage2, chance = 1 },
-	Entity_Stats { entity_age = .stage3, speed = 1 },
-	Entity_Stats { entity_age = .stage4, strength = 1 },
-	Entity_Stats { entity_age = .stage5, psyche = 1 },
-}
-
 element_sprites := []Element_Sprite {
 	{element = .fire}
 }

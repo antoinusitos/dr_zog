@@ -141,17 +141,6 @@ on_home_enter :: proc() {
 on_home_back :: proc() {
 	game_state.game_step = .home
     for &e in game_state.entities {
-    	#partial switch e.entity_stats.entity_age {
-    		case .stage1:
-    			e.entity_stats.entity_age = .stage2
-			case .stage2:
-    			e.entity_stats.entity_age = .stage3
-    		case .stage3:
-    			e.entity_stats.entity_age = .stage4
-    		case .stage4:
-    			e.entity_stats.entity_age = .stage5
-    		case .stage5:
-    			e.entity_stats.entity_age = .retired
-    	}
+    	e.entity_stats.entity_retired = true
     }
 }

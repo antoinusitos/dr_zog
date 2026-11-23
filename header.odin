@@ -205,17 +205,8 @@ cell_remove_tag :: proc(cell : ^Cell, tag : string) {
 	}
 }
 
-Entity_Age :: enum {
-	stage1,
-	stage2,
-	stage3,
-	stage4,
-	stage5,
-    retired,
-}
-
 Entity_Stats :: struct {
-	entity_age : Entity_Age,
+	entity_retired : bool, // si l'unite peut aller combattre
 	vitality : int, // Vitalité, vie totale = 4 * VIT 
 	endurance : int, // Nombre de PA de base, regen de PA
 	strength : int, // Puissance d’attaque physique
